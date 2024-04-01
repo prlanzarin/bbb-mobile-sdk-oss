@@ -45,9 +45,8 @@ const ProblemFeedbackScreen = ({ route }) => {
     initialState[option.code] = false;
   });
 
-  const stepDetalied = { text: '' };
-
   const [optionsStatus, changeStatus] = useState(initialState);
+  const [stepDetalied, setStepDetalied] = useState('');
 
   // disables android go back button
   useFocusEffect(
@@ -78,13 +77,22 @@ const ProblemFeedbackScreen = ({ route }) => {
     }
   };
 
+  const activateSendProblem = () => {
+    const anyOptionChecked = Service.isAnyOptionChecked(optionsStatus);
+    const otherSelected = optionsStatus['other'];
+
+    if (anyOptionChecked && !otherSelected) return true;
+
+    return (otherSelected && stepDetalied.trim().length > 0);
+  };
+
   const getProblem = () => {
     const answer = {};
     Object.entries(optionsStatus).forEach(([key, value]) => {
       if (value === true) {
         answer.problem = key;
         if (key === 'other') {
-          answer.problem_described = stepDetalied.text;
+          answer.problem_described = stepDetalied;
         }
       }
     });
@@ -170,7 +178,7 @@ const ProblemFeedbackScreen = ({ route }) => {
   };
 
   const handleSendProblem = () => {
-    if (Service.isAnyOptionChecked(optionsStatus)) {
+    if (activateSendProblem()) {
       const { host } = route.params.meetingData;
       const payload = buildFeedback();
       const stepData = buildStepData();
@@ -217,12 +225,15 @@ const ProblemFeedbackScreen = ({ route }) => {
           <Styled.TextInputOther
             onFocus={() => checkOption('other')}
             multiline
-            onChangeText={(newText) => Service.setMessageText(stepDetalied, newText)}
+            value={stepDetalied}
+            onChangeText={(newText) => {
+              setStepDetalied(newText);
+            }}
           />
 
           <Styled.ButtonContainer>
             <Styled.ConfirmButton
-              disabled={!Service.isAnyOptionChecked(optionsStatus)}
+              disabled={!activateSendProblem()}
               onPress={handleSendProblem}
             >
               {t('app.customFeedback.defaultButtons.next')}

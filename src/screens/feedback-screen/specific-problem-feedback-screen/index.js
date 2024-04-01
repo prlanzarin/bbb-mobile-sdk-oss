@@ -26,7 +26,6 @@ const SpecificProblemFeedbackScreen = ({ route }) => {
     code: option.value,
     next: option.next,
   }));
-  const stepDetalied = { text: '' };
 
   if (rating >= 8) {
     questionTitle = t('app.customFeedback.wish.title');
@@ -41,6 +40,7 @@ const SpecificProblemFeedbackScreen = ({ route }) => {
 
   const [step, setStep] = useState('');
   const [optionsStatus, changeStatus] = useState({});
+  const [stepDetalied, setStepDetalied] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -77,13 +77,22 @@ const SpecificProblemFeedbackScreen = ({ route }) => {
     }
   };
 
+  const activateSendProblem = () => {
+    const anyOptionChecked = Service.isAnyOptionChecked(optionsStatus);
+    const otherSelected = optionsStatus.other;
+
+    if (anyOptionChecked && !otherSelected) return true;
+
+    return (otherSelected && stepDetalied.trim().length > 0);
+  };
+
   const getProblem = () => {
     const answer = {};
     Object.entries(optionsStatus).forEach(([key, value]) => {
       if (value === true) {
         answer.problem_detailed = key;
         if (key === 'other') {
-          answer.problem_described = stepDetalied.text;
+          answer.problem_described = stepDetalied;
         }
       }
     });
@@ -142,7 +151,7 @@ const SpecificProblemFeedbackScreen = ({ route }) => {
   };
 
   const handleSendProblem = () => {
-    if (Service.isAnyOptionChecked(optionsStatus)) {
+    if (activateSendProblem()) {
       const { host } = route.params;
       // There is one feedback screen left. Just aggregate the
       // information that we have and send it to the next screen
@@ -209,13 +218,16 @@ const SpecificProblemFeedbackScreen = ({ route }) => {
         <Styled.TextInputOther
           onFocus={() => checkOption('other')}
           multiline
-          onChangeText={(newText) => Service.setMessageText(stepDetalied, newText)}
+          value={stepDetalied}
+          onChangeText={(newText) => {
+            setStepDetalied(newText);
+          }}
         />
       </KeyboardAvoidingView>
 
       <Styled.ButtonContainer>
         <Styled.ConfirmButton
-          disabled={!Service.isAnyOptionChecked(optionsStatus)}
+          disabled={!activateSendProblem()}
           onPress={handleSendProblem}
         >
           {t('app.customFeedback.defaultButtons.next')}
