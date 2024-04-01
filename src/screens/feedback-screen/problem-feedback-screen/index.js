@@ -175,7 +175,11 @@ const ProblemFeedbackScreen = ({ route }) => {
       const payload = buildFeedback();
       const stepData = buildStepData();
       sendFeedback();
-      navigation.navigate('SpecificProblemFeedbackScreen', { payload, host, stepData });
+      if (stepData.stepType === 'email') {
+        navigation.navigate('EmailFeedbackScreen', { payload, host });
+      } else {
+        navigation.navigate('SpecificProblemFeedbackScreen', { payload, host, stepData });
+      }
     }
   };
 
