@@ -61,7 +61,7 @@
     "react-native": "0.71.14",
     "react-native-gesture-handler": "~2.9.0",
     "react-native-htmlview": "^0.17.0",
-    "react-native-incall-manager": "^4.1.0",
+    "react-native-incall-manager": "github:frankemax/react-native-incall-manager#set-audio-route-callkeep",
     "react-native-orientation-locker": "github:pawlitos/react-native-orientation-locker",
     "react-native-paper": "5.0.0-rc.3",
     "react-native-reanimated": "~2.14.4",
