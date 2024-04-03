@@ -237,14 +237,11 @@ const DrawerNavigator = ({
           title: t('app.createBreakoutRoom.title'),
           unmountOnBlur: true,
           drawerIcon: (config) => (
-            <>
-              <Styled.BetaTag>{t('mobileSdk.tag.new')}</Styled.BetaTag>
-              <Styled.DrawerIcon
-                icon="account-group"
-                size={24}
-                iconColor={config.color}
-              />
-            </>
+            <Styled.DrawerIcon
+              icon="account-group"
+              size={24}
+              iconColor={config.color}
+            />
 
           ),
         }}
@@ -261,10 +258,7 @@ const DrawerNavigator = ({
             maxWidth: 150, fontWeight: '400', fontSize: 16, paddingLeft: 12
           },
           drawerIcon: (config) => (
-            <>
-              <Styled.BetaTag>{t('mobileSdk.tag.new')}</Styled.BetaTag>
-              <Styled.IconMaterial name="notes" size={24} color={config.color} />
-            </>
+            <Styled.IconMaterial name="notes" size={24} color={config.color} />
           ),
         }}
       />
