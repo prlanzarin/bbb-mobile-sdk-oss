@@ -80,6 +80,11 @@ const FeedbackScreen = () => {
 
   const handleNextButton = () => {
     if (noRating()) return;
+    // TODO fix sometimes the redux clean before getting the user.current data, crashing the app
+    if (user.current === undefined) {
+      navigation.navigate('EndSessionScreen');
+      return;
+    }
     sendStarRating();
   };
 
