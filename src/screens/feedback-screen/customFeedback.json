@@ -89,12 +89,12 @@
       },
       {
         "textLabel":{
-          "id": "app.customFeedback.problem.whiteboard"
+          "id": "app.customFeedback.problem.interface"
         },
         "type": "radio",
-        "next": "whiteboardProblem",
+        "next": "interfaceProblem",
         "key": "feedback.problem",
-        "value": "whiteboard"
+        "value": "interface"
       },
       {
         "textLabel":{
@@ -283,38 +283,38 @@
       }
     ]
   },
-  "whiteboardProblem": {
+  "interfaceProblem": {
     "titleLabel":{
-      "id": "app.customFeedback.whiteboardProblem.title"
+      "id": "app.customFeedback.interfaceProblem.title"
     },
     "progress": "2/2",
     "options":[
       {
         "textLabel":{
-          "id": "app.customFeedback.whiteboardProblem.eraseTool"
+          "id": "app.customFeedback.interfaceProblem.loginUi"
         },
         "type": "radio",
         "next": "email",
         "key": "feedback.problem_detailed",
-        "value": "erasertool"
+        "value": "loginUi"
       },
       {
         "textLabel":{
-          "id": "app.customFeedback.whiteboardProblem.bucketTool"
+          "id": "app.customFeedback.interfaceProblem.pollUi"
         },
         "type": "radio",
         "next": "email",
         "key": "feedback.problem_detailed",
-        "value": "buckettool"
+        "value": "pollUi"
       },
       {
         "textLabel":{
-          "id": "app.customFeedback.whiteboardProblem.textEdition"
+          "id": "app.customFeedback.interfaceProblem.status"
         },
         "type": "radio",
         "next": "email",
         "key": "feedback.problem_detailed",
-        "value": "textedition"
+        "value": "status"
       },
       {
         "textLabel":{
@@ -335,6 +335,33 @@
     "options":[
       {
         "textLabel":{
+          "id": "app.customFeedback.like.notificationApp"
+        },
+        "type": "radio",
+        "next": "wish",
+        "key": "feedback.like",
+        "value": "notificationApp"
+      },
+      {
+        "textLabel":{
+          "id": "app.customFeedback.like.chatUx"
+        },
+        "type": "radio",
+        "next": "wish",
+        "key": "feedback.like",
+        "value": "chatUx"
+      },
+      {
+        "textLabel":{
+          "id": "app.customFeedback.like.appUi"
+        },
+        "type": "radio",
+        "next": "wish",
+        "key": "feedback.like",
+        "value": "appUi"
+      },
+      {
+        "textLabel":{
           "id": "app.customFeedback.other"
         },
         "type": "radio",
@@ -352,30 +379,48 @@
     "options":[
       {
         "textLabel":{
-          "id": "app.customFeedback.wish.moreUsers"
+          "id": "app.customFeedback.wish.backCamera"
         },
         "type": "radio",
         "next": "email",
         "key": "feedback.wish",
-        "value": "moreusers"
+        "value": "backCamera"
       },
       {
         "textLabel":{
-          "id": "app.customFeedback.wish.chatInteracions"
+          "id": "app.customFeedback.wish.whiteboardUse"
         },
         "type": "radio",
         "next": "email",
         "key": "feedback.wish",
-        "value": "chatinteractions"
+        "value": "whiteboardUse"
       },
       {
         "textLabel":{
-          "id": "app.customFeedback.wish.whiteboardTools"
+          "id": "app.customFeedback.wish.picture"
         },
         "type": "radio",
         "next": "email",
         "key": "feedback.wish",
-        "value": "whiteboardtools"
+        "value": "picture"
+      },
+      {
+        "textLabel":{
+          "id": "app.customFeedback.wish.outputDevice"
+        },
+        "type": "radio",
+        "next": "email",
+        "key": "feedback.wish",
+        "value": "outputDevice"
+      },
+      {
+        "textLabel":{
+          "id": "app.customFeedback.wish.privateChat"
+        },
+        "type": "radio",
+        "next": "email",
+        "key": "feedback.wish",
+        "value": "privateChat"
       },
       {
         "textLabel":{
