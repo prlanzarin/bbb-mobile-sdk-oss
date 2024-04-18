@@ -1,5 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { BackHandler, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  BackHandler, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard
+} from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useTranslation } from 'react-i18next';
@@ -203,45 +205,47 @@ const SpecificProblemFeedbackScreen = ({ route }) => {
   };
 
   return (
-    <Styled.ContainerView>
-      <Styled.Title>{questionTitle}</Styled.Title>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <Styled.ContainerView>
+        <Styled.Title>{questionTitle}</Styled.Title>
 
-      <Styled.OptionsContainer>
-        {renderOptions()}
-      </Styled.OptionsContainer>
+        <Styled.OptionsContainer>
+          {renderOptions()}
+        </Styled.OptionsContainer>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={height + 100}
-        style={{ width: '100%' }}
-      >
-        <Styled.TextInputOther
-          onFocus={() => checkOption('other')}
-          multiline
-          value={stepDetalied}
-          onChangeText={(newText) => {
-            setStepDetalied(newText);
-          }}
-        />
-      </KeyboardAvoidingView>
-
-      <Styled.ButtonContainer>
-        <Styled.ConfirmButton
-          disabled={!activateSendProblem()}
-          onPress={handleSendProblem}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={height + 100}
+          style={{ width: '100%' }}
         >
-          {t('app.customFeedback.defaultButtons.next')}
-        </Styled.ConfirmButton>
-      </Styled.ButtonContainer>
+          <Styled.TextInputOther
+            onFocus={() => checkOption('other')}
+            multiline
+            value={stepDetalied}
+            onChangeText={(newText) => {
+              setStepDetalied(newText);
+            }}
+          />
+        </KeyboardAvoidingView>
 
-      <Styled.QuitSessionButtonContainer>
-        <Styled.QuitSessionButton
-          onPress={handleSkip}
-        >
-          {skipButton}
-        </Styled.QuitSessionButton>
-      </Styled.QuitSessionButtonContainer>
-    </Styled.ContainerView>
+        <Styled.ButtonContainer>
+          <Styled.ConfirmButton
+            disabled={!activateSendProblem()}
+            onPress={handleSendProblem}
+          >
+            {t('app.customFeedback.defaultButtons.next')}
+          </Styled.ConfirmButton>
+        </Styled.ButtonContainer>
+
+        <Styled.QuitSessionButtonContainer>
+          <Styled.QuitSessionButton
+            onPress={handleSkip}
+          >
+            {skipButton}
+          </Styled.QuitSessionButton>
+        </Styled.QuitSessionButtonContainer>
+      </Styled.ContainerView>
+    </TouchableWithoutFeedback>
   );
 };
 
