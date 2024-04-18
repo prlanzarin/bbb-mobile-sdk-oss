@@ -199,14 +199,10 @@ const ProblemFeedbackScreen = ({ route }) => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <Styled.ContainerView>
-          <Styled.Title>{questionTitle}</Styled.Title>
-
-          <Styled.OptionsContainer>
-            {
+      <Styled.ContainerView>
+        <Styled.Title>{questionTitle}</Styled.Title>
+        <Styled.OptionsContainer>
+          {
           feedbackOptions.map((option) => {
             return (
               <Styled.CheckContainerItem key={option.code}>
@@ -220,8 +216,12 @@ const ProblemFeedbackScreen = ({ route }) => {
             );
           })
           }
-          </Styled.OptionsContainer>
+        </Styled.OptionsContainer>
 
+        <KeyboardAvoidingView
+          style={{ width: '100%' }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <Styled.TextInputOther
             onFocus={() => checkOption('other')}
             multiline
@@ -230,25 +230,26 @@ const ProblemFeedbackScreen = ({ route }) => {
               setStepDetalied(newText);
             }}
           />
+        </KeyboardAvoidingView>
 
-          <Styled.ButtonContainer>
-            <Styled.ConfirmButton
-              disabled={!activateSendProblem()}
-              onPress={handleSendProblem}
-            >
-              {t('app.customFeedback.defaultButtons.next')}
-            </Styled.ConfirmButton>
-          </Styled.ButtonContainer>
+        <Styled.ButtonContainer>
+          <Styled.ConfirmButton
+            disabled={!activateSendProblem()}
+            onPress={handleSendProblem}
+          >
+            {t('app.customFeedback.defaultButtons.next')}
+          </Styled.ConfirmButton>
+        </Styled.ButtonContainer>
 
-          <Styled.QuitSessionButtonContainer>
-            <Styled.QuitSessionButton
-              onPress={handleSkip}
-            >
-              {skipButton}
-            </Styled.QuitSessionButton>
-          </Styled.QuitSessionButtonContainer>
-        </Styled.ContainerView>
-      </KeyboardAvoidingView>
+        <Styled.QuitSessionButtonContainer>
+          <Styled.QuitSessionButton
+            onPress={handleSkip}
+          >
+            {skipButton}
+          </Styled.QuitSessionButton>
+        </Styled.QuitSessionButtonContainer>
+      </Styled.ContainerView>
+
     </TouchableWithoutFeedback>
   );
 };
