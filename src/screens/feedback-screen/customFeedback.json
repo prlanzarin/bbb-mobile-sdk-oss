@@ -177,7 +177,7 @@
       },
       {
         "textLabel":{
-          "id": "app.customFeedback.cameraProblem.badQuality"
+          "id": "app.customFeedback.cameraProblem.imageQuality"
         },
         "type": "radio",
         "next": "email",
@@ -221,7 +221,7 @@
       },
       {
         "textLabel":{
-          "id": "app.customFeedback.connectionProblem.dataConsumption"
+          "id": "app.customFeedback.connectionProblem.data"
         },
         "type": "radio",
         "next": "email",
@@ -256,7 +256,7 @@
       },
       {
         "textLabel":{
-          "id": "app.customFeedback.microphoneProblem.deviceIdentification"
+          "id": "app.customFeedback.microphoneProblem.deviceidentification"
         },
         "type": "radio",
         "next": "email",
@@ -421,15 +421,6 @@
         "next": "email",
         "key": "feedback.wish",
         "value": "privateChat"
-      },
-      {
-        "textLabel":{
-          "id": "app.customFeedback.wish.accessibilityTools"
-        },
-        "type": "radio",
-        "next": "email",
-        "key": "feedback.wish",
-        "value": "accessibilityTools"
       },
       {
         "textLabel":{
