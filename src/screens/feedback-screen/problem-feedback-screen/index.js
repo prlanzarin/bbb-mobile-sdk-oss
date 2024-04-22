@@ -106,7 +106,7 @@ const ProblemFeedbackScreen = ({ route }) => {
       if (value === true) {
         answer.like = key;
         if (key === 'other') {
-          answer.like_described = stepDetalied.text;
+          answer.like_described = stepDetalied;
         }
       }
     });

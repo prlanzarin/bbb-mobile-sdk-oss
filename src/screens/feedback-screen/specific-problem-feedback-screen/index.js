@@ -108,7 +108,7 @@ const SpecificProblemFeedbackScreen = ({ route }) => {
       if (value === true) {
         answer.wish = key;
         if (key === 'other') {
-          answer.wish_described = stepDetalied.text;
+          answer.wish_described = stepDetalied;
         }
       }
     });
