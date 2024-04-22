@@ -1,6 +1,7 @@
 import React, {
   useCallback, useEffect, useRef, useState
 } from 'react';
+import { nativeApplicationVersion, nativeBuildVersion } from 'expo-application';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { PORTRAIT, OrientationLocker } from 'react-native-orientation-locker';
 import { useTranslation } from 'react-i18next';
@@ -149,7 +150,9 @@ const FeedbackScreen = () => {
           platformApiLevel,
           productName,
           suppCpuArch: supportedCpuArchitectures,
-          totalMemory
+          totalMemory,
+          appVersion: nativeApplicationVersion,
+          appBuildNumber: parseInt(nativeBuildVersion, 10) || 0,
         },
       },
       user: {
