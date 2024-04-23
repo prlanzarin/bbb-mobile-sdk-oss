@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { Share, Platform } from 'react-native';
+import { Share, Platform, NativeModules } from 'react-native';
 import {
   DrawerContentScrollView,
   DrawerItemList,
@@ -8,7 +8,7 @@ import {
 } from '@react-navigation/drawer';
 import Colors from '../../constants/colors';
 import { useOrientation } from '../../hooks/use-orientation';
-import { setExpandActionsBar } from '../../store/redux/slices/wide-app/layout';
+import { setExpandActionsBar, setIsPiPEnabled } from '../../store/redux/slices/wide-app/layout';
 import { selectCurrentUser } from '../../store/redux/slices/current-user';
 import { setProfile } from '../../store/redux/slices/wide-app/modal';
 import logger from '../../services/api';
@@ -19,12 +19,14 @@ import Styled from './styles';
 
 const CustomDrawer = (props) => {
   const { meetingUrl, navigation } = props;
+  const { PictureInPictureModule } = NativeModules;
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const currentUserObj = useSelector(selectCurrentUser);
   const isBreakout = useSelector((state) => state.client.meetingData.isBreakout);
   const isAndroid = Platform.OS === 'android';
   const isLandscape = useOrientation() === 'LANDSCAPE';
+  const isPiPEnabled = useSelector((state) => state.layout.isPiPEnabled);
 
   const leaveSession = () => {
     dispatch(leave(api));
@@ -92,6 +94,20 @@ const CustomDrawer = (props) => {
         inactiveBackgroundColor={Colors.lightGray100}
         icon={() => <Styled.DrawerIcon name="logout" size={24} color="#1C1B1F" />}
       />
+      {!isPiPEnabled && (
+      <DrawerItem
+        label="PiP"
+        labelStyle={Styled.TextButtonLabel}
+        onPress={() => {
+          PictureInPictureModule.setPictureInPictureEnabled(true);
+          PictureInPictureModule.enterPictureInPicture();
+          dispatch(setIsPiPEnabled(true));
+        }}
+        inactiveTintColor={Colors.lightGray400}
+        inactiveBackgroundColor={Colors.lightGray100}
+        icon={() => <Styled.DrawerIcon name="logout" size={24} color="#1C1B1F" />}
+      />
+      )}
     </>
   );
 

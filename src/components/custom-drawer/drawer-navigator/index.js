@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { selectCurrentUser } from '../../../store/redux/slices/current-user';
 import { selectWaitingUsers } from '../../../store/redux/slices/guest-users';
 import { selectRecordMeeting } from '../../../store/redux/slices/record-meetings';
+import useAppState from '../../../hooks/use-app-state';
 import usePrevious from '../../../hooks/use-previous';
 import logger from '../../../services/logger';
 // screens
@@ -33,6 +34,7 @@ const DrawerNavigator = ({
 }) => {
   const Drawer = createDrawerNavigator();
   const navigation = useNavigation();
+  const appState = useAppState();
   const { t } = useTranslation();
   const ended = useSelector((state) => state.client.sessionState.ended);
   const joinUrl = useSelector((state) => state.client.meetingData.joinUrl);
@@ -146,6 +148,7 @@ const DrawerNavigator = ({
         options={{
           title: meetingData?.confname || t('mobileSdk.meeting.label'),
           unmountOnBlur: true,
+          headerShown: appState !== 'background',
           headerRight: () => (
             <RecordingIndicator recordMeeting={recordMeeting} />
           ),

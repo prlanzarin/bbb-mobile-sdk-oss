@@ -6,6 +6,7 @@ const initialState = {
   focusedElement: '',
   detailedInfo: true,
   expandActionsBar: false,
+  isPiPEnabled: false,
 };
 
 const layoutSlice = createSlice({
@@ -30,6 +31,9 @@ const layoutSlice = createSlice({
     setExpandActionsBar: (state, action) => {
       state.expandActionsBar = action.payload;
     },
+    setIsPiPEnabled: (state, action) => {
+      state.isPiPEnabled = action.payload;
+    },
   },
 });
 
@@ -40,5 +44,6 @@ export const {
   trigDetailedInfo,
   setDetailedInfo,
   setExpandActionsBar,
+  setIsPiPEnabled
 } = layoutSlice.actions;
 export default layoutSlice.reducer;
