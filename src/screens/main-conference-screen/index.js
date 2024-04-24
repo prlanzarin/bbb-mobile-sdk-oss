@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
+import { Platform } from 'react-native';
 import ScreenWrapper from '../../components/screen-wrapper';
 import VideoGrid from '../../components/video/video-grid';
 import MiniAudioPlayerIcon from '../../components/audio-player/mini-audio-player-icon';
@@ -12,8 +13,10 @@ import Styled from './styles';
 const MainConferenceScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const initialChatMsgsFetched = useSelector((state) => state.client.initialChatMsgsFetched);
+  const isPiPEnabled = useSelector((state) => state.layout.isPiPEnabled);
   const navigation = useNavigation();
   const appState = useAppState();
+  const isAndroid = Platform.OS === 'android';
 
   const isBackgrounded = appState === 'background';
 
@@ -58,7 +61,7 @@ const MainConferenceScreen = () => {
     );
   }
 
-  return isBackgrounded ? renderPiP() : renderGridLayout();
+  return isBackgrounded && isAndroid && isPiPEnabled ? renderPiP() : renderGridLayout();
 };
 
 export default MainConferenceScreen;
