@@ -66,6 +66,20 @@ const CustomDrawer = (props) => {
 
   const renderBottomDrawerItems = () => (
     <>
+      {(!isPiPEnabled && isAndroid) && (
+      <DrawerItem
+        label="Picture-in-Picture"
+        labelStyle={Styled.TextButtonLabel}
+        onPress={() => {
+          PictureInPictureModule.setPictureInPictureEnabled(true);
+          PictureInPictureModule.enterPictureInPicture();
+          dispatch(setIsPiPEnabled(true));
+        }}
+        inactiveTintColor={Colors.lightGray400}
+        inactiveBackgroundColor={Colors.lightGray100}
+        icon={() => <Styled.DrawerIcon name="picture-in-picture" size={24} color="#1C1B1F" />}
+      />
+      )}
       {isAndroid && (
       <DrawerItem
         label={t('mobileSdk.audio.deviceSelector.title')}
@@ -94,20 +108,6 @@ const CustomDrawer = (props) => {
         inactiveBackgroundColor={Colors.lightGray100}
         icon={() => <Styled.DrawerIcon name="logout" size={24} color="#1C1B1F" />}
       />
-      {!isPiPEnabled && (
-      <DrawerItem
-        label="PiP"
-        labelStyle={Styled.TextButtonLabel}
-        onPress={() => {
-          PictureInPictureModule.setPictureInPictureEnabled(true);
-          PictureInPictureModule.enterPictureInPicture();
-          dispatch(setIsPiPEnabled(true));
-        }}
-        inactiveTintColor={Colors.lightGray400}
-        inactiveBackgroundColor={Colors.lightGray100}
-        icon={() => <Styled.DrawerIcon name="logout" size={24} color="#1C1B1F" />}
-      />
-      )}
     </>
   );
 
