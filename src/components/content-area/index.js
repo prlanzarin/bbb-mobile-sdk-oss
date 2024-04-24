@@ -2,16 +2,20 @@ import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { NativeModules } from 'react-native';
 import { selectScreenshare } from '../../store/redux/slices/screenshare';
 import {
+  setDetailedInfo,
   setFocusedElement,
   setFocusedId,
   setIsFocused,
+  setIsPiPEnabled
 } from '../../store/redux/slices/wide-app/layout';
 import Styled from './styles';
 
 const ContentArea = (props) => {
   const { style, fullscreen } = props;
+  const { PictureInPictureModule } = NativeModules;
 
   const slidesStore = useSelector((state) => state.slidesCollection);
   const presentationsStore = useSelector((state) => state.presentationsCollection);
@@ -46,6 +50,13 @@ const ContentArea = (props) => {
     dispatch(setFocusedId(handleSlideAndPresentationActive()));
     dispatch(setFocusedElement('contentArea'));
     navigation.navigate('FullscreenWrapperScreen');
+  };
+
+  const handleEnterPiPClick = () => {
+    PictureInPictureModule.setPictureInPictureEnabled(true);
+    PictureInPictureModule.enterPictureInPicture();
+    dispatch(setIsPiPEnabled(true));
+    dispatch(setDetailedInfo(false));
   };
 
   // ** Content area views methods **
@@ -87,17 +98,9 @@ const ContentArea = (props) => {
             </Styled.NameLabel>
           </Styled.NameLabelContainer>
 
-          <Styled.PressableButton
-            activeOpacity={0.6}
-            onPress={handleFullscreenClick}
-          >
-            <Styled.FullscreenIcon
-              icon="fullscreen"
-              iconColor="white"
-              size={16}
-              containerColor="#00000000"
-            />
-          </Styled.PressableButton>
+          <Styled.FullscreenIcon onPress={handleFullscreenClick} />
+
+          <Styled.PIPIcon onPress={handleEnterPiPClick} />
         </>
       )}
     </Styled.ContentAreaPressable>

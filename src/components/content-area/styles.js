@@ -1,10 +1,11 @@
 import styled from 'styled-components/native';
 import { css } from 'styled-components';
+import { MaterialIcons } from '@expo/vector-icons';
+import { TouchableRipple } from 'react-native-paper';
 import presentation from '../presentation';
 import screenshare from '../screenshare';
 import Colors from '../../constants/colors';
 import Pressable from '../pressable';
-import IconButtonComponent from '../icon-button';
 
 const Presentation = styled(presentation)``;
 const Screenshare = styled(screenshare)``;
@@ -43,10 +44,35 @@ const PressableButton = styled(Pressable).attrs(() => ({
   `}
 `;
 
-const FullscreenIcon = styled(IconButtonComponent)`
-  padding: 0;
-  margin: 0;
+const IconContainerFullscreen = styled(TouchableRipple)`
+  background-color: #28282d99;
+  margin: 5px;
+  padding: 8px;
+  border-radius: 4px;
+  position: absolute;
+  right: 0px;
 `;
+
+const IconContainerPiP = styled(TouchableRipple)`
+  background-color: #28282d99;
+  margin: 5px;
+  padding: 8px;
+  border-radius: 4px;
+  position: absolute;
+  right: 35px;
+`;
+
+const FullscreenIcon = ({ onPress }) => (
+  <IconContainerFullscreen onPress={onPress}>
+    <MaterialIcons name="fullscreen" size={16} color="#FFFFFF" />
+  </IconContainerFullscreen>
+);
+
+const PIPIcon = ({ onPress }) => (
+  <IconContainerPiP onPress={onPress}>
+    <MaterialIcons name="picture-in-picture" size={16} color="#FFFFFF" />
+  </IconContainerPiP>
+);
 
 export default {
   Presentation,
@@ -55,5 +81,6 @@ export default {
   NameLabel,
   NameLabelContainer,
   PressableButton,
-  FullscreenIcon
+  FullscreenIcon,
+  PIPIcon
 };

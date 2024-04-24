@@ -101,7 +101,6 @@ class PictureInPictureModule extends ReactContextBaseJavaModule {
 
         PictureInPictureParams.Builder builder
                 = new PictureInPictureParams.Builder()
-                .setAutoEnterEnabled(true)
                 .setAspectRatio(new Rational(16, 9));
 
         // https://developer.android.com/reference/android/app/Activity.html#enterPictureInPictureMode(android.app.PictureInPictureParams)

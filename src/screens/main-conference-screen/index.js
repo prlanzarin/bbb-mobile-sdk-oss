@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Platform } from 'react-native';
 import ScreenWrapper from '../../components/screen-wrapper';
 import VideoGrid from '../../components/video/video-grid';
@@ -9,12 +9,14 @@ import TalkingIndicator from '../../components/talking-indicator';
 import useAppState from '../../hooks/use-app-state';
 import PiPView from './pip-view';
 import Styled from './styles';
+import { setIsPiPEnabled } from '../../store/redux/slices/wide-app/layout';
 
 const MainConferenceScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const initialChatMsgsFetched = useSelector((state) => state.client.initialChatMsgsFetched);
   const isPiPEnabled = useSelector((state) => state.layout.isPiPEnabled);
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const appState = useAppState();
   const isAndroid = Platform.OS === 'android';
 
@@ -24,6 +26,9 @@ const MainConferenceScreen = () => {
   useEffect(() => {
     if (appState === 'background') {
       navigation.closeDrawer();
+    }
+    if (appState === 'active') {
+      dispatch(setIsPiPEnabled(false));
     }
   }, [appState]);
 
