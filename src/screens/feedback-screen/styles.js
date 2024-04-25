@@ -23,14 +23,14 @@ const ContainerFeedbackCard = styled.View`
 `;
 
 const Title = styled.Text`
-color: ${Colors.white};
+  color: ${Colors.white};
   font-size: 21px;
   font-size: 21px;
   font-weight: 500;
-font-size: 21px;
+  font-size: 21px;
   font-weight: 500;
-text-align: center;
-font-weight: 500;
+  text-align: center;
+  font-weight: 500;
 `;
 
 const ConfirmButton = ({

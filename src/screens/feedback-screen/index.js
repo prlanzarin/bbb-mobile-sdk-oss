@@ -13,6 +13,8 @@ import logger from '../../services/logger';
 import { selectMeeting } from '../../store/redux/slices/meeting';
 import { selectCurrentUser } from '../../store/redux/slices/current-user';
 import useEndReason from '../../hooks/use-end-reason';
+import useAppState from '../../hooks/use-app-state';
+import PiPView from './pip-view';
 import Settings from '../../../settings.json';
 import Colors from '../../constants/colors';
 import Styled from './styles';
@@ -55,8 +57,13 @@ const FeedbackScreen = () => {
   const currentMeetingData = useSelector((state) => state.client.meetingData);
   const currentMeeting = useSelector(selectMeeting);
   const currentUser = useSelector(selectCurrentUser);
+  const isPiPEnabled = useSelector((state) => state.layout.isPiPEnabled);
   const meetingData = useRef(null);
   const user = useRef(null);
+  const appState = useAppState();
+
+  const isAndroid = Platform.OS === 'android';
+  const isBackgrounded = appState === 'background';
 
   useEffect(() => {
     // Some info are lost after first render
@@ -185,6 +192,12 @@ const FeedbackScreen = () => {
   };
 
   const noRating = () => rating === undefined;
+
+  if (isBackgrounded && isAndroid && isPiPEnabled) {
+    return (
+      <PiPView />
+    );
+  }
 
   return (
     <Styled.ContainerView>

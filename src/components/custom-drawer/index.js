@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { Share, Platform } from 'react-native';
+import { Share, Platform, NativeModules } from 'react-native';
 import {
   DrawerContentScrollView,
   DrawerItemList,
