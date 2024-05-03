@@ -32,8 +32,10 @@ const UserParticipantsScreen = () => {
 
   const { AudioModule } = NativeModules;
 
-  const onPress = () => {
-    console.log(AudioModule);
+  const onPress = async () => {
+    const inputs = await AudioModule.getAudioInputs();
+    console.log(inputs);
+    AudioModule.setAudioDevice("MicrophoneBuiltIn");
   };
 
   const handleUsersName = useCallback(

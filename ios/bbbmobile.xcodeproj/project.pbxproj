@@ -13,6 +13,8 @@
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		96905EF65AED1B983A6B3ABC /* libPods-bbbmobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58EEBF8E8E6FB1BC6CAF49B5 /* libPods-bbbmobile.a */; };
 		A1E15BA00C9442C98334C815 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = A480D0AB28A64593A7ED86D1 /* noop-file.swift */; };
+		A24B93F32BE3964800E1CA57 /* RCTAudioModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A24B93F22BE3964800E1CA57 /* RCTAudioModule.m */; };
+		A24B93F72BE3A51D00E1CA57 /* JitsiAudioSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A24B93F62BE3A51D00E1CA57 /* JitsiAudioSession.m */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 /* End PBXBuildFile section */
@@ -28,6 +30,12 @@
 		58EEBF8E8E6FB1BC6CAF49B5 /* libPods-bbbmobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-bbbmobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C2E3173556A471DD304B334 /* Pods-bbbmobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bbbmobile.debug.xcconfig"; path = "Target Support Files/Pods-bbbmobile/Pods-bbbmobile.debug.xcconfig"; sourceTree = "<group>"; };
 		7A4D352CD337FB3A3BF06240 /* Pods-bbbmobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bbbmobile.release.xcconfig"; path = "Target Support Files/Pods-bbbmobile/Pods-bbbmobile.release.xcconfig"; sourceTree = "<group>"; };
+		A24B93EE2BE10F5D00E1CA57 /* bbbmobile.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = bbbmobile.xcodeproj; sourceTree = "<group>"; };
+		A24B93F12BE3956800E1CA57 /* RCTAudioModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTAudioModule.h; sourceTree = "<group>"; };
+		A24B93F22BE3964800E1CA57 /* RCTAudioModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTAudioModule.m; sourceTree = "<group>"; };
+		A24B93F42BE39B7C00E1CA57 /* JitsiAudioSession+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "JitsiAudioSession+Private.h"; sourceTree = "<group>"; };
+		A24B93F52BE39BA500E1CA57 /* JitsiAudioSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JitsiAudioSession.h; sourceTree = "<group>"; };
+		A24B93F62BE3A51D00E1CA57 /* JitsiAudioSession.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = JitsiAudioSession.m; sourceTree = "<group>"; };
 		A480D0AB28A64593A7ED86D1 /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "bbbmobile/noop-file.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = bbbmobile/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
@@ -54,6 +62,12 @@
 				008F07F21AC5B25A0029DE68 /* main.jsbundle */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
+				A24B93EE2BE10F5D00E1CA57 /* bbbmobile.xcodeproj */,
+				A24B93F12BE3956800E1CA57 /* RCTAudioModule.h */,
+				A24B93F22BE3964800E1CA57 /* RCTAudioModule.m */,
+				A24B93F42BE39B7C00E1CA57 /* JitsiAudioSession+Private.h */,
+				A24B93F52BE39BA500E1CA57 /* JitsiAudioSession.h */,
+				A24B93F62BE3A51D00E1CA57 /* JitsiAudioSession.m */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
@@ -108,6 +122,13 @@
 				FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */,
 			);
 			name = bbbmobile;
+			sourceTree = "<group>";
+		};
+		A24B93FC2BE3B2F300E1CA57 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -185,6 +206,12 @@
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = A24B93FC2BE3B2F300E1CA57 /* Products */;
+					ProjectRef = A24B93EE2BE10F5D00E1CA57 /* bbbmobile.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* bbbmobile */,
@@ -311,7 +338,9 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */,
+				A24B93F32BE3964800E1CA57 /* RCTAudioModule.m in Sources */,
 				A1E15BA00C9442C98334C815 /* noop-file.swift in Sources */,
+				A24B93F72BE3A51D00E1CA57 /* JitsiAudioSession.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -15,12 +15,11 @@ const AudioDeviceSelectorModal = () => {
   const modalCollection = useSelector((state) => state.modal);
 
   const getAudioDevicesIOS = async () => {
+    console.log(InCallManager.getAudioRoutes())
     return InCallManager.getAudioRoutes();
   };
 
-  const setAudioDevice = async (uuid, inputName) => {
-    await InCallManager.setAudioRoute(uuid, inputName);
-  };
+  console.log(getAudioDevicesIOS());
 
   return (
     <Modal
