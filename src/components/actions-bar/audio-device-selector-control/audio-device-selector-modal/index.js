@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Modal } from 'react-native-paper';
+import { NativeModules, Platform } from 'react-native';
 import InCallManager from 'react-native-incall-manager';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
+import { setAudioDevices } from '../../../../store/redux/slices/wide-app/audio';
 import { hide } from '../../../../store/redux/slices/wide-app/modal';
 import Styled from './styles';
 
 const AudioDeviceSelectorModal = () => {
+  const { AudioModule } = NativeModules;
   const { t } = useTranslation();
   const dispatch = useDispatch();
 
@@ -15,11 +19,41 @@ const AudioDeviceSelectorModal = () => {
   const modalCollection = useSelector((state) => state.modal);
 
   const getAudioDevicesIOS = async () => {
-    console.log(InCallManager.getAudioRoutes())
-    return InCallManager.getAudioRoutes();
+    const audioDevicesIOS = await AudioModule.getAudioInputs();
+    dispatch(setAudioDevices(audioDevicesIOS));
   };
 
-  console.log(getAudioDevicesIOS());
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'ios') {
+        getAudioDevicesIOS();
+      }
+    }, [])
+  );
+
+  if (Platform.OS === 'ios') {
+    return (
+      <Modal
+        visible={modalCollection.isShow}
+        onDismiss={() => dispatch(hide())}
+      >
+        <Styled.Container>
+          <Styled.DeviceSelectorTitle>{t('mobileSdk.audio.deviceSelector.title')}</Styled.DeviceSelectorTitle>
+          <Styled.ButtonContainer>
+            {audioDevices.map((ad) => (
+              <Styled.OptionsButton
+                onPress={() => AudioModule.setAudioDevice(ad.uid)}
+                key={ad.uid}
+                selected={ad.selected}
+              >
+                {ad.name}
+              </Styled.OptionsButton>
+            ))}
+          </Styled.ButtonContainer>
+        </Styled.Container>
+      </Modal>
+    );
+  }
 
   return (
     <Modal

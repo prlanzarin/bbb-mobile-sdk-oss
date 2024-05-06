@@ -1,4 +1,4 @@
-import { Pressable, NativeModules, Button } from 'react-native';
+import { Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTranslation } from 'react-i18next';
@@ -29,14 +29,6 @@ const UserParticipantsScreen = () => {
   const { t } = useTranslation();
   const orientation = useOrientation();
   const navigation = useNavigation();
-
-  const { AudioModule } = NativeModules;
-
-  const onPress = async () => {
-    const inputs = await AudioModule.getAudioInputs();
-    console.log(inputs);
-    AudioModule.setAudioDevice("MicrophoneBuiltIn");
-  };
 
   const handleUsersName = useCallback(
     () => mainUsers.map((user) => {
@@ -176,11 +168,6 @@ const UserParticipantsScreen = () => {
     <ScreenWrapper>
       <Provider>
         <Styled.ContainerView orientation={orientation}>
-          <Button
-            title="Click to invoke your native module!"
-            color="#841584"
-            onPress={onPress}
-          />
           <Styled.Block orientation={orientation}>
             {amIModerator && !meetingIsBreakout && renderGuestPolicy()}
             <Styled.FlatList data={handleUsersName()} renderItem={renderItem} />
