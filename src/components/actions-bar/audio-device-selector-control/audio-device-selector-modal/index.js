@@ -35,7 +35,10 @@ const AudioDeviceSelectorModal = () => {
     return (
       <Modal
         visible={modalCollection.isShow}
-        onDismiss={() => dispatch(hide())}
+        onDismiss={() => {
+          dispatch(hide());
+          getAudioDevicesIOS();
+        }}
       >
         <Styled.Container>
           <Styled.DeviceSelectorTitle>{t('mobileSdk.audio.deviceSelector.title')}</Styled.DeviceSelectorTitle>
