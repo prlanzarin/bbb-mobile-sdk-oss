@@ -13,6 +13,12 @@ const InCallManagerController = () => {
 
   useEffect(() => {
     InCallManager.start({ media: 'video' });
+
+    // InCallManager cannot get DeviceChange from iOS
+    if (Platform.OS === 'ios') {
+      return;
+    }
+
     nativeEventListeners.current.push(
       DeviceEventEmitter.addListener('onAudioDeviceChanged', (event) => {
         const { availableAudioDeviceList, selectedAudioDevice } = event;
