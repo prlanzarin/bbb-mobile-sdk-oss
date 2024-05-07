@@ -64,7 +64,6 @@ const CustomDrawer = (props) => {
 
   const renderBottomDrawerItems = () => (
     <>
-      {isAndroid && (
       <DrawerItem
         label={t('mobileSdk.audio.deviceSelector.title')}
         labelStyle={Styled.TextButtonLabel}
@@ -73,7 +72,6 @@ const CustomDrawer = (props) => {
         inactiveBackgroundColor={Colors.lightGray100}
         icon={() => <Styled.DrawerIcon name="bluetooth-audio" size={24} color="#1C1B1F" />}
       />
-      )}
       {!isBreakout && meetingUrl && (
         <DrawerItem
           label={t('mobileSdk.drawer.shareButtonLabel')}
