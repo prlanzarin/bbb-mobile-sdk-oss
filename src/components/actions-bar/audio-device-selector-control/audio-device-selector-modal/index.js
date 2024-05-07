@@ -42,7 +42,11 @@ const AudioDeviceSelectorModal = () => {
           <Styled.ButtonContainer>
             {audioDevices.map((ad) => (
               <Styled.OptionsButton
-                onPress={() => AudioModule.setAudioDevice(ad.uid)}
+                onPress={() => {
+                  AudioModule.setAudioDevice(ad.uid);
+                  getAudioDevicesIOS();
+                  dispatch(hide());
+                }}
                 key={ad.uid}
                 selected={ad.selected}
               >
