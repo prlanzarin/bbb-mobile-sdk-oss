@@ -168,7 +168,8 @@ RCT_EXPORT_METHOD(setAudioDevice:(NSString *)device
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
     RCTLogInfo(@"[AudioMode] Selected device: %@", device);
-    
+    NSLog(@"[RCTAudioModule] %@", device);
+
     RTCAudioSession *session = JitsiAudioSession.rtcAudioSession;
     [session lockForConfiguration];
     BOOL success;
@@ -180,6 +181,8 @@ RCT_EXPORT_METHOD(setAudioDevice:(NSString *)device
     
     // The speaker is special, so test for it first.
     if ([device isEqualToString:kDeviceTypeSpeaker]) {
+
+        NSLog(@"[RCTAudioModule] setting Device to speaker");
         forceSpeaker = YES;
         success = [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
     } else {
@@ -204,6 +207,7 @@ RCT_EXPORT_METHOD(setAudioDevice:(NSString *)device
             // Special case for the earpiece.
             if ([port.portType isEqualToString:AVAudioSessionPortBuiltInMic]) {
                 forceEarpiece = YES;
+                NSLog(@"[RCTAudioModule] setting Device to Earpiece");
                 [self setConfigWithoutLock:earpieceConfig error:nil];
             } else if (isEarpieceOn) {
                 // Reset the config.
@@ -215,6 +219,8 @@ RCT_EXPORT_METHOD(setAudioDevice:(NSString *)device
             success = [session setPreferredInput:port error:&error];
         } else {
             success = NO;
+
+            NSLog(@"[RCTAudioModule] Error could not set audio device");
             error = RCTErrorWithMessage(@"Could not find audio device");
         }
     }
