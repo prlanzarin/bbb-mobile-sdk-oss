@@ -43,19 +43,24 @@ const AudioDeviceSelectorModal = () => {
         <Styled.Container>
           <Styled.DeviceSelectorTitle>{t('mobileSdk.audio.deviceSelector.title')}</Styled.DeviceSelectorTitle>
           <Styled.ButtonContainer>
-            {audioDevices.map((ad) => (
-              <Styled.OptionsButton
-                onPress={() => {
-                  AudioModule.setAudioDevice(ad.uid);
-                  getAudioDevicesIOS();
-                  dispatch(hide());
-                }}
-                key={ad.uid}
-                selected={ad.selected}
-              >
-                {ad.name}
-              </Styled.OptionsButton>
-            ))}
+            {audioDevices.map((ad) => {
+              if (ad.type !== 'EARPIECE') {
+                return (
+                  <Styled.OptionsButton
+                    onPress={() => {
+                      AudioModule.setAudioDevice(ad.uid);
+                      getAudioDevicesIOS();
+                      dispatch(hide());
+                    }}
+                    key={ad.uid}
+                    selected={ad.selected}
+                  >
+                    {ad.name}
+                  </Styled.OptionsButton>
+                );
+              }
+              return null;
+            })}
           </Styled.ButtonContainer>
         </Styled.Container>
       </Modal>
