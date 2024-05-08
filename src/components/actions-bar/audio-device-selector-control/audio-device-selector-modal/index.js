@@ -28,7 +28,7 @@ const AudioDeviceSelectorModal = () => {
       if (Platform.OS === 'ios') {
         getAudioDevicesIOS();
       }
-    }, [])
+    }, [modalCollection.isShow])
   );
 
   if (Platform.OS === 'ios') {
@@ -37,7 +37,6 @@ const AudioDeviceSelectorModal = () => {
         visible={modalCollection.isShow}
         onDismiss={() => {
           dispatch(hide());
-          getAudioDevicesIOS();
         }}
       >
         <Styled.Container>
@@ -49,7 +48,6 @@ const AudioDeviceSelectorModal = () => {
                   <Styled.OptionsButton
                     onPress={() => {
                       AudioModule.setAudioDevice(ad.uid);
-                      getAudioDevicesIOS();
                       dispatch(hide());
                     }}
                     key={ad.uid}
