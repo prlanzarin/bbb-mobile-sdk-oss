@@ -53,7 +53,9 @@ const AudioDeviceSelectorModal = () => {
                     key={ad.uid}
                     selected={ad.selected}
                   >
-                    {ad.name}
+                    {ad.name === 'Speaker'
+                      ? t('mobileSdk.audio.deviceSelector.speakerPhone')
+                      : ad.name}
                   </Styled.OptionsButton>
                 );
               }
