@@ -6,6 +6,7 @@ import {
   useEffect, useRef, useState
 } from 'react';
 import axios from 'axios';
+import { setAdjustPan, setAdjustResize } from 'rn-android-keyboard-adjust';
 import logger from '../../services/logger';
 
 const WhiteboardScreen = () => {
@@ -15,6 +16,9 @@ const WhiteboardScreen = () => {
   const webViewRef = useRef();
 
   useEffect(() => {
+    // don't resize screen when keyboard shows
+    setAdjustPan();
+
     const url = new URL(joinUrl);
     const getJoinUrlWithEnforceLayout = `https://${url.host}/bigbluebutton/api/getJoinUrl?sessionToken=${url.searchParams.get('sessionToken')}&enforceLayout=presentationOnly`;
 
@@ -32,6 +36,11 @@ const WhiteboardScreen = () => {
         },
       }, `Unable to get enforceLayout Join URL: ${e.message}`);
     });
+
+    return () => {
+      // restore keyboard default behaviour
+      setAdjustResize();
+    };
   }, []);
 
   useEffect(() => {
