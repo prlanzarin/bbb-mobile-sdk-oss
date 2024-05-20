@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import { selectScreenshare } from '../../store/redux/slices/screenshare';
 import {
   setDetailedInfo,
@@ -24,6 +24,8 @@ const ContentArea = (props) => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const { t } = useTranslation();
+
+  const isAndroid = Platform.OS === 'android';
 
   const handleSlideAndPresentationActive = useCallback(() => {
     // TODO Review this collection after update the 2.6 code
@@ -100,7 +102,7 @@ const ContentArea = (props) => {
 
           <Styled.FullscreenIcon onPress={handleFullscreenClick} />
 
-          <Styled.PIPIcon onPress={handleEnterPiPClick} />
+          {isAndroid && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
         </>
       )}
     </Styled.ContentAreaPressable>
