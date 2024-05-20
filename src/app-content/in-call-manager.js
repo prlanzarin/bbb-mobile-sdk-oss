@@ -7,12 +7,17 @@ import logger from '../services/logger';
 
 const InCallManagerController = () => {
   const audioIsConnected = useSelector((state) => state.audio.isConnected);
-  const audioDevices = useSelector((state) => state.audio.audioDevices);
   const dispatch = useDispatch();
   const nativeEventListeners = useRef([]);
 
   useEffect(() => {
     InCallManager.start({ media: 'video' });
+
+    // InCallManager cannot get DeviceChange from iOS
+    if (Platform.OS === 'ios') {
+      return;
+    }
+
     nativeEventListeners.current.push(
       DeviceEventEmitter.addListener('onAudioDeviceChanged', (event) => {
         const { availableAudioDeviceList, selectedAudioDevice } = event;
@@ -41,15 +46,6 @@ const InCallManagerController = () => {
         return;
       }
 
-      // Priority: "BLUETOOTH" -> "WIRED_HEADSET" -> "SPEAKER_PHONE" -> "EARPIECE"
-      if (audioDevices.includes('BLUETOOTH')) {
-        InCallManager.chooseAudioRoute('BLUETOOTH');
-        return;
-      }
-      if (audioDevices.includes('WIRED_HEADSET')) {
-        InCallManager.chooseAudioRoute('WIRED_HEADSET');
-        return;
-      }
       InCallManager.chooseAudioRoute('SPEAKER_PHONE');
     }
   }, [audioIsConnected]);

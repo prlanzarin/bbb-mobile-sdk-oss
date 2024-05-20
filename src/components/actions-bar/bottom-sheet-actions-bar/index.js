@@ -1,7 +1,7 @@
 import React, {
   useCallback, useEffect, useMemo, useRef
 } from 'react';
-import { View, Platform } from 'react-native';
+import { View } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useRoute } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,12 +26,11 @@ const BottomSheetActionsBar = ({ alwaysOpen }) => {
   const isModalShow = useSelector((state) => state.modal.isShow);
 
   const isFullscreen = route.name === 'FullscreenWrapperScreen';
-  const isAndroid = Platform.OS === 'android';
   const { showDebugToggle, showNotImplementedFeatures } = Settings;
 
   // variables
   const handleSizeOfActionsBar = () => {
-    const variables = [showDebugToggle, showNotImplementedFeatures, isAndroid];
+    const variables = [showDebugToggle, showNotImplementedFeatures, true];
     return variables.reduce((base, item) => base + (item ? 85 : 0), 110);
   };
 
@@ -88,7 +87,7 @@ const BottomSheetActionsBar = ({ alwaysOpen }) => {
         <ActionsBar />
         <BottomSheetScrollView>
           <Styled.ControlsContainer>
-            {isAndroid && <DeviceSelectorControl />}
+            <DeviceSelectorControl />
             <DebugControl />
             <Screenshare />
           </Styled.ControlsContainer>
