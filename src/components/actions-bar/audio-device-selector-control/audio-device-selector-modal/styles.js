@@ -47,9 +47,17 @@ const Container = styled.View`
   border-radius: 12px;
 `;
 
+const MissingPermission = styled.Text`
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  color: ${Colors.orange}
+`;
+
 export default {
   OptionsButton,
   ButtonContainer,
   DeviceSelectorTitle,
-  Container
+  Container,
+  MissingPermission
 };

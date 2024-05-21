@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { Modal } from 'react-native-paper';
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules, Platform, PermissionsAndroid } from 'react-native';
 import InCallManager from 'react-native-incall-manager';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,6 +17,17 @@ const AudioDeviceSelectorModal = () => {
   const audioDevices = useSelector((state) => state.audio.audioDevices);
   const selectedAudioDevice = useSelector((state) => state.audio.selectedAudioDevice);
   const modalCollection = useSelector((state) => state.modal);
+
+  const ANDROID_SDK_MIN_BTCONNECT = 31;
+
+  const checkBTPermissionAndroid = async () => {
+    if (Platform.OS === 'android' && Platform.Version >= ANDROID_SDK_MIN_BTCONNECT) {
+      const checkStatus = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
+      );
+      return checkStatus;
+    }
+  };
 
   const getAudioDevicesIOS = async () => {
     const audioDevicesIOS = await AudioModule.getAudioInputs();
@@ -91,6 +102,7 @@ const AudioDeviceSelectorModal = () => {
             {t('mobileSdk.audio.deviceSelector.wiredHeadset')}
           </Styled.OptionsButton>
           )}
+          {!checkBTPermissionAndroid && <Styled.MissingPermission>{t('mobileSdk.audio.deviceSelector.btPermissionOff')}</Styled.MissingPermission>}
         </Styled.ButtonContainer>
       </Styled.Container>
 

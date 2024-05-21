@@ -239,5 +239,6 @@
   "mobileSdk.transfer.title": "Você está sendo direcionado para a sala de transfer",
   "mobileSdk.transfer.subtitle": "A sessão que você está tentando acessar está lotada.",
   "mobileSdk.transfer.subtitle2": "O moderador definiu que novos participantes devem ser direcionados a sala de transfer.",
-  "mobileSdk.transfer.button.title": "Entrar"
+  "mobileSdk.transfer.button.title": "Entrar",
+  "mobileSdk.audio.deviceSelector.btPermissionOff": "Você não permitiu o uso do bluetooth nesse aplicativo"
 }
