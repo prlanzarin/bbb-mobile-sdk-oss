@@ -62,7 +62,7 @@
     "react-native-callkeep": "4.3.7",
     "react-native-gesture-handler": "~2.9.0",
     "react-native-htmlview": "^0.17.0",
-    "react-native-incall-manager": "git+https://github.com/frankemax/react-native-incall-manager.git#team-around-master",
+    "react-native-incall-manager": "git+https://github.com/frankemax/react-native-incall-manager.git#v0.1.0",
     "react-native-orientation-locker": "github:pawlitos/react-native-orientation-locker",
     "react-native-paper": "5.0.0-rc.3",
     "react-native-reanimated": "~2.14.4",
