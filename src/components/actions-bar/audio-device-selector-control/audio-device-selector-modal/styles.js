@@ -47,9 +47,37 @@ const Container = styled.View`
   border-radius: 12px;
 `;
 
+const MissingPermission = styled.Text`
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  color: ${Colors.orange}
+`;
+
+const SettingsButton = ({
+  onPress, children
+}) => {
+  return (
+    <ButtonCreate
+      mode="contained"
+      onPress={onPress}
+      buttonColor={Colors.orange}
+      textColor={Colors.white}
+      labelStyle={{
+        fontSize: 18,
+        fontWeight: 500,
+      }}
+    >
+      {children}
+    </ButtonCreate>
+  );
+};
+
 export default {
   OptionsButton,
   ButtonContainer,
   DeviceSelectorTitle,
-  Container
+  Container,
+  MissingPermission,
+  SettingsButton
 };

@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Modal } from 'react-native-paper';
-import { NativeModules, Platform } from 'react-native';
+import * as Linking from 'expo-linking';
+import { NativeModules, Platform, PermissionsAndroid } from 'react-native';
 import InCallManager from 'react-native-incall-manager';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,16 +18,55 @@ const AudioDeviceSelectorModal = () => {
   const audioDevices = useSelector((state) => state.audio.audioDevices);
   const selectedAudioDevice = useSelector((state) => state.audio.selectedAudioDevice);
   const modalCollection = useSelector((state) => state.modal);
+  const [androidBTPerm, setAndroidBTPerm] = useState(null);
+
+  const ANDROID_SDK_MIN_BTCONNECT = 31;
 
   const getAudioDevicesIOS = async () => {
     const audioDevicesIOS = await AudioModule.getAudioInputs();
     dispatch(setAudioDevices(audioDevicesIOS));
   };
 
+  const checkBTPermissionAndroid = async () => {
+    if (Platform.Version >= ANDROID_SDK_MIN_BTCONNECT) {
+      const checkStatus = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
+      );
+      setAndroidBTPerm(checkStatus);
+    }
+  };
+
+  const missingPermissionView = () => {
+    if (Platform.OS !== 'android') {
+      return null;
+    }
+
+    if (androidBTPerm === false) {
+      return (
+        <>
+          <Styled.MissingPermission>{t('mobileSdk.audio.deviceSelector.btPermissionOff')}</Styled.MissingPermission>
+          <Styled.SettingsButton
+            onPress={() => {
+              Linking.openSettings();
+              dispatch(hide());
+            }}
+          >
+            {t('app.settings.main.label')}
+          </Styled.SettingsButton>
+        </>
+      );
+    }
+    return null;
+  };
+
   useFocusEffect(
     useCallback(() => {
       if (Platform.OS === 'ios') {
         getAudioDevicesIOS();
+        return;
+      }
+      if (Platform.OS === 'android') {
+        checkBTPermissionAndroid();
       }
     }, [modalCollection.isShow])
   );
@@ -75,25 +115,49 @@ const AudioDeviceSelectorModal = () => {
       <Styled.Container>
         <Styled.DeviceSelectorTitle>{t('mobileSdk.audio.deviceSelector.title')}</Styled.DeviceSelectorTitle>
         <Styled.ButtonContainer>
-          <Styled.OptionsButton onPress={() => InCallManager.chooseAudioRoute('EARPIECE')} selected={selectedAudioDevice === 'EARPIECE'}>
+          <Styled.OptionsButton
+            onPress={() => {
+              InCallManager.chooseAudioRoute('EARPIECE');
+              dispatch(hide());
+            }}
+            selected={selectedAudioDevice === 'EARPIECE'}
+          >
             {t('mobileSdk.audio.deviceSelector.earpiece')}
           </Styled.OptionsButton>
-          <Styled.OptionsButton onPress={() => InCallManager.chooseAudioRoute('SPEAKER_PHONE')} selected={selectedAudioDevice === 'SPEAKER_PHONE'}>
+          <Styled.OptionsButton
+            onPress={() => {
+              InCallManager.chooseAudioRoute('SPEAKER_PHONE');
+              dispatch(hide());
+            }}
+            selected={selectedAudioDevice === 'SPEAKER_PHONE'}
+          >
             {t('mobileSdk.audio.deviceSelector.speakerPhone')}
           </Styled.OptionsButton>
           {audioDevices.includes('BLUETOOTH') && (
-          <Styled.OptionsButton onPress={() => InCallManager.chooseAudioRoute('BLUETOOTH')} selected={selectedAudioDevice === 'BLUETOOTH'}>
+          <Styled.OptionsButton
+            onPress={() => {
+              InCallManager.chooseAudioRoute('BLUETOOTH');
+              dispatch(hide());
+            }}
+            selected={selectedAudioDevice === 'BLUETOOTH'}
+          >
             {t('mobileSdk.audio.deviceSelector.bluetooth')}
           </Styled.OptionsButton>
           )}
           {audioDevices.includes('WIRED_HEADSET') && (
-          <Styled.OptionsButton onPress={() => InCallManager.chooseAudioRoute('WIRED_HEADSET')} selected={selectedAudioDevice === 'WIRED_HEADSET'}>
+          <Styled.OptionsButton
+            onPress={() => {
+              InCallManager.chooseAudioRoute('WIRED_HEADSET');
+              dispatch(hide());
+            }}
+            selected={selectedAudioDevice === 'WIRED_HEADSET'}
+          >
             {t('mobileSdk.audio.deviceSelector.wiredHeadset')}
           </Styled.OptionsButton>
           )}
+          {missingPermissionView()}
         </Styled.ButtonContainer>
       </Styled.Container>
-
     </Modal>
   );
 };
