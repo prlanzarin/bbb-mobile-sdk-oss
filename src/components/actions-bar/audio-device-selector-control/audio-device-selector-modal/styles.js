@@ -54,10 +54,30 @@ const MissingPermission = styled.Text`
   color: ${Colors.orange}
 `;
 
+const SettingsButton = ({
+  onPress, children
+}) => {
+  return (
+    <ButtonCreate
+      mode="contained"
+      onPress={onPress}
+      buttonColor={Colors.orange}
+      textColor={Colors.white}
+      labelStyle={{
+        fontSize: 18,
+        fontWeight: 500,
+      }}
+    >
+      {children}
+    </ButtonCreate>
+  );
+};
+
 export default {
   OptionsButton,
   ButtonContainer,
   DeviceSelectorTitle,
   Container,
-  MissingPermission
+  MissingPermission,
+  SettingsButton
 };
