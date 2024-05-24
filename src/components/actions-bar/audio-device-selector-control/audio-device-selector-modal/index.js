@@ -19,6 +19,7 @@ const AudioDeviceSelectorModal = () => {
   const selectedAudioDevice = useSelector((state) => state.audio.selectedAudioDevice);
   const modalCollection = useSelector((state) => state.modal);
   const [androidBTPerm, setAndroidBTPerm] = useState(null);
+  const [androidRefreshedDevices, setAndroidRefreshedDevices] = useState(false);
 
   const ANDROID_SDK_MIN_BTCONNECT = 31;
 
@@ -34,6 +35,11 @@ const AudioDeviceSelectorModal = () => {
       );
       setAndroidBTPerm(checkStatus);
     }
+  };
+
+  const refreshDevicesAndroid = () => {
+    InCallManager.stop({ media: 'video' });
+    InCallManager.start({ media: 'video' });
   };
 
   const missingPermissionView = () => {
@@ -114,7 +120,15 @@ const AudioDeviceSelectorModal = () => {
     >
       <Styled.Container>
         <Styled.DeviceSelectorTitle>{t('mobileSdk.audio.deviceSelector.title')}</Styled.DeviceSelectorTitle>
-        <Styled.ButtonContainer>
+        <Styled.RefreshDevicesButton
+          loading={androidRefreshedDevices}
+          onPress={() => {
+            setAndroidRefreshedDevices(true);
+            setTimeout(() => setAndroidRefreshedDevices(false), 5000);
+            refreshDevicesAndroid();
+          }}
+        />
+        <Styled.ButtonContainer loading={androidRefreshedDevices}>
           <Styled.OptionsButton
             onPress={() => {
               InCallManager.chooseAudioRoute('EARPIECE');
