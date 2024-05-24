@@ -11,8 +11,6 @@ const InCallManagerController = () => {
   const nativeEventListeners = useRef([]);
 
   useEffect(() => {
-    InCallManager.start({ media: 'video' });
-
     // InCallManager cannot get DeviceChange from iOS
     if (Platform.OS === 'ios') {
       return;
@@ -35,19 +33,15 @@ const InCallManagerController = () => {
 
     return () => {
       nativeEventListeners.current.forEach((eventListener) => eventListener.remove());
-      InCallManager.stop({ media: 'video' });
     };
   }, []);
 
   useEffect(() => {
     if (audioIsConnected) {
-      // Avaiable only in android
-      if (Platform.OS !== 'android') {
-        return;
-      }
-
-      InCallManager.chooseAudioRoute('SPEAKER_PHONE');
+      InCallManager.start({ media: 'video' });
+      return;
     }
+    InCallManager.stop({ media: 'video' });
   }, [audioIsConnected]);
 
   return null;
