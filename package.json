@@ -75,6 +75,7 @@
     "react-native-webview": "11.26.0",
     "react-redux": "^8.0.2",
     "reconnecting-websocket": "^4.4.0",
+    "rn-android-keyboard-adjust": "^2.1.2",
     "styled-components": "^5.3.5",
     "url": "^0.11.0",
     "util": "^0.12.4"
