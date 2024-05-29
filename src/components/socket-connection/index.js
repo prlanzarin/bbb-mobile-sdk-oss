@@ -115,13 +115,13 @@ const reAuthenticateUser = (ws) => {
 };
 
 const sendValidationMsg = (ws, meetingData) => {
-  const { meetingID, internalUserID, authToken } = meetingData;
+  const { meetingID, internalUserID, authToken, sessionToken } = meetingData;
   const validateReqId = getRandomAlphanumeric(32);
   const msg = {
     msg: 'method',
     method: 'validateAuthToken',
     id: validateReqId,
-    params: [meetingID, internalUserID, authToken],
+    params: [meetingID, internalUserID, authToken, null, sessionToken],
   };
 
   sendMessage(ws, msg);
