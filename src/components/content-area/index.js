@@ -102,7 +102,7 @@ const ContentArea = (props) => {
 
           <Styled.FullscreenIcon onPress={handleFullscreenClick} />
 
-          {isAndroid && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
+          {isAndroid && false && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
         </>
       )}
     </Styled.ContentAreaPressable>
