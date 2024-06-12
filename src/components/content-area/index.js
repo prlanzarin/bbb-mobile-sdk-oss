@@ -50,7 +50,7 @@ const ContentArea = (props) => {
 
   const handleFullscreenClick = () => {
     dispatch(setIsFocused(true));
-    dispatch(setFocusedId(handleSlideAndPresentationActive()));
+    dispatch(setFocusedId(screenshare ? 'screenshare' : 'whiteboard'));
     dispatch(setFocusedElement('contentArea'));
     navigation.navigate('FullscreenWrapperScreen');
   };
