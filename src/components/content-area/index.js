@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { NativeModules, Platform } from 'react-native';
 import { selectScreenshare } from '../../store/redux/slices/screenshare';
+import WhiteboardScreen from '../../screens/whiteboard-screen';
 import {
   setDetailedInfo,
   setFocusedElement,
@@ -80,7 +81,7 @@ const ContentArea = (props) => {
   if (fullscreen) {
     return (
       <>
-        {!screenshare && presentationView()}
+        {!screenshare && <WhiteboardScreen />}
         {screenshare && screenshareView()}
       </>
     );
@@ -100,7 +101,10 @@ const ContentArea = (props) => {
             </Styled.NameLabel>
           </Styled.NameLabelContainer>
 
-          <Styled.FullscreenIcon onPress={handleFullscreenClick} />
+          <Styled.FullscreenIcon
+            isScreensharing={screenshare}
+            onPress={handleFullscreenClick}
+          />
 
           {isAndroid && false && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
         </>
