@@ -9,6 +9,7 @@ const DEVICE_HEIGHT = parseInt(Dimensions.get('window').height, 10);
 
 const GridView = () => {
   const videoUsers = useSelector(selectSortedVideoUsers);
+  const isPresentationOpen = useSelector((state) => state.layout.isPresentationOpen);
   const [numOfColumns, setNumOfColumns] = useState(1);
 
   useFocusEffect(
@@ -35,6 +36,7 @@ const GridView = () => {
       <Styled.Item
         usersCount={videoUsers.length}
         dimensionHeight={DEVICE_HEIGHT - 90}
+        isPresentationOpen={isPresentationOpen}
       >
         <Styled.VideoListItem
           cameraId={cameraId}
@@ -56,8 +58,8 @@ const GridView = () => {
   return (
     <>
       <Styled.ContainerViewItem
+        isPresentationOpen={isPresentationOpen}
         dimensionHeight={DEVICE_HEIGHT - 90}
-        usersCount={videoUsers.length}
       >
         <Styled.ContentArea />
       </Styled.ContainerViewItem>
@@ -70,9 +72,7 @@ const GridView = () => {
         key={numOfColumns}
         disableIntervalMomentum
       />
-
     </>
-
   );
 };
 

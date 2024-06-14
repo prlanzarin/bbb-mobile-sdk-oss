@@ -10,7 +10,8 @@ import {
   setFocusedElement,
   setFocusedId,
   setIsFocused,
-  setIsPiPEnabled
+  setIsPiPEnabled,
+  setIsPresentationOpen
 } from '../../store/redux/slices/wide-app/layout';
 import Styled from './styles';
 
@@ -53,6 +54,10 @@ const ContentArea = (props) => {
     dispatch(setFocusedId(screenshare ? 'screenshare' : 'whiteboard'));
     dispatch(setFocusedElement('contentArea'));
     navigation.navigate('FullscreenWrapperScreen');
+  };
+
+  const handleMinimizeClick = () => {
+    dispatch(setIsPresentationOpen(false));
   };
 
   const handleEnterPiPClick = () => {
@@ -104,6 +109,9 @@ const ContentArea = (props) => {
           <Styled.FullscreenIcon
             isScreensharing={screenshare}
             onPress={handleFullscreenClick}
+          />
+          <Styled.MinimizeIcon
+            onPress={handleMinimizeClick}
           />
 
           {isAndroid && false && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
