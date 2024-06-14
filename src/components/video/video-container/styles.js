@@ -1,7 +1,7 @@
 import styled from 'styled-components/native';
 import { css } from 'styled-components';
 import { RTCView } from 'react-native-webrtc';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { View } from 'react-native';
 import IconButtonComponent from '../../icon-button';
 import Colors from '../../../constants/colors';
@@ -131,7 +131,7 @@ const IconContainer = styled.View`
 
 const HandRaisedIcon = () => (
   <IconContainer>
-    <Ionicons name="md-hand-right-sharp" size={20} color={Colors.blue} />
+    <MaterialIcons name="back-hand" size={20} color={Colors.blue} />
   </IconContainer>
 );
 
