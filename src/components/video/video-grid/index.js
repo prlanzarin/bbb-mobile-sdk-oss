@@ -9,19 +9,12 @@ const DEVICE_HEIGHT = parseInt(Dimensions.get('window').height, 10);
 
 const GridView = () => {
   const videoUsers = useSelector(selectSortedVideoUsers);
-
-  const contentAreaUserItem = {
-    cameraId: 'ContentArea',
-    contentArea: true,
-  };
-
-  const mescleGridItems = [contentAreaUserItem, ...videoUsers];
   const [numOfColumns, setNumOfColumns] = useState(1);
 
   useFocusEffect(
     useCallback(() => {
-      setNumOfColumns(mescleGridItems.length > 2 ? 2 : 1);
-    }, [mescleGridItems])
+      setNumOfColumns(videoUsers.length > 2 ? 2 : 1);
+    }, [videoUsers])
   );
 
   const renderItem = (videoUser) => {
@@ -35,20 +28,14 @@ const GridView = () => {
       local,
       visible,
       userRole,
-      contentArea,
       userEmoji,
     } = vuItem;
 
-    if (contentArea) {
-      return (
-        <Styled.Item usersCount={mescleGridItems.length} dimensionHeight={DEVICE_HEIGHT}>
-          <Styled.ContentArea />
-        </Styled.Item>
-      );
-    }
-
     return (
-      <Styled.Item usersCount={mescleGridItems.length} dimensionHeight={DEVICE_HEIGHT}>
+      <Styled.Item
+        usersCount={videoUsers.length}
+        dimensionHeight={DEVICE_HEIGHT - 90}
+      >
         <Styled.VideoListItem
           cameraId={cameraId}
           userId={userId}
@@ -58,7 +45,7 @@ const GridView = () => {
           local={local}
           visible={visible}
           isGrid
-          usersCount={mescleGridItems.length}
+          usersCount={videoUsers.length}
           userRole={userRole}
           userEmoji={userEmoji}
         />
@@ -67,15 +54,25 @@ const GridView = () => {
   };
 
   return (
-    <FlatList
-      data={mescleGridItems}
-      style={Styled.styles.container}
-      renderItem={renderItem}
-      numColumns={numOfColumns}
-      initialNumToRender={2}
-      key={numOfColumns}
-      disableIntervalMomentum
-    />
+    <>
+      <Styled.ContainerViewItem
+        dimensionHeight={DEVICE_HEIGHT - 90}
+        usersCount={videoUsers.length}
+      >
+        <Styled.ContentArea />
+      </Styled.ContainerViewItem>
+      <FlatList
+        data={videoUsers}
+        style={Styled.styles.container}
+        renderItem={renderItem}
+        numColumns={numOfColumns}
+        initialNumToRender={2}
+        key={numOfColumns}
+        disableIntervalMomentum
+      />
+
+    </>
+
   );
 };
 
