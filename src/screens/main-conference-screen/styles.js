@@ -24,24 +24,46 @@ const ContentAreaGrid = styled(contentArea)`
 `;
 
 // skeleton loading
-const GridItemSkeletonLoading = () => (
+const GridItemSkeletonLoading = ({ DEVICE_HEIGHT, DEVICE_WIDTH }) => (
   <ContainerView>
     <ContentLoader
       speed={1}
       width="100%"
       height="100%"
-      viewBox="0 0 310 510"
+      viewBox={`0 0 ${DEVICE_WIDTH} ${DEVICE_HEIGHT}`}
       backgroundColor={Colors.contentLetterboxColor}
       foregroundColor={Colors.contentForegroundColor}
     >
-      <Rect x="0" y="0" rx="0" ry="0" width="150" height="120" />
-      <Rect x="160" y="0" rx="0" ry="0" width="150" height="120" />
-      <Rect x="0" y="130" rx="0" ry="0" width="150" height="120" />
-      <Rect x="160" y="130" rx="0" ry="0" width="150" height="120" />
-      <Rect x="0" y="260" rx="0" ry="0" width="150" height="120" />
-      <Rect x="160" y="260" rx="0" ry="0" width="150" height="120" />
-      <Rect x="0" y="390" rx="0" ry="0" width="150" height="120" />
-      <Rect x="160" y="390" rx="0" ry="0" width="150" height="120" />
+      <Rect
+        x="5"
+        y="0"
+        width={DEVICE_WIDTH - 10}
+        height={parseInt((DEVICE_HEIGHT / 3), 10)}
+      />
+      <Rect
+        x="5"
+        y={parseInt(DEVICE_HEIGHT / 3 + 5, 10)}
+        width={parseInt((DEVICE_WIDTH / 2) - 5, 10)}
+        height={parseInt((DEVICE_HEIGHT / 3) - 5, 10)}
+      />
+      <Rect
+        x={parseInt(DEVICE_WIDTH / 2 + 5, 10)}
+        y={parseInt(DEVICE_HEIGHT / 3 + 5, 10)}
+        width={parseInt((DEVICE_WIDTH / 2) - 10, 10)}
+        height={parseInt((DEVICE_HEIGHT / 3) - 5, 10)}
+      />
+      <Rect
+        x="5"
+        y={parseInt((DEVICE_HEIGHT * 2) / 3 + 5, 10)}
+        width={parseInt((DEVICE_WIDTH / 2) - 5, 10)}
+        height={parseInt((DEVICE_HEIGHT / 3) - 5, 10)}
+      />
+      <Rect
+        x={parseInt(DEVICE_WIDTH / 2 + 5, 10)}
+        y={parseInt((DEVICE_HEIGHT * 2) / 3 + 5, 10)}
+        width={parseInt((DEVICE_WIDTH / 2) - 10, 10)}
+        height={parseInt((DEVICE_HEIGHT / 3) - 5, 10)}
+      />
     </ContentLoader>
   </ContainerView>
 );

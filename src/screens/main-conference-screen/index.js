@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { Platform } from 'react-native';
+import { Platform, Dimensions } from 'react-native';
 import ScreenWrapper from '../../components/screen-wrapper';
 import VideoGrid from '../../components/video/video-grid';
 import MiniAudioPlayerIcon from '../../components/audio-player/mini-audio-player-icon';
@@ -10,6 +10,9 @@ import useAppState from '../../hooks/use-app-state';
 import PiPView from './pip-view';
 import Styled from './styles';
 import { setIsPiPEnabled } from '../../store/redux/slices/wide-app/layout';
+
+const DEVICE_HEIGHT = parseInt(Dimensions.get('window').height, 10);
+const DEVICE_WIDTH = parseInt(Dimensions.get('window').width, 10);
 
 const MainConferenceScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -62,7 +65,10 @@ const MainConferenceScreen = () => {
 
   if (isLoading) {
     return (
-      <Styled.GridItemSkeletonLoading />
+      <Styled.GridItemSkeletonLoading
+        DEVICE_HEIGHT={DEVICE_HEIGHT - 60}
+        DEVICE_WIDTH={DEVICE_WIDTH}
+      />
     );
   }
 
