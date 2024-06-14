@@ -27,7 +27,7 @@ const ContentAreaGrid = styled(contentArea)`
 const GridItemSkeletonLoading = ({ DEVICE_HEIGHT, DEVICE_WIDTH }) => (
   <ContainerView>
     <ContentLoader
-      speed={1}
+      speed={0.5}
       width="100%"
       height="100%"
       viewBox={`0 0 ${DEVICE_WIDTH} ${DEVICE_HEIGHT}`}
@@ -36,33 +36,55 @@ const GridItemSkeletonLoading = ({ DEVICE_HEIGHT, DEVICE_WIDTH }) => (
     >
       <Rect
         x="5"
-        y="0"
+        y="5"
+        rx="12"
+        width={parseInt((DEVICE_WIDTH / 3) - 5, 10)}
+        height="20"
+      />
+      <Rect
+        x={parseInt((DEVICE_WIDTH / 3 + 5), 10)}
+        y="5"
+        rx="12"
+        width={parseInt((DEVICE_WIDTH / 3) - 5, 10)}
+        height="20"
+      />
+      <Rect
+        x={parseInt(((DEVICE_WIDTH * 2) / 3 + 5), 10)}
+        y="5"
+        rx="12"
+        width={parseInt((DEVICE_WIDTH / 3) - 10, 10)}
+        height="20"
+      />
+
+      <Rect
+        x="5"
+        y="30"
         width={DEVICE_WIDTH - 10}
         height={parseInt((DEVICE_HEIGHT / 3), 10)}
       />
       <Rect
         x="5"
-        y={parseInt(DEVICE_HEIGHT / 3 + 5, 10)}
+        y={parseInt(DEVICE_HEIGHT / 3 + 5 + 30, 10)}
         width={parseInt((DEVICE_WIDTH / 2) - 5, 10)}
         height={parseInt((DEVICE_HEIGHT / 3) - 5, 10)}
       />
       <Rect
         x={parseInt(DEVICE_WIDTH / 2 + 5, 10)}
-        y={parseInt(DEVICE_HEIGHT / 3 + 5, 10)}
+        y={parseInt(DEVICE_HEIGHT / 3 + 5 + 30, 10)}
         width={parseInt((DEVICE_WIDTH / 2) - 10, 10)}
         height={parseInt((DEVICE_HEIGHT / 3) - 5, 10)}
       />
       <Rect
         x="5"
-        y={parseInt((DEVICE_HEIGHT * 2) / 3 + 5, 10)}
+        y={parseInt((DEVICE_HEIGHT * 2) / 3 + 5 + 30, 10)}
         width={parseInt((DEVICE_WIDTH / 2) - 5, 10)}
         height={parseInt((DEVICE_HEIGHT / 3) - 5, 10)}
       />
       <Rect
         x={parseInt(DEVICE_WIDTH / 2 + 5, 10)}
-        y={parseInt((DEVICE_HEIGHT * 2) / 3 + 5, 10)}
+        y={parseInt((DEVICE_HEIGHT * 2) / 3 + 5 + 30, 10)}
         width={parseInt((DEVICE_WIDTH / 2) - 10, 10)}
-        height={parseInt((DEVICE_HEIGHT / 3) - 5, 10)}
+        height={parseInt((DEVICE_HEIGHT / 3) - 5 - 30, 10)}
       />
     </ContentLoader>
   </ContainerView>
