@@ -36,13 +36,11 @@ const MicIcon = () => (
 );
 
 const IconContainerPresentation = styled(TouchableRipple)`
-  background-color: #28282d99;
   margin: 5px;
   padding: 6px;
-  border-radius: 4px;
+  border-radius: 16px;
   position: absolute;
-  right: 0px;
-  top: 0px;
+  right: 4px;
   background-color: ${Colors.orange}
   z-index: 2;
 `;

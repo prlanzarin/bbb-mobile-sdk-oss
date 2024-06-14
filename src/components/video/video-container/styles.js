@@ -100,15 +100,6 @@ const PressableButton = styled(Pressable).attrs(() => ({
   `}
 `;
 
-const TalkingIndicatorContainer = styled.View`
-    background-color: #28282d99;
-    margin: 5px;
-    border-radius: 20px;
-    position: absolute;
-    padding: 4px;
-    left: 0;
-`;
-
 const FullscreenIcon = styled(IconButtonComponent)`
   padding: 0;
   margin: 0;
@@ -135,10 +126,6 @@ const HandRaisedIcon = () => (
   </IconContainer>
 );
 
-const TalkingIndicatorIcon = () => (
-  <Feather name="activity" size={24} color="white" />
-);
-
 export default {
   ContainerPressable,
   UserAvatar,
@@ -150,7 +137,5 @@ export default {
   VideoSkeleton,
   ContainerPressableGrid,
   FullscreenIcon,
-  HandRaisedIcon,
-  TalkingIndicatorContainer,
-  TalkingIndicatorIcon,
+  HandRaisedIcon
 };

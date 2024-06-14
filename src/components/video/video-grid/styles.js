@@ -1,9 +1,7 @@
 import styled from 'styled-components/native';
 import { StyleSheet } from 'react-native';
-import { IconButton } from 'react-native-paper';
 import VideoContainer from '../video-container';
 import contentArea from '../../content-area';
-import Colors from '../../../constants/colors';
 
 const VideoListItem = styled(VideoContainer)`
   width: 100%;
@@ -132,29 +130,10 @@ const ContainerViewItem = styled.View`
   `}
 `;
 
-const RestorePresentationIconButton = ({
-  onPress
-}) => {
-  return (
-    <IconButton
-      style={{
-        position: 'absolute', right: 12, top: 12, margin: 0
-      }}
-      icon="presentation"
-      mode="contained"
-      iconColor={Colors.white}
-      containerColor={Colors.orange}
-      size={14}
-      onPress={onPress}
-    />
-  );
-};
-
 export default {
   VideoListItem,
   ContentArea,
   styles,
   Item,
-  ContainerViewItem,
-  RestorePresentationIconButton
+  ContainerViewItem
 };
