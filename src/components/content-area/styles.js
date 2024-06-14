@@ -50,6 +50,15 @@ const IconContainerFullscreen = styled(TouchableRipple)`
   padding: 8px;
   border-radius: 4px;
   position: absolute;
+  right: 35px;
+`;
+
+const IconContainerMinimize = styled(TouchableRipple)`
+  background-color: #28282d99;
+  margin: 5px;
+  padding: 8px;
+  border-radius: 4px;
+  position: absolute;
   right: 0px;
 `;
 
@@ -59,13 +68,19 @@ const IconContainerPiP = styled(TouchableRipple)`
   padding: 8px;
   border-radius: 4px;
   position: absolute;
-  right: 35px;
+  right: 70px;
 `;
 
 const FullscreenIcon = ({ onPress, isScreensharing }) => (
   <IconContainerFullscreen onPress={onPress}>
     <MaterialIcons name={isScreensharing ? 'fullscreen' : 'draw'} size={16} color="#FFFFFF" />
   </IconContainerFullscreen>
+);
+
+const MinimizeIcon = ({ onPress }) => (
+  <IconContainerMinimize onPress={onPress}>
+    <MaterialIcons name="close" size={16} color="#FFFFFF" />
+  </IconContainerMinimize>
 );
 
 const PIPIcon = ({ onPress }) => (
@@ -82,5 +97,6 @@ export default {
   NameLabelContainer,
   PressableButton,
   FullscreenIcon,
-  PIPIcon
+  PIPIcon,
+  MinimizeIcon
 };

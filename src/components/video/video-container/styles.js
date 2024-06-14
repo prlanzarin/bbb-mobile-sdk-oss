@@ -1,7 +1,7 @@
 import styled from 'styled-components/native';
 import { css } from 'styled-components';
 import { RTCView } from 'react-native-webrtc';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { View } from 'react-native';
 import IconButtonComponent from '../../icon-button';
 import Colors from '../../../constants/colors';
@@ -100,15 +100,6 @@ const PressableButton = styled(Pressable).attrs(() => ({
   `}
 `;
 
-const TalkingIndicatorContainer = styled.View`
-    background-color: #28282d99;
-    margin: 5px;
-    border-radius: 20px;
-    position: absolute;
-    padding: 4px;
-    left: 0;
-`;
-
 const FullscreenIcon = styled(IconButtonComponent)`
   padding: 0;
   margin: 0;
@@ -131,12 +122,8 @@ const IconContainer = styled.View`
 
 const HandRaisedIcon = () => (
   <IconContainer>
-    <Ionicons name="md-hand-right-sharp" size={20} color={Colors.blue} />
+    <MaterialIcons name="back-hand" size={20} color={Colors.blue} />
   </IconContainer>
-);
-
-const TalkingIndicatorIcon = () => (
-  <Feather name="activity" size={24} color="white" />
 );
 
 export default {
@@ -150,7 +137,5 @@ export default {
   VideoSkeleton,
   ContainerPressableGrid,
   FullscreenIcon,
-  HandRaisedIcon,
-  TalkingIndicatorContainer,
-  TalkingIndicatorIcon,
+  HandRaisedIcon
 };

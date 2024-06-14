@@ -18,46 +18,92 @@ const Item = styled.View`
   justify-content: center;
   width: 100%;
   height: 100%;
-  ${({ dimensionHeight }) => dimensionHeight
+
+  ${({ dimensionHeight, isPresentationOpen }) => dimensionHeight // 1 user
+  && isPresentationOpen
   && `
-    height: ${parseInt(dimensionHeight / 2.3, 10)}px;
+    height: ${parseInt((dimensionHeight * 2) / 3, 10)}px;
+  `}
+
+  ${({ dimensionHeight, usersCount, isPresentationOpen }) => dimensionHeight // 2 user
+  && isPresentationOpen
+  && usersCount === 2
+  && `
+    height: ${parseInt((dimensionHeight) / 3, 10)}px;
   `}
 
 
-  ${({ usersCount, dimensionHeight }) => usersCount % 2 === 0 && usersCount > 2
+  ${({ usersCount, dimensionHeight, isPresentationOpen }) => usersCount % 2 === 0
+  && isPresentationOpen
+  && usersCount > 2
   && `
       width: 50%;
-      height: ${parseInt(
-    dimensionHeight
-      / ((usersCount > 2 && usersCount < 5)
-        ? 2.3
-        : (usersCount > 4 && usersCount < 7)
-          ? 3.4
-          : (usersCount > 6)
-            ? 4.5
-            : 0.00),
-    10
-  )}px;
+      height: ${parseInt((dimensionHeight) / 3, 10)}px;
   `}
 
-  ${({ usersCount, dimensionHeight }) => usersCount % 2 === 1 && usersCount > 2
+  ${({ usersCount, dimensionHeight, isPresentationOpen }) => usersCount % 2 === 1
+  && isPresentationOpen
+  && usersCount > 2
   && `
       width: 50%;
       flex-grow: 1;
       flex-shrink: 1;
       flex-basis: 0;
-      height: ${parseInt(
-    dimensionHeight
-    / ((usersCount > 2 && usersCount < 5)
-      ? 2.3
-      : (usersCount > 4 && usersCount < 7)
-        ? 3.4
-        : (usersCount > 6)
-          ? 4.5
-          : 0.00),
-    10
-  )}px;
+      height: ${parseInt((dimensionHeight) / 3, 10)}px;
   `}
+
+  ${({ dimensionHeight, isPresentationOpen }) => dimensionHeight // 1 user
+  && !isPresentationOpen
+  && `
+    height: ${parseInt((dimensionHeight * 3) / 3, 10)}px;
+  `}
+
+  ${({ dimensionHeight, usersCount, isPresentationOpen }) => dimensionHeight // 2 user
+  && !isPresentationOpen
+  && usersCount === 2
+  && `
+    height: ${parseInt((dimensionHeight * 1.5) / 3, 10)}px;
+  `}
+
+
+  ${({ usersCount, dimensionHeight, isPresentationOpen }) => usersCount % 2 === 0
+  && !isPresentationOpen
+  && usersCount > 2
+  && `
+      width: 50%;
+      height: ${parseInt((dimensionHeight * 1.5) / 3, 10)}px;
+  `}
+
+  ${({ usersCount, dimensionHeight, isPresentationOpen }) => usersCount % 2 === 1
+  && !isPresentationOpen
+  && usersCount > 2
+  && `
+      width: 50%;
+      flex-grow: 1;
+      flex-shrink: 1;
+      flex-basis: 0;
+      height: ${parseInt((dimensionHeight * 1.5) / 3, 10)}px;
+  `}
+
+  ${({ usersCount, dimensionHeight, isPresentationOpen }) => usersCount % 2 === 0
+  && !isPresentationOpen
+  && usersCount > 4
+  && `
+      width: 50%;
+      height: ${parseInt((dimensionHeight * 1) / 3, 10)}px;
+  `}
+
+  ${({ usersCount, dimensionHeight, isPresentationOpen }) => usersCount % 2 === 1
+  && !isPresentationOpen
+  && usersCount > 4
+  && `
+      width: 50%;
+      flex-grow: 1;
+      flex-shrink: 1;
+      flex-basis: 0;
+      height: ${parseInt((dimensionHeight * 1) / 3, 10)}px;
+  `}
+
 `;
 
 const styles = StyleSheet.create({
@@ -66,9 +112,28 @@ const styles = StyleSheet.create({
   }
 });
 
+const ContainerViewItem = styled.View`
+  display: flex;
+  background-color: #d0c4cb;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+
+  ${({ isPresentationOpen }) => !isPresentationOpen
+  && `
+      display: none;
+  `}
+
+  ${({ dimensionHeight }) => dimensionHeight
+  && `
+    height: ${parseInt(dimensionHeight / 3, 10)}px;
+  `}
+`;
+
 export default {
   VideoListItem,
   ContentArea,
   styles,
-  Item
+  Item,
+  ContainerViewItem
 };
