@@ -1,7 +1,7 @@
 import styled from 'styled-components/native';
 import { StyleSheet } from 'react-native';
 
-const fullscreenStyles = StyleSheet.create({
+const opacityStyles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
@@ -58,6 +58,6 @@ const ControlsContainer = styled.View`
 
 export default {
   styles,
-  fullscreenStyles,
+  opacityStyles,
   ControlsContainer
 };

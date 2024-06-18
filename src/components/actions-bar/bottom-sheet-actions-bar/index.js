@@ -25,7 +25,8 @@ const BottomSheetActionsBar = ({ alwaysOpen }) => {
   const expandedActionsBar = useSelector((state) => state.layout.expandActionsBar);
   const isModalShow = useSelector((state) => state.modal.isShow);
 
-  const isFullscreen = route.name === 'FullscreenWrapperScreen';
+  const renderWithOpacity = route.name === 'FullscreenWrapperScreen'
+  || route.name === 'UserNotesScreen';
   const { showDebugToggle, showNotImplementedFeatures } = Settings;
 
   // variables
@@ -77,13 +78,13 @@ const BottomSheetActionsBar = ({ alwaysOpen }) => {
       index={detailedInfo ? 0 : -1}
       enablePanDownToClose={!alwaysOpen}
       snapPoints={snapPoints}
-      handleIndicatorStyle={Styled[isFullscreen ? 'fullscreenStyles' : 'styles'].indicatorStyle}
-      style={Styled[isFullscreen ? 'fullscreenStyles' : 'styles'].style}
-      handleStyle={Styled[isFullscreen ? 'fullscreenStyles' : 'styles'].handleStyle}
-      backgroundStyle={Styled[isFullscreen ? 'fullscreenStyles' : 'styles'].backgroundStyle}
+      handleIndicatorStyle={Styled[renderWithOpacity ? 'opacityStyles' : 'styles'].indicatorStyle}
+      style={Styled[renderWithOpacity ? 'opacityStyles' : 'styles'].style}
+      handleStyle={Styled[renderWithOpacity ? 'opacityStyles' : 'styles'].handleStyle}
+      backgroundStyle={Styled[renderWithOpacity ? 'opacityStyles' : 'styles'].backgroundStyle}
       onChange={handleSheetChanges}
     >
-      <View style={Styled[isFullscreen ? 'fullscreenStyles' : 'styles'].contentContainer}>
+      <View style={Styled[renderWithOpacity ? 'opacityStyles' : 'styles'].contentContainer}>
         <ActionsBar />
         <BottomSheetScrollView>
           <Styled.ControlsContainer>
