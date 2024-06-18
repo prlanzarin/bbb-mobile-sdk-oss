@@ -88,8 +88,6 @@ const DefaultElements = ({ focusedElement, focusedId }) => {
   switch (focusedElement) {
     case 'videoStream':
       return <VideoStream streamURL={focusedId} />;
-    case 'avatar':
-      return <UserAvatar source={{ uri: focusedId }} />;
     case 'contentArea':
       return (
         <>
@@ -106,6 +104,7 @@ const DefaultElements = ({ focusedElement, focusedId }) => {
             userColor={`${focusedId.userColor}`}
             userRole={focusedId.userRole}
             isTalking={focusedId.isTalking}
+            userImage={focusedId.userImage}
           />
         </UserColor>
       );
