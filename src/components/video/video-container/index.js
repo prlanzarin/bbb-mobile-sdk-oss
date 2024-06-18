@@ -78,12 +78,9 @@ const VideoContainer = (props) => {
     if (typeof mediaStreamId === 'string') {
       dispatch(setFocusedId(mediaStreamId));
       dispatch(setFocusedElement('videoStream'));
-    } else if (userAvatar && userAvatar.length !== 0) {
-      dispatch(setFocusedId(userAvatar));
-      dispatch(setFocusedElement('avatar'));
     } else {
       dispatch(setFocusedId({
-        userName, userColor, isTalking: false, userRole
+        userName, userColor, isTalking: false, userRole, userImage: userAvatar
       }));
       dispatch(setFocusedElement('color'));
     }
