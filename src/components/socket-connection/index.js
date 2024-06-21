@@ -53,6 +53,7 @@ import { store } from '../../store/redux/store';
 import { selectUserByIntId } from '../../store/redux/slices/users';
 import { selectMeeting } from '../../store/redux/slices/meeting';
 import { selectCurrentUserRole } from '../../store/redux/slices/current-user';
+import { selectActivePoll } from '../../store/redux/slices/polls';
 import {
   setLoggingIn,
   setLoggedIn,
@@ -321,6 +322,8 @@ const SocketConnectionComponent = (props) => {
   const currentRole = useSelector(selectCurrentUserRole);
   const previousRole = usePrevious(currentRole);
   const currentUserReady = useSelector((state) => state.currentUserCollection.ready);
+  const activePollObject = useSelector(selectActivePoll);
+  const previousPollObject = usePrevious(activePollObject);
 
   useEffect(() => {
     if (currentUserReady && currentRole === 'MODERATOR' && previousRole === 'VIEWER') {
@@ -331,6 +334,18 @@ const SocketConnectionComponent = (props) => {
       });
     }
   }, [currentUserReady, currentRole]);
+
+  useEffect(() => {
+    if (activePollObject
+    && activePollObject?.id !== previousPollObject?.id
+    && activePollObject?.pollType !== 'R-'
+    && activePollObject?.answers[0]?.key === undefined
+    ) {
+      // force resubscribe on role dependent collections
+      modules.current['polls'].onDisconnected();
+      modules.current['polls'].onConnected();
+      };
+  }, [activePollObject])
 
   useEffect(() => {
     if (jUrl && typeof jUrl === 'string' && jUrl !== joinUrl) {
