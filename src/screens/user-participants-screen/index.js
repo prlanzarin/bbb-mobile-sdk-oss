@@ -13,11 +13,12 @@ import { isModerator, selectCurrentUserId } from '../../store/redux/slices/curre
 import { isBreakout } from '../../store/redux/slices/wide-app/client';
 import UserParticipantsService from './service';
 import Colors from '../../constants/colors';
+import UtilsFunctions from '../../utils/functions'
 import Styled from './styles';
 
 const UserParticipantsScreen = () => {
   const amIModerator = useSelector(isModerator);
-  const mainUsers = useSelector(selectMainUsers);
+  const mainUsers = useSelector(selectMainUsers, UtilsFunctions.arraysEqual);
   const myUserId = useSelector(selectCurrentUserId);
   const pendingUsers = useSelector(selectWaitingUsers);
 

@@ -91,12 +91,8 @@ const NotifeeController = () => {
     const requestNotificationPermission = async () => {
       await notifee.requestPermission();
     };
-
-    if (audioIsConnected) {
-      requestNotificationPermission();
-    }
-
-  }, [audioIsConnected]);
+    requestNotificationPermission();
+  }, []);
 
   useEffect(() => {
     if (notification) {
