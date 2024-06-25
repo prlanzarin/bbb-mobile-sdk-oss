@@ -3,12 +3,13 @@ import { FlatList, Dimensions } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 import { selectSortedVideoUsers } from '../../../store/redux/slices/video-streams';
+import UtilsFunctions from '../../../utils/functions'
 import Styled from './styles';
 
 const DEVICE_HEIGHT = parseInt(Dimensions.get('window').height, 10);
 
 const GridView = () => {
-  const videoUsers = useSelector(selectSortedVideoUsers);
+  const videoUsers = useSelector(selectSortedVideoUsers, UtilsFunctions.arraysEqual);
   const isPresentationOpen = useSelector((state) => state.layout.isPresentationOpen);
   const [numOfColumns, setNumOfColumns] = useState(1);
 
