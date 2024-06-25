@@ -29,7 +29,6 @@ const VideoContainer = (props) => {
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const detailedInfo = useSelector((state) => state.layout.detailedInfo);
   const clientIsReady = useSelector(({ client }) => {
     return client.connectionStatus.isConnected
       && client.sessionState.connected
@@ -107,8 +106,6 @@ const VideoContainer = (props) => {
       userColor={userColor}
     >
       {renderVideo()}
-
-      {detailedInfo && (
         <>
           <Styled.NameLabelContainer>
             <Styled.NameLabel numberOfLines={1}>{userName}</Styled.NameLabel>
@@ -126,7 +123,6 @@ const VideoContainer = (props) => {
             />
           </Styled.PressableButton>
         </>
-      )}
       {renderRaisedHand()}
     </Styled.ContainerPressableGrid>
   );
