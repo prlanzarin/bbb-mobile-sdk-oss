@@ -7,8 +7,12 @@ import Styled from './styles';
 
 const DEVICE_HEIGHT = parseInt(Dimensions.get('window').height, 10);
 
+const arraysEqual = (a1,a2) => {
+  return JSON.stringify(a1)==JSON.stringify(a2);
+}
+
 const GridView = () => {
-  const videoUsers = useSelector(selectSortedVideoUsers);
+  const videoUsers = useSelector(selectSortedVideoUsers, arraysEqual);
   const isPresentationOpen = useSelector((state) => state.layout.isPresentationOpen);
   const [numOfColumns, setNumOfColumns] = useState(1);
 
