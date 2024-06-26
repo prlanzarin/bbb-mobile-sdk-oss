@@ -21,7 +21,12 @@ const Screenshare = (props) => {
   }, [clientIsReady, mediaStreamId, screenshare]);
 
   if (isConnected && mediaStreamId) {
-    return <Styled.ScreenshareStream style={style} streamURL={mediaStreamId} />;
+    return (
+      <Styled.ScreenshareStream
+        streamURL={mediaStreamId}
+        zOrder={1}
+      />
+    );
   }
 
   return <Styled.ScreenshareSkeleton />;

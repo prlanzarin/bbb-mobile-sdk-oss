@@ -1,7 +1,7 @@
 import styled from 'styled-components/native';
 import { css } from 'styled-components';
 import { RTCView } from 'react-native-webrtc';
-import { Feather, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { View } from 'react-native';
 import IconButtonComponent from '../../icon-button';
 import Colors from '../../../constants/colors';

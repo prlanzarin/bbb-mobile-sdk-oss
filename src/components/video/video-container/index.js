@@ -54,7 +54,16 @@ const VideoContainer = (props) => {
 
   const renderVideo = () => {
     if (cameraId && visible) {
-      if (typeof mediaStreamId === 'string') return <Styled.VideoStream streamURL={mediaStreamId} isGrid={isGrid} />;
+      if (typeof mediaStreamId === 'string') {
+        return (
+          <Styled.VideoStream
+            streamURL={mediaStreamId}
+            isGrid={isGrid}
+            objectFit="cover"
+            zOrder={0}
+          />
+        );
+      }
       return <Styled.VideoSkeleton />;
     }
 
@@ -106,23 +115,23 @@ const VideoContainer = (props) => {
       userColor={userColor}
     >
       {renderVideo()}
-        <>
-          <Styled.NameLabelContainer>
-            <Styled.NameLabel numberOfLines={1}>{userName}</Styled.NameLabel>
-          </Styled.NameLabelContainer>
+      <>
+        <Styled.NameLabelContainer>
+          <Styled.NameLabel numberOfLines={1}>{userName}</Styled.NameLabel>
+        </Styled.NameLabelContainer>
 
-          <Styled.PressableButton
-            activeOpacity={0.6}
-            onPress={handleFullscreenClick}
-          >
-            <Styled.FullscreenIcon
-              icon="fullscreen"
-              iconColor="white"
-              size={16}
-              containerColor="#00000000"
-            />
-          </Styled.PressableButton>
-        </>
+        <Styled.PressableButton
+          activeOpacity={0.6}
+          onPress={handleFullscreenClick}
+        >
+          <Styled.FullscreenIcon
+            icon="fullscreen"
+            iconColor="white"
+            size={16}
+            containerColor="#00000000"
+          />
+        </Styled.PressableButton>
+      </>
       {renderRaisedHand()}
     </Styled.ContainerPressableGrid>
   );
