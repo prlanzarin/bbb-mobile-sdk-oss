@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
 import { NativeModules, Platform } from 'react-native';
 import { selectScreenshare } from '../../store/redux/slices/screenshare';
 import WhiteboardScreen from '../../screens/whiteboard-screen';
+import { isPresenter } from '../../store/redux/slices/current-user';
 import {
   setDetailedInfo,
   setFocusedElement,
@@ -22,10 +22,9 @@ const ContentArea = (props) => {
   const slidesStore = useSelector((state) => state.slidesCollection);
   const presentationsStore = useSelector((state) => state.presentationsCollection);
   const screenshare = useSelector(selectScreenshare);
-  const detailedInfo = useSelector((state) => state.layout.detailedInfo);
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const { t } = useTranslation();
+  const amIPresenter = useSelector(isPresenter);
 
   const isAndroid = Platform.OS === 'android';
 
@@ -68,15 +67,21 @@ const ContentArea = (props) => {
   };
 
   // ** Content area views methods **
-  const presentationView = () => (
-    <Styled.Presentation
-      width="100%"
-      height="100%"
-      source={{
-        uri: handleSlideAndPresentationActive(),
-      }}
-    />
-  );
+  const presentationView = () => {
+    if (!amIPresenter) {
+      return (
+        <WhiteboardScreen />
+      );
+    }
+    return (
+      <Styled.Presentation
+        width="100%"
+        height="100%"
+        source={{
+          uri: handleSlideAndPresentationActive(),
+        }}
+      />
+    ); };
 
   const screenshareView = () => (
     <Styled.Screenshare style={style} />
@@ -96,27 +101,16 @@ const ContentArea = (props) => {
     <Styled.ContentAreaPressable>
       {!screenshare && presentationView()}
       {screenshare && screenshareView()}
-      {detailedInfo && (
-        <>
-          <Styled.NameLabelContainer>
-            <Styled.NameLabel
-              numberOfLines={1}
-            >
-              {screenshare ? t('app.content.screenshare') : t('app.content.presentation')}
-            </Styled.NameLabel>
-          </Styled.NameLabelContainer>
-
-          <Styled.FullscreenIcon
-            isScreensharing={screenshare}
-            onPress={handleFullscreenClick}
-          />
-          <Styled.MinimizeIcon
-            onPress={handleMinimizeClick}
-          />
-
-          {isAndroid && false && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
-        </>
-      )}
+      <>
+        <Styled.FullscreenIcon
+          isScreensharing={screenshare}
+          onPress={handleFullscreenClick}
+        />
+        <Styled.MinimizeIcon
+          onPress={handleMinimizeClick}
+        />
+        {isAndroid && false && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
+      </>
     </Styled.ContentAreaPressable>
 
   );
