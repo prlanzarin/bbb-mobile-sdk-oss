@@ -28,7 +28,7 @@ const BottomSheetChat = () => {
   const flatListRef = useRef(null);
   const [messageText, setMessageText] = useState('');
   const dispatch = useDispatch();
-  const chatStore = useSelector((state) => state.chat);
+  const isBottomChatOpen = useSelector((state) => state.chat.isBottomChatOpen);
 
   const snapPoints = useMemo(() => ['95%'], []);
 
@@ -39,7 +39,7 @@ const BottomSheetChat = () => {
     }
   }, []);
 
-  useBottomSheetBackHandler(chatStore.isBottomChatOpen, sheetRef, () => {});
+  useBottomSheetBackHandler(isBottomChatOpen, sheetRef, () => {});
 
   const handleMessage = (message) => {
     if ((/<a\b[^>]*>/.test(message))) {
@@ -54,10 +54,10 @@ const BottomSheetChat = () => {
     );
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = useCallback(({ item }) => {
     const timestamp = new Date(item.timestamp);
     return (
-      <View style={Styled.styles.item}>
+      <View style={Styled.styles.item} key={item.timestamp}>
         <Styled.ContainerItem>
           <UserAvatar
             userName={item.author}
@@ -78,7 +78,7 @@ const BottomSheetChat = () => {
         </Styled.ContainerItem>
       </View>
     );
-  };
+  }, []);
 
   const renderEmptyChatHandler = () => {
     if (messages.length !== 0) {
@@ -87,7 +87,7 @@ const BottomSheetChat = () => {
     return <Styled.NoMessageText>{t('mobileSdk.chat.isEmptyLabel')}</Styled.NoMessageText>;
   };
 
-  if (!chatStore.isBottomChatOpen) {
+  if (!isBottomChatOpen) {
     return null;
   }
 
@@ -102,8 +102,12 @@ const BottomSheetChat = () => {
         {renderEmptyChatHandler()}
         <FlatList
           ref={flatListRef}
+          initialNumToRender={7}
+          maxToRenderPerBatch={50}
           data={messages.reverse()}
+          updateCellsBatchingPeriod={500}
           renderItem={renderItem}
+          keyExtractor={(item) => item.timestamp}
           style={Styled.styles.list}
         />
         <KeyboardAvoidingView
