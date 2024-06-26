@@ -116,6 +116,7 @@ const BottomSheetChat = () => {
               label={t('app.chat.submitLabel')}
               onChangeText={(newText) => setMessageText(newText)}
               multiline
+              maxLength={1000}
               value={messageText}
             />
             <IconButtonComponent
