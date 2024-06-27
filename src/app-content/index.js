@@ -87,7 +87,21 @@ const AppContent = ({
             onPress: () => { },
             style: 'cancel',
           },
-          { text: 'OK', onPress: () => dispatch(leave(api)) },
+          {
+            text: 'OK',
+            onPress: () => {
+              if (!transferUrl) {
+                dispatch(leave(api));
+                return;
+              }
+
+              dispatch(sessionStateChanged({
+                ended: true,
+                endReason: 'logged_out',
+              }));
+              onLeaveSession();
+            }
+          },
         ]);
       }
 
