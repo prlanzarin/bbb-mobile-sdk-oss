@@ -19,7 +19,6 @@ const ContentArea = (props) => {
   const { style, fullscreen } = props;
   const { PictureInPictureModule } = NativeModules;
 
-  const slidesStore = useSelector((state) => state.slidesCollection);
   const presentationsStore = useSelector((state) => state.presentationsCollection);
   const screenshare = useSelector(selectScreenshare);
   const dispatch = useDispatch();
@@ -29,24 +28,15 @@ const ContentArea = (props) => {
   const isAndroid = Platform.OS === 'android';
 
   const handleSlideAndPresentationActive = useCallback(() => {
-    // TODO Review this collection after update the 2.6 code
     const currentPresentation = Object.values(
       presentationsStore.presentationsCollection
-    ).filter((obj) => {
-      return obj.current === true;
-    });
-
-    const currentSlideList = Object.values(slidesStore.slidesCollection).filter(
-      (obj) => {
-        return (
-          obj.current === true
-          && obj.presentationId === currentPresentation[0]?.id
-        );
-      }
-    );
-    const imageUri = currentSlideList[0]?.imageUri;
+    ).filter((obj) => obj.current);
+    if (currentPresentation.length === 0) {
+      return;
+    }
+    const imageUri = currentPresentation[0]?.currentSlideSvgUri;
     return imageUri?.replace('/svg/', '/png/');
-  }, [presentationsStore, slidesStore]);
+  }, [presentationsStore]);
 
   const handleFullscreenClick = () => {
     dispatch(setIsFocused(true));
