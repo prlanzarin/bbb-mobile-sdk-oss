@@ -17,21 +17,21 @@ export class SlidesModule extends Module {
 
   // eslint-disable-next-line class-methods-use-this
   _add(msgObj) {
-    return store.dispatch(
-      addSlide({
-        slideObject: msgObj,
-      })
-    );
+    // return store.dispatch(
+    //   addSlide({
+    //     slideObject: msgObj,
+    //   })
+    // );
   }
 
   // eslint-disable-next-line class-methods-use-this
   _remove(msgObj) {
     if (!this._ignoreDeletions) {
-      return store.dispatch(
-        removeSlide({
-          slideObject: msgObj,
-        })
-      );
+      // return store.dispatch(
+      //   removeSlide({
+      //     slideObject: msgObj,
+      //   })
+      // );
     }
 
     return false;
@@ -39,11 +39,11 @@ export class SlidesModule extends Module {
 
   // eslint-disable-next-line class-methods-use-this
   _update(msgObj) {
-    return store.dispatch(
-      editSlide({
-        slideObject: msgObj,
-      })
-    );
+    // return store.dispatch(
+    //   editSlide({
+    //     slideObject: msgObj,
+    //   })
+    // );
   }
 
   // eslint-disable-next-line class-methods-use-this

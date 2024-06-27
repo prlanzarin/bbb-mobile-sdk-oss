@@ -4,7 +4,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { TouchableRipple } from 'react-native-paper';
 import presentation from '../presentation';
 import screenshare from '../screenshare';
-import Colors from '../../constants/colors';
 import Pressable from '../pressable';
 
 const Presentation = styled(presentation)``;
@@ -15,20 +14,6 @@ const ContentAreaPressable = styled.View`
   border-color: #06172A;
   border-width: 2px;
   `;
-
-const NameLabelContainer = styled.View`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  background-color: #28282d99;
-  padding: 5px;
-  margin: 5px;
-  border-radius: 4px;
-`;
-
-const NameLabel = styled.Text`
-  color: ${Colors.white};
-`;
 
 const PressableButton = styled(Pressable).attrs(() => ({
   pressStyle: {
@@ -93,8 +78,6 @@ export default {
   Presentation,
   Screenshare,
   ContentAreaPressable,
-  NameLabel,
-  NameLabelContainer,
   PressableButton,
   FullscreenIcon,
   PIPIcon,
