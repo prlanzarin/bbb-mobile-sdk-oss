@@ -90,11 +90,7 @@ const AppContent = ({
           {
             text: 'OK',
             onPress: () => {
-              if (!transferUrl) {
-                dispatch(leave(api));
-                return;
-              }
-
+              dispatch(leave(api));
               dispatch(sessionStateChanged({
                 ended: true,
                 endReason: 'logged_out',
