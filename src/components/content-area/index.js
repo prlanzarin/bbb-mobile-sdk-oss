@@ -99,7 +99,7 @@ const ContentArea = (props) => {
         <Styled.MinimizeIcon
           onPress={handleMinimizeClick}
         />
-        {isAndroid && false && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
+        {isAndroid && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
       </>
     </Styled.ContentAreaPressable>
 
