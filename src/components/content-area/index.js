@@ -20,6 +20,7 @@ const ContentArea = (props) => {
   const { PictureInPictureModule } = NativeModules;
 
   const presentationsStore = useSelector((state) => state.presentationsCollection);
+  const isPiPEnabled = useSelector((state) => state.layout.isPiPEnabled);
   const screenshare = useSelector(selectScreenshare);
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -58,11 +59,12 @@ const ContentArea = (props) => {
 
   // ** Content area views methods **
   const presentationView = () => {
-    if (!amIPresenter) {
+    if (!amIPresenter && !isPiPEnabled) {
       return (
         <WhiteboardScreen />
       );
     }
+
     return (
       <Styled.Presentation
         width="100%"
@@ -87,10 +89,12 @@ const ContentArea = (props) => {
     );
   }
 
-  return (
-    <Styled.ContentAreaPressable>
-      {!screenshare && presentationView()}
-      {screenshare && screenshareView()}
+  const renderIcons = () => {
+    if (isPiPEnabled) {
+      return null;
+    }
+
+    return (
       <>
         <Styled.FullscreenIcon
           isScreensharing={screenshare}
@@ -99,8 +103,20 @@ const ContentArea = (props) => {
         <Styled.MinimizeIcon
           onPress={handleMinimizeClick}
         />
-        {isAndroid && <Styled.PIPIcon onPress={handleEnterPiPClick} />}
+        {isAndroid && (
+          <Styled.PIPIcon
+            onPress={handleEnterPiPClick}
+          />
+        )}
       </>
+    );
+  };
+
+  return (
+    <Styled.ContentAreaPressable>
+      {!screenshare && presentationView()}
+      {screenshare && screenshareView()}
+      {renderIcons()}
     </Styled.ContentAreaPressable>
 
   );
