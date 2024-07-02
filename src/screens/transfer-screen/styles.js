@@ -1,4 +1,4 @@
-import { Button } from 'react-native-paper';
+import { Button, IconButton } from 'react-native-paper';
 import styled from 'styled-components/native';
 import Colors from '../../constants/colors';
 
@@ -55,9 +55,42 @@ const PressableButton = ({
   );
 };
 
+const LeaveIconButton = ({
+  onPress
+}) => {
+  return (
+    <IconButton
+      style={{
+        position: 'absolute', left: 12, top: 30, margin: 0,
+      }}
+      icon="account-arrow-left"
+      mode="contained"
+      iconColor={Colors.white}
+      containerColor={Colors.orange}
+      size={14}
+      onPress={onPress}
+    />
+  );
+};
+
+const Container = styled.View`
+width: 100%;
+height: 100%;
+display: flex;
+justify-content: space-between;
+`;
+
+const Wrapper = styled.View`
+  width: 100%;
+  height: 100%;
+`;
+
 export default {
   ContainerView,
   TitleText,
   SubtitleText,
-  PressableButton
+  PressableButton,
+  LeaveIconButton,
+  Container,
+  Wrapper
 };
