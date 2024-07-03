@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import * as Linking from 'expo-linking';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -66,7 +67,12 @@ const ContentArea = (props) => {
           onPress: () => { },
           style: 'cancel',
         },
-        { text: 'OK', onPress: () => {} },
+        {
+          text: t('app.settings.main.label'),
+          onPress: () => {
+            Linking.openSettings();
+          }
+        },
       ]);
     }
   };
