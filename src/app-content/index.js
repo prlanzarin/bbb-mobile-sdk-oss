@@ -63,6 +63,15 @@ const AppContent = ({
     return hasCustomLeaveSession;
   };
 
+  const onForcedLeaveSession = () => {
+    dispatch(leave(api));
+    dispatch(sessionStateChanged({
+      ended: true,
+      endReason: 'logged_out',
+    }));
+    onLeaveSession();
+  };
+
   useEffect(() => {
     logger.info({
       logCode: 'app_mounted',
@@ -87,7 +96,12 @@ const AppContent = ({
             onPress: () => { },
             style: 'cancel',
           },
-          { text: 'OK', onPress: () => dispatch(leave(api)) },
+          {
+            text: 'OK',
+            onPress: () => {
+              onForcedLeaveSession();
+            }
+          },
         ]);
       }
 
@@ -120,7 +134,10 @@ const AppContent = ({
 
   if (transferUrl) {
     return (
-      <TransferScreen transferUrl={transferUrl} />
+      <TransferScreen
+        transferUrl={transferUrl}
+        onLeaveSession={onForcedLeaveSession}
+      />
     );
   }
 

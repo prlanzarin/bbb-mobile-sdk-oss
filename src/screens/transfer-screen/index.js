@@ -1,26 +1,43 @@
 import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import WebView from 'react-native-webview';
-import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LottieView from 'lottie-react-native';
 import Styled from './styles';
 
 const TransferScreen = (props) => {
-  const { transferUrl } = props;
+  const { transferUrl, onLeaveSession } = props;
   const [joinTransfer, setJoinTransfer] = useState(false);
   const { t } = useTranslation();
 
+  const leaveConference = () => (
+    Alert.alert(t('app.leaveModal.title'), t('app.leaveModal.desc'), [
+      {
+        text: t('app.settings.main.cancel.label'),
+        onPress: () => { },
+        style: 'cancel',
+      },
+      {
+        text: 'OK',
+        onPress: () => { onLeaveSession(); }
+      },
+    ])
+  );
+
   if (joinTransfer) {
     return (
-      <View style={{ flex: 1 }}>
-        <WebView
-          source={{ uri: transferUrl }}
-          allowsFullscreenVideo
-          javaScriptEnabled
-          sharedCookiesEnabled
-          thirdPartyCookiesEnabled
-        />
-      </View>
+      <Styled.Container>
+        <Styled.Wrapper>
+          <WebView
+            source={{ uri: transferUrl }}
+            allowsFullscreenVideo
+            javaScriptEnabled
+            sharedCookiesEnabled
+            thirdPartyCookiesEnabled
+          />
+        </Styled.Wrapper>
+        <Styled.LeaveIconButton onPress={leaveConference} />
+      </Styled.Container>
     );
   }
 
