@@ -50,6 +50,7 @@ const AppContent = ({
   const guestStatus = useSelector((state) => state.client.guestStatus);
   const transferUrl = useSelector((state) => state.client.transferUrl);
   const isBreakout = useSelector((state) => state.client.meetingData.isBreakout);
+  const transferUrlRef = useRef(null);
   const navigationRef = useRef(null);
 
   const onLeaveSession = () => {
@@ -64,6 +65,10 @@ const AppContent = ({
   };
 
   const onForcedLeaveSession = () => {
+    if (!transferUrlRef.current) {
+      dispatch(leave(api));
+      return;
+    }
     dispatch(leave(api));
     dispatch(sessionStateChanged({
       ended: true,
@@ -133,6 +138,7 @@ const AppContent = ({
   }, []);
 
   if (transferUrl) {
+    transferUrlRef.current = transferUrl;
     return (
       <TransferScreen
         transferUrl={transferUrl}
