@@ -231,5 +231,7 @@
   "mobileSdk.transfer.subtitle": "La sesión a la que intentas acceder está llena.",
   "mobileSdk.transfer.subtitle2": "El moderador definió que los nuevos participantes deben ser dirigidos a la sala de transferencia.",
   "mobileSdk.transfer.button.title": "Entrar",
-  "mobileSdk.audio.deviceSelector.btPermissionOff": "No permitiste el uso de Bluetooth en esta aplicación"
+  "mobileSdk.audio.deviceSelector.btPermissionOff": "No permitiste el uso de Bluetooth en esta aplicación",
+  "mobileSdk.pip.permission.title": "Permiso no concedido",
+  "mobileSdk.pip.permission.subtitle": "No has permitido el uso de Picture-in-Picture en esta aplicación"
 }
