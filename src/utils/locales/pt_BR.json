@@ -240,5 +240,7 @@
   "mobileSdk.transfer.subtitle": "A sessão que você está tentando acessar está lotada.",
   "mobileSdk.transfer.subtitle2": "O moderador definiu que novos participantes devem ser direcionados a sala de transfer.",
   "mobileSdk.transfer.button.title": "Entrar",
-  "mobileSdk.audio.deviceSelector.btPermissionOff": "Você não permitiu o uso do bluetooth nesse aplicativo"
+  "mobileSdk.audio.deviceSelector.btPermissionOff": "Você não permitiu o uso do bluetooth nesse aplicativo",
+  "mobileSdk.pip.permission.title": "Permissão não concedida",
+  "mobileSdk.pip.permission.subtitle": "Você não permitiu o uso de Picture-in-Picture neste aplicativo"
 }

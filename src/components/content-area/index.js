@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { NativeModules, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Alert, NativeModules, Platform } from 'react-native';
 import { selectScreenshare } from '../../store/redux/slices/screenshare';
 import WhiteboardScreen from '../../screens/whiteboard-screen';
 import { isPresenter } from '../../store/redux/slices/current-user';
@@ -26,6 +27,7 @@ const ContentArea = (props) => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const amIPresenter = useSelector(isPresenter);
+  const { t } = useTranslation();
 
   const isAndroid = Platform.OS === 'android';
 
@@ -51,11 +53,22 @@ const ContentArea = (props) => {
     dispatch(setIsPresentationOpen(false));
   };
 
-  const handleEnterPiPClick = () => {
+  const handleEnterPiPClick = async () => {
     PictureInPictureModule.setPictureInPictureEnabled(true);
-    PictureInPictureModule.enterPictureInPicture();
-    dispatch(setIsPiPEnabled(true));
-    dispatch(setDetailedInfo(false));
+    try {
+      await PictureInPictureModule.enterPictureInPicture();
+      dispatch(setIsPiPEnabled(true));
+      dispatch(setDetailedInfo(false));
+    } catch (error) {
+      Alert.alert(t('mobileSdk.pip.permission.title'), t('mobileSdk.pip.permission.subtitle'), [
+        {
+          text: t('app.settings.main.cancel.label'),
+          onPress: () => { },
+          style: 'cancel',
+        },
+        { text: 'OK', onPress: () => {} },
+      ]);
+    }
   };
 
   // ** Content area views methods **
