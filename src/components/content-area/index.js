@@ -14,6 +14,7 @@ import {
   setIsPresentationOpen
 } from '../../store/redux/slices/wide-app/layout';
 import Styled from './styles';
+import Settings from '../../../settings.json';
 
 const ContentArea = (props) => {
   const { style, fullscreen } = props;
@@ -103,7 +104,7 @@ const ContentArea = (props) => {
         <Styled.MinimizeIcon
           onPress={handleMinimizeClick}
         />
-        {isAndroid && (
+        {isAndroid && !Settings.dev && (
           <Styled.PIPIcon
             onPress={handleEnterPiPClick}
           />
