@@ -20,6 +20,7 @@
     "prepublish": "npm run build"
   },
   "dependencies": {
+    "@apollo/client": "^3.8.7",
     "@browser-bunyan/console-formatted-stream": "^1.8.0",
     "@browser-bunyan/console-raw-stream": "^1.8.0",
     "@browser-bunyan/levels": "^1.8.0",
