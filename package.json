@@ -52,6 +52,7 @@
     "expo-splash-screen": "~0.18.2",
     "expo-status-bar": "~1.4.0",
     "graphql": "^15.8.0",
+    "graphql-ws": "^5.16.0",
     "he": "^1.2.0",
     "i18next": "^22.4.10",
     "lottie-react-native": "5.1.4",
@@ -79,7 +80,6 @@
     "reconnecting-websocket": "^4.4.0",
     "rn-android-keyboard-adjust": "^2.1.2",
     "styled-components": "^5.3.5",
-    "subscriptions-transport-ws": "^0.11.0",
     "url": "^0.11.0",
     "util": "^0.12.4"
   },
