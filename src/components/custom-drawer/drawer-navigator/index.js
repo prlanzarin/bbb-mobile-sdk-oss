@@ -13,7 +13,6 @@ import logger from '../../../services/logger';
 // screens
 import PollNavigator from '../../../screens/poll-screen/navigator';
 import UserParticipantsNavigator from '../../../screens/user-participants-screen/navigator';
-import TestComponentsScreen from '../../../screens/test-components-screen';
 import BreakoutRoomScreen from '../../../screens/breakout-room-screen';
 import MainConferenceScreen from '../../../screens/main-conference-screen';
 import SelectLanguageScreen from '../../../screens/select-language-screen';
@@ -108,38 +107,7 @@ const DrawerNavigator = ({
           meetingUrl={meetingUrl}
         />
       )}
-      screenOptions={{
-        contentOptions: {
-          style: {
-            backgroundColor: 'black',
-            flex: 1,
-          },
-        },
-        drawerStyle: {
-          width: '80%',
-        },
-        drawerItemStyle: {
-          borderRadius: 8,
-        },
-        drawerLabelStyle: {
-          textAlign: 'left',
-          textAlignVertical: 'center',
-          paddingLeft: 12,
-          fontSize: 16,
-          fontWeight: '400',
-          lineHeight: 18,
-        },
-        sceneContainerStyle: { backgroundColor: '#06172A' },
-        drawerActiveBackgroundColor: Colors.blue,
-        drawerInactiveBackgroundColor: Colors.lightGray100,
-        drawerActiveTintColor: Colors.white,
-        drawerInactiveTintColor: Colors.lightGray400,
-        headerStyle: { backgroundColor: Colors.blue },
-        headerTitleContainerStyle: { maxWidth: '75%' },
-        headerTintColor: Colors.white,
-        drawerBackgroundColor: Colors.blue,
-        headerTitleAlign: 'center',
-      }}
+      screenOptions={Styled.ScreenOptions}
     >
       <Drawer.Screen
         name="Main"
@@ -295,25 +263,6 @@ const DrawerNavigator = ({
 
         }}
       />
-
-      {/* Put the join url by hand screen */}
-      {Settings.dev && (
-        <Drawer.Screen
-          name="TestComponent"
-          options={{
-            title: 'Test Component',
-            drawerIcon: (config) => (
-              <Styled.DrawerIcon
-                icon="dev-to"
-                size={24}
-                iconColor={config.color}
-              />
-            ),
-          }}
-        >
-          {(props) => <TestComponentsScreen {...props} jUrl={jUrl} />}
-        </Drawer.Screen>
-      )}
     </Drawer.Navigator>
   );
 };

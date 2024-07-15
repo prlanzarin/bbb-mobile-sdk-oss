@@ -5,7 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import Colors from './src/constants/colors';
 import LoadingScreen from './src/screens/loading-screen';
 import useJoinMeeting from './src/graphql/hooks/use-join-meeting';
-import Auth from './src/graphql/collections/auth';
+import DrawerNavigator from './src/components/custom-drawer/drawer-navigator';
+import UserJoinScreen from './src/screens/user-join-screen';
 
 // Screens
 
@@ -26,7 +27,7 @@ const MainNavigator = () => {
     if (loginStage === 6) {
       navigation.reset({
         index: 1,
-        routes: [{ name: 'AuthScreen' }]
+        routes: [{ name: 'UserJoinScreen' }]
       });
     }
   }, [loginStage]);
@@ -46,6 +47,7 @@ const MainNavigator = () => {
           contentStyle: { backgroundColor: Colors.white },
           headerTitleAlign: 'center',
           gestureEnabled: false,
+          headerShown: false,
         }}
       >
         <Stack.Screen
@@ -53,19 +55,29 @@ const MainNavigator = () => {
           component={LoadingScreen}
           options={{
             title: 'Loading Screen',
+          }}
+        />
+        <Stack.Screen
+          name="UserJoinScreen"
+          component={UserJoinScreen}
+          options={{
+            title: 'UserJoinScreen',
             headerShown: false,
           }}
         />
         <Stack.Screen
-          name="AuthScreen"
-          component={Auth}
-          options={{
-            title: 'Auth Screen',
-            headerShown: false,
-          }}
-        />
+          name="DrawerNavigator"
+        >
+          {() => (
+            <DrawerNavigator
+              navigationRef="test"
+              jUrl="test"
+              onLeaveSession={() => console.log('leave')}
+              meetingUrl="test"
+            />
+          )}
+        </Stack.Screen>
         {/* <GuestScreen />
-      <DrawerNavigator />
       <EndNavigator />
       <TransferScreen /> */}
       </Stack.Navigator>

@@ -1,9 +1,11 @@
 import { gql, useMutation, useSubscription } from '@apollo/client';
+import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { Text } from 'react-native';
-import { Button } from 'react-native-paper';
 
-const Auth = () => {
+const UserJoinScreen = () => {
+  const navigation = useNavigation();
+
   const [dispatchUserJoin] = useMutation(gql`
       mutation UserJoin($authToken: String!, $clientType: String!) {
         userJoinMeeting(
@@ -56,6 +58,11 @@ const Auth = () => {
   useEffect(() => {
     if (data?.user_current) {
       handleDispatchUserJoin(data.user_current[0].authToken);
+      console.log(JSON.stringify(data, null, 2));
+      if (data.user_current[0].joined) {
+        console.log("Joined")
+        console.log(navigation.navigate('DrawerNavigator'));
+      }
     }
   }, [data]);
 
@@ -73,12 +80,9 @@ const Auth = () => {
     }
 
     return (
-      <>
-        <Text style={{ color: 'white' }}>{JSON.stringify(data.user_current, null, 2)}</Text>
-        <Button onPress={() => handleDispatchUserJoin(data.user_current[0].authToken)}>Join</Button>
-      </>
+      <Text style={{ color: 'black' }}>Loading...</Text>
     );
   }
 };
 
-export default Auth;
+export default UserJoinScreen;
