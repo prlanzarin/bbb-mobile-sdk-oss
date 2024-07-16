@@ -9,6 +9,7 @@ const UserJoinScreen = () => {
 
   const [dispatchUserJoin] = useMutation(Queries.USER_JOIN_MUTATION);
   const { loading, error, data } = useSubscription(Queries.USER_CURRENT_SUBSCRIPTION);
+  const currentUser = data?.user_current[0];
 
   const handleDispatchUserJoin = (authToken) => {
     dispatchUserJoin({
@@ -21,15 +22,17 @@ const UserJoinScreen = () => {
   };
 
   useEffect(() => {
-    if (data?.user_current) {
-      handleDispatchUserJoin(data.user_current[0].authToken);
-      console.log(JSON.stringify(data, null, 2));
-      if (data.user_current[0].joined) {
-        console.log("Joined")
-        console.log(navigation.navigate('DrawerNavigator'));
+    if (currentUser) {
+      handleDispatchUserJoin(currentUser.authToken);
+
+      // redirect to guest screen
+      if (currentUser.guestStatus === 'WAIT') {
+        navigation.navigate('GuestScreen');
+      } else if (currentUser.joined) {
+        navigation.navigate('DrawerNavigator');
       }
     }
-  }, [data]);
+  }, [currentUser?.guestStatus, currentUser?.joined]);
 
   if (!loading && !error) {
     // eslint-disable-next-line no-prototype-builtins

@@ -1,103 +1,32 @@
-import { useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSubscription } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import Colors from '../../constants/colors';
 import Styled from './styles';
-import { fetchGuestStatus } from '../../store/redux/slices/wide-app/client';
-import logger from '../../services/logger';
-
-const GUEST_POLL_INTERVAL = 10000;
+import Queries from './queries';
 
 const GuestScreen = () => {
-  const dispatch = useDispatch();
+  const { data } = useSubscription(Queries.GUEST_STATUS_DETAILED_SUBSCRIPTION);
+  const guestStatusDetails = data?.user_current[0].guestStatusDetails;
   const { t } = useTranslation();
-  const guestStatus = useSelector((state) => state.client.guestStatus);
-  const guestPollInterval = useRef(null);
-  const [lobbyMessage, setLobbyMessage] = useState(null);
-  const [positionInWaitingQueue, setPositionInWaitingQueue] = useState(null);
-  // TODO localization
-  const guestScreenTitle = t('mobileSdk.guest.screenTitle');
-  const guestScreenSubtitle = t('app.guest.guestWait');
-  const firstInQueueStr = t('app.guest.firstPositionInWaitingQueue');
-  const laterInQueueStr = t('app.guest.positionInWaitingQueue');
-
-  const probeGuestStatus = async () => {
-    try {
-      const { response } = await dispatch(fetchGuestStatus({ logger })).unwrap();
-      const {
-        lobbyMessage: message,
-        positionInWaitingQueue: position
-      } = response;
-      if (position) setPositionInWaitingQueue(parseInt(position, 10));
-      if (typeof message === 'string' && message) setLobbyMessage(message);
-    } catch (error) {
-      logger.error({
-        logCode: 'guest_poll_failure',
-        extraInfo: {
-          errorCode: error.code,
-          errorMessage: error.message,
-        }
-      }, `Guest poll failed: ${error.message}`);
-    }
-  };
-
-  const startPolling = () => {
-    probeGuestStatus();
-    guestPollInterval.current = setInterval(probeGuestStatus, GUEST_POLL_INTERVAL);
-  };
-
-  const stopPolling = () => {
-    if (guestPollInterval.current) {
-      clearInterval(guestPollInterval.current);
-      guestPollInterval.current = null;
-    }
-  };
-
-  useEffect(() => {
-    startPolling();
-    return () => {
-      stopPolling();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (guestStatus !== 'WAIT') {
-      stopPolling();
-    }
-  }, [guestStatus]);
-
-  const getPositionInWaitingQueueMessage = () => {
-    if (positionInWaitingQueue === 1) {
-      return firstInQueueStr;
-    }
-
-    if (positionInWaitingQueue > 1) {
-      return `${laterInQueueStr} ${positionInWaitingQueue}`;
-    }
-
-    return null;
-  };
 
   return (
     <Styled.ContainerView>
-      <Styled.GuestCardContainer>
-        <Styled.GuestScreenTitle>{guestScreenTitle}</Styled.GuestScreenTitle>
-        <Styled.GuestScreenSubtitle>{guestScreenSubtitle}</Styled.GuestScreenSubtitle>
-        <Styled.WaitingAnimation
-          size={64}
-          color={Colors.blue}
-          animating
-          hidesWhenStopped
-        />
-        {lobbyMessage && (
-          <Styled.GuestScreenTextContent>{lobbyMessage}</Styled.GuestScreenTextContent>
-        )}
-        {positionInWaitingQueue && (
-          <Styled.GuestScreenTextContent>
-            {getPositionInWaitingQueueMessage()}
-          </Styled.GuestScreenTextContent>
-        )}
-      </Styled.GuestCardContainer>
+      <Styled.WaitingAnimation />
+      <Styled.Title>
+        {t('mobileSdk.guest.screenTitle')}
+      </Styled.Title>
+      <Styled.Subtitle>
+        { t('app.guest.guestWait')}
+      </Styled.Subtitle>
+      {guestStatusDetails?.guestLobbyMessage && (
+      <Styled.Subtitle>
+        {guestStatusDetails?.guestLobbyMessage}
+      </Styled.Subtitle>
+      )}
+      {guestStatusDetails?.positionInWaitingQueue && (
+      <Styled.Subtitle>
+        {`${t('app.guest.positionInWaitingQueue')} ${guestStatusDetails?.positionInWaitingQueue}`}
+      </Styled.Subtitle>
+      )}
     </Styled.ContainerView>
   );
 };

@@ -87,15 +87,15 @@ const DrawerNavigator = ({
   }, []);
 
   // this effect controls the meeting ended
-  useEffect(() => {
-    if (ended) {
-      if (feedbackEnabled && currentUser && meetingData && !isBreakout) {
-        navigation.navigate('FeedbackScreen');
-      } else {
-        navigation.navigate('EndSessionScreen');
-      }
-    }
-  }, [ended]);
+  // useEffect(() => {
+  //   if (ended) {
+  //     if (feedbackEnabled && currentUser && meetingData && !isBreakout) {
+  //       navigation.navigate('FeedbackScreen');
+  //     } else {
+  //       navigation.navigate('EndSessionScreen');
+  //     }
+  //   }
+  // }, [ended]);
 
   return (
     <Drawer.Navigator
