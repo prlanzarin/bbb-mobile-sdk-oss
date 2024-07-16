@@ -6,6 +6,7 @@ import LoadingScreen from '../loading-screen';
 import useJoinMeeting from '../../graphql/hooks/use-join-meeting';
 import DrawerNavigator from '../../components/custom-drawer/drawer-navigator';
 import UserJoinScreen from '../user-join-screen';
+import GuestScreen from '../guest-screen';
 import Styled from './styles';
 
 // Screens
@@ -55,6 +56,14 @@ const MainNavigator = () => {
           component={UserJoinScreen}
           options={{
             title: 'UserJoinScreen',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="GuestScreen"
+          component={GuestScreen}
+          options={{
+            title: 'GuestScreen',
             headerShown: false,
           }}
         />

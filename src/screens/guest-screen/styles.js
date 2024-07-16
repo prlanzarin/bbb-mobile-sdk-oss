@@ -6,54 +6,38 @@ const ContainerView = styled.View`
   width: 100%;
   height: 100%;
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-around;
-  padding: 10px;
-
-  ${({ orientation }) => orientation === 'LANDSCAPE'
-  && `
-    flex-direction: row;
-    justify-content: center;
-  `}
-`;
-
-const GuestCardContainer = styled.View`
-  background-color: ${Colors.white};
-  width: 100%;
-  max-height: 85%;
   padding: 16px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
+  gap: 16px;
+  background-color: ${Colors.blueBackgroundColor}
 `;
 
-const GuestScreenTextContent = styled.Text`
-  font-size: 16px;
-  font-weight: 500;
-  text-align: center;
-  color: ${Colors.lightGray300};
-  padding-bottom: 40px;
-`;
-
-const GuestScreenTitle = styled(GuestScreenTextContent)`
+const Title = styled.Text`
+  color: ${Colors.white};
   font-size: 21px;
-  color: ${Colors.lightGray400};
-  padding-bottom: 20px;
+  text-align: center;
+  font-weight: 500;
 `;
 
-const GuestScreenSubtitle = styled(GuestScreenTextContent)`
-  font-size: 18px;
+const Subtitle = styled.Text`
+  color: ${Colors.white};
+  font-size: 16px;
+  text-align: center;
 `;
 
-const WaitingAnimation = styled(ActivityIndicator)`
-  padding-bottom: 40px;
-`;
+const WaitingAnimation = () => (
+  <ActivityIndicator
+    size={64}
+    color={Colors.white}
+    animating
+    hidesWhenStopped
+  />
+);
 
 export default {
   ContainerView,
-  GuestCardContainer,
-  GuestScreenTitle,
-  GuestScreenSubtitle,
-  GuestScreenTextContent,
+  Title,
+  Subtitle,
   WaitingAnimation,
 };
