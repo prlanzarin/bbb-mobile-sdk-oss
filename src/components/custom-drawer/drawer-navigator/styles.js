@@ -44,11 +44,45 @@ const BetaTag = styled(Tag)`
   right: 12px;
 `;
 
+const ScreenOptions = {
+  contentOptions: {
+    style: {
+      backgroundColor: 'black',
+      flex: 1,
+    },
+  },
+  drawerStyle: {
+    width: '80%',
+  },
+  drawerItemStyle: {
+    borderRadius: 8,
+  },
+  drawerLabelStyle: {
+    textAlign: 'left',
+    textAlignVertical: 'center',
+    paddingLeft: 12,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+  sceneContainerStyle: { backgroundColor: '#06172A' },
+  drawerActiveBackgroundColor: Colors.blue,
+  drawerInactiveBackgroundColor: Colors.lightGray100,
+  drawerActiveTintColor: Colors.white,
+  drawerInactiveTintColor: Colors.lightGray400,
+  headerStyle: { backgroundColor: Colors.blue },
+  headerTitleContainerStyle: { maxWidth: '75%' },
+  headerTintColor: Colors.white,
+  drawerBackgroundColor: Colors.blue,
+  headerTitleAlign: 'center',
+};
+
 export default {
   DrawerIcon,
   NotificationIcon,
   HeaderTitleContainer,
   HeaderTitleText,
   BetaTag,
-  IconMaterial
+  IconMaterial,
+  ScreenOptions
 };
