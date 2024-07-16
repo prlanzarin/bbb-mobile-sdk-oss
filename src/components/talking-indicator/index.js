@@ -1,16 +1,15 @@
 import { useSelector, useDispatch } from 'react-redux';
+import { useSubscription } from '@apollo/client';
 import Styled from './styles';
 import { setIsPresentationOpen } from '../../store/redux/slices/wide-app/layout';
+import Queries from './queries';
 
 const TalkingIndicator = () => {
   const isPresentationOpen = useSelector((state) => state.layout.isPresentationOpen);
+  const { data } = useSubscription(Queries.TALKING_INDICATOR_SUBSCRIPTION);
   const dispatch = useDispatch();
-  const VoiceUsersCollection = useSelector(
-    (state) => state.voiceUsersCollection.voiceUsersCollection
-  );
-  const callersTalking = Object.values(VoiceUsersCollection)
-    .filter((call) => call.talking)
-    .map((call) => ({ callerName: call.callerName.replaceAll('+', ' '), voiceUserId: call.voiceUserId }));
+
+  const callersTalking = data?.user_voice ?? [];
 
   return (
     <>
@@ -19,12 +18,17 @@ const TalkingIndicator = () => {
         onPress={() => dispatch(setIsPresentationOpen(true))}
       />
       <Styled.Container>
-        {callersTalking.map((userObj) => (
-          <Styled.TextContainer key={userObj.voiceUserId}>
-            <Styled.MicIcon />
-            <Styled.Text numberOfLines={1}>{userObj.callerName}</Styled.Text>
-          </Styled.TextContainer>
-        ))}
+        {callersTalking.map((userObj) => {
+          if (userObj.talking) {
+            return (
+              <Styled.TextContainer key={userObj.userId}>
+                <Styled.MicIcon />
+                <Styled.Text numberOfLines={1}>{userObj.user.name}</Styled.Text>
+              </Styled.TextContainer>
+            );
+          }
+          return null;
+        })}
       </Styled.Container>
     </>
   );
