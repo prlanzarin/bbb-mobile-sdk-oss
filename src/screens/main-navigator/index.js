@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ApolloProvider } from '@apollo/client';
 import { useNavigation } from '@react-navigation/native';
-import Colors from './src/constants/colors';
-import LoadingScreen from './src/screens/loading-screen';
-import useJoinMeeting from './src/graphql/hooks/use-join-meeting';
-import DrawerNavigator from './src/components/custom-drawer/drawer-navigator';
-import UserJoinScreen from './src/screens/user-join-screen';
+import LoadingScreen from '../loading-screen';
+import useJoinMeeting from '../../graphql/hooks/use-join-meeting';
+import DrawerNavigator from '../../components/custom-drawer/drawer-navigator';
+import UserJoinScreen from '../user-join-screen';
+import Styled from './styles';
 
 // Screens
 
@@ -41,14 +41,7 @@ const MainNavigator = () => {
   return (
     <ApolloProvider client={graphqlUrlApolloClient}>
       <Stack.Navigator
-        screenOptions={{
-          headerStyle: { backgroundColor: Colors.blue },
-          headerTintColor: Colors.white,
-          contentStyle: { backgroundColor: Colors.white },
-          headerTitleAlign: 'center',
-          gestureEnabled: false,
-          headerShown: false,
-        }}
+        screenOptions={Styled.ScreenOptions}
       >
         <Stack.Screen
           name="LoadingScreen"

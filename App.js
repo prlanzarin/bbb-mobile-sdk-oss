@@ -4,7 +4,7 @@ import { OrientationLocker, PORTRAIT } from 'react-native-orientation-locker';
 import { store } from './src/store/redux/store';
 import AppStatusBar from './src/components/status-bar';
 import './src/utils/locales/i18n';
-import MainNavigator from './navigator';
+import MainNavigator from './src/screens/main-navigator';
 
 const App = (props) => {
   return (
