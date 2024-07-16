@@ -1,20 +1,14 @@
-import { gql, useMutation, useSubscription } from '@apollo/client';
+import { useMutation, useSubscription } from '@apollo/client';
+import { Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import { Text } from 'react-native';
+import Queries from './queries';
 
 const UserJoinScreen = () => {
   const navigation = useNavigation();
 
-  const [dispatchUserJoin] = useMutation(gql`
-      mutation UserJoin($authToken: String!, $clientType: String!) {
-        userJoinMeeting(
-          authToken: $authToken,
-          clientType: $clientType,
-          clientIsMobile: $clientIsMobile,
-        )
-      }
-    `);
+  const [dispatchUserJoin] = useMutation(Queries.USER_JOIN_MUTATION);
+  const { loading, error, data } = useSubscription(Queries.USER_CURRENT_SUBSCRIPTION);
 
   const handleDispatchUserJoin = (authToken) => {
     dispatchUserJoin({
@@ -25,35 +19,6 @@ const UserJoinScreen = () => {
       },
     });
   };
-
-  const { loading, error, data } = useSubscription(
-    gql`subscription {
-      user_current {
-        userId
-        authToken
-        name
-        loggedOut
-        ejected
-        isOnline
-        isModerator
-        joined
-        joinErrorCode
-        joinErrorMessage
-        guestStatus
-        guestStatusDetails {
-          guestLobbyMessage
-          positionInWaitingQueue
-        }
-        meeting {
-            name
-            ended
-            learningDashboard {
-              learningDashboardAccessToken
-            }
-        }
-      }
-    }`
-  );
 
   useEffect(() => {
     if (data?.user_current) {
