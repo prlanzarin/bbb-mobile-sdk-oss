@@ -1,12 +1,11 @@
-import { useCallback } from 'react';
 import * as Linking from 'expo-linking';
+import { useSubscription } from '@apollo/client';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Alert, NativeModules, Platform } from 'react-native';
 import { selectScreenshare } from '../../store/redux/slices/screenshare';
 import WhiteboardScreen from '../../screens/whiteboard-screen';
-import { isPresenter } from '../../store/redux/slices/current-user';
 import {
   setDetailedInfo,
   setFocusedElement,
@@ -17,31 +16,22 @@ import {
 } from '../../store/redux/slices/wide-app/layout';
 import Styled from './styles';
 import Settings from '../../../settings.json';
+import Queries from './queries';
 
 const ContentArea = (props) => {
   const { style, fullscreen } = props;
   const { PictureInPictureModule } = NativeModules;
 
-  const presentationsStore = useSelector((state) => state.presentationsCollection);
   const isPiPEnabled = useSelector((state) => state.layout.isPiPEnabled);
+  const { data } = useSubscription(Queries.CURRENT_PRESENTATION_PAGE_SUBSCRIPTION);
   const screenshare = useSelector(selectScreenshare);
+
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const amIPresenter = useSelector(isPresenter);
   const { t } = useTranslation();
 
+  const currentSlide = data?.pres_page_curr[0].svgUrl;
   const isAndroid = Platform.OS === 'android';
-
-  const handleSlideAndPresentationActive = useCallback(() => {
-    const currentPresentation = Object.values(
-      presentationsStore.presentationsCollection
-    ).filter((obj) => obj.current);
-    if (currentPresentation.length === 0) {
-      return;
-    }
-    const imageUri = currentPresentation[0]?.currentSlideSvgUri;
-    return imageUri?.replace('/svg/', '/png/');
-  }, [presentationsStore]);
 
   const handleFullscreenClick = () => {
     dispatch(setIsFocused(true));
@@ -79,18 +69,12 @@ const ContentArea = (props) => {
 
   // ** Content area views methods **
   const presentationView = () => {
-    if (!amIPresenter && !isPiPEnabled) {
-      return (
-        <WhiteboardScreen />
-      );
-    }
-
     return (
       <Styled.Presentation
         width="100%"
         height="100%"
         source={{
-          uri: handleSlideAndPresentationActive(),
+          uri: currentSlide,
         }}
       />
     ); };

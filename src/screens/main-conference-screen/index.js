@@ -15,8 +15,8 @@ const DEVICE_HEIGHT = parseInt(Dimensions.get('window').height, 10);
 const DEVICE_WIDTH = parseInt(Dimensions.get('window').width, 10);
 
 const MainConferenceScreen = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const initialChatMsgsFetched = useSelector((state) => state.client.initialChatMsgsFetched);
+  const [isLoading, setIsLoading] = useState(false);
+  // const initialChatMsgsFetched = useSelector((state) => state.client.initialChatMsgsFetched);
   const isPiPEnabled = useSelector((state) => state.layout.isPiPEnabled);
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -35,14 +35,14 @@ const MainConferenceScreen = () => {
     }
   }, [appState]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setIsLoading(true);
-      if (initialChatMsgsFetched) {
-        setIsLoading(false);
-      }
-    }, [initialChatMsgsFetched])
-  );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     setIsLoading(true);
+  //     if (initialChatMsgsFetched) {
+  //       setIsLoading(false);
+  //     }
+  //   }, [initialChatMsgsFetched])
+  // );
 
   /* view components */
   const renderGridLayout = () => {
