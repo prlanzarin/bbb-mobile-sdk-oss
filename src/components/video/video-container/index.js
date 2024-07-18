@@ -24,7 +24,7 @@ const VideoContainer = (props) => {
     visible,
     isGrid,
     userRole,
-    userEmoji,
+    raiseHand,
   } = props;
 
   const dispatch = useDispatch();
@@ -98,7 +98,7 @@ const VideoContainer = (props) => {
   };
 
   const renderRaisedHand = () => {
-    if (userEmoji === 'raiseHand') {
+    if (raiseHand) {
       return (
         <Styled.HandRaisedIcon />
       );
