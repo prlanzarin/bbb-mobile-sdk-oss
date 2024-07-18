@@ -1,6 +1,7 @@
 import {
   useCallback, useRef, useMemo, useState
 } from 'react';
+import { useSubscription, useMutation } from '@apollo/client';
 import {
   KeyboardAvoidingView, Platform, Text, View
 } from 'react-native';
@@ -14,15 +15,16 @@ import { useBottomSheetBackHandler } from '../../../hooks/useBottomSheetBackHand
 import { setHasUnreadMessages, setBottomChatOpen } from '../../../store/redux/slices/wide-app/chat';
 import UserAvatar from '../../user-avatar';
 import IconButtonComponent from '../../icon-button';
-import { useChatMsgs } from '../../../hooks/selectors/chat/use-chat-msgs';
-import ChatService from '../service';
 import Colors from '../../../constants/colors';
 import Styled from './styles';
+import Queries from './queries';
 
 const BottomSheetChat = () => {
-  const messages = useChatMsgs();
   const height = useHeaderHeight();
   const { t } = useTranslation();
+  const { data } = useSubscription(Queries.CHAT_MESSAGE_PUBLIC_SUB);
+  const [dispatchSendMessage] = useMutation(Queries.SEND_MESSAGE_MUTATION);
+  const messages = data?.chat_message_public;
 
   const sheetRef = useRef(null);
   const flatListRef = useRef(null);
@@ -38,6 +40,15 @@ const BottomSheetChat = () => {
       dispatch(setHasUnreadMessages(false));
     }
   }, []);
+
+  const handleSendMessage = (message) => {
+    dispatchSendMessage({
+      variables: {
+        chatId: 'MAIN-PUBLIC-GROUP-CHAT',
+        chatMessageInMarkdownFormat: message,
+      },
+    });
+  };
 
   useBottomSheetBackHandler(isBottomChatOpen, sheetRef, () => {});
 
@@ -55,18 +66,18 @@ const BottomSheetChat = () => {
   };
 
   const renderItem = useCallback(({ item }) => {
-    const timestamp = new Date(item.timestamp);
+    const timestamp = new Date(item.createdAt);
     return (
       <View style={Styled.styles.item} key={item.timestamp}>
         <Styled.ContainerItem>
           <UserAvatar
-            userName={item.author}
-            userRole={item.role}
-            userId={item.senderUserId}
+            userName={item.senderName}
+            userRole={item.senderRole}
+            userId={item.senderId}
           />
           <Styled.Card>
             <Styled.MessageTopContainer>
-              <Styled.MessageAuthor selectable>{item.author}</Styled.MessageAuthor>
+              <Styled.MessageAuthor selectable>{item.senderName}</Styled.MessageAuthor>
               <Styled.MessageTimestamp>
                 {`${String(timestamp.getHours()).padStart(2, '0')}:${String(
                   timestamp.getMinutes()
@@ -81,7 +92,7 @@ const BottomSheetChat = () => {
   }, []);
 
   const renderEmptyChatHandler = () => {
-    if (messages.length !== 0) {
+    if (messages?.length !== 0) {
       return null;
     }
     return <Styled.NoMessageText>{t('mobileSdk.chat.isEmptyLabel')}</Styled.NoMessageText>;
@@ -104,10 +115,10 @@ const BottomSheetChat = () => {
           ref={flatListRef}
           initialNumToRender={7}
           maxToRenderPerBatch={50}
-          data={messages.reverse()}
+          data={messages}
           updateCellsBatchingPeriod={500}
           renderItem={renderItem}
-          keyExtractor={(item) => item.timestamp}
+          keyExtractor={(item) => item.createdAt}
           style={Styled.styles.list}
         />
         <KeyboardAvoidingView
@@ -130,7 +141,7 @@ const BottomSheetChat = () => {
               animated
               onPress={() => {
                 setMessageText('');
-                return ChatService.handleSendChatMsg(messageText);
+                return handleSendMessage(messageText);
               }}
             />
           </Styled.SendMessageContainer>

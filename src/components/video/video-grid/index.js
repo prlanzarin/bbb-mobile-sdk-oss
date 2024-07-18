@@ -32,6 +32,7 @@ const GridView = () => {
       visible,
       role,
       emoji,
+      raiseHand
     } = vuItem;
 
     // TODO: MULTIPLE CAMERAS
@@ -55,6 +56,7 @@ const GridView = () => {
           usersCount={videoUsers.length}
           userRole={role}
           userEmoji={emoji}
+          raiseHand={raiseHand}
         />
       </Styled.Item>
     );
