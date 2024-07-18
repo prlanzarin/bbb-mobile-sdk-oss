@@ -1,36 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useSubscription } from '@apollo/client';
 import { useDispatch, useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 import { setBottomChatOpen, setHasShownInFastChat } from '../../../store/redux/slices/wide-app/chat';
-import { useChatMsgs } from '../../../hooks/selectors/chat/use-chat-msgs';
 import ChatPopupItem from './chat-popout-item';
+import Queries from './queries';
 import Styled from './styles';
 
 const ChatPopupList = () => {
   const dispatch = useDispatch();
-  const messages = useChatMsgs();
+
+  const { data } = useSubscription(Queries.CHAT_MESSAGE_PUBLIC_SUB);
+  const messages = data?.chat_message_public || [];
 
   const [showMessage, setShowMessage] = useState(false);
-  const lastMessage = messages[messages.length - 1];
-  const detailedInfo = useSelector((state) => state.layout.detailedInfo);
-  const hasUnreadMessages = useSelector((state) => state.chat.hasUnreadMessages);
-  const hasShownInFastChat = useSelector((state) => state.chat.hasShownInFastChat);
+  const lastMessage = messages[0];
   const isBottomChatOpen = useSelector((state) => state.chat.isBottomChatOpen);
 
-  useEffect(() => {
-    if (lastMessage?.message
-      && !detailedInfo
-      && hasUnreadMessages
-      && !hasShownInFastChat
+  useFocusEffect(
+    useCallback(() => {
+      if (lastMessage?.message
       && !isBottomChatOpen) {
-      setShowMessage(true);
-    }
-    const timer = setTimeout(() => {
-      setShowMessage(false);
-      dispatch(setHasShownInFastChat(true));
-    }, 3000);
+        setShowMessage(true);
+      }
+      const timer = setTimeout(() => {
+        setShowMessage(false);
+        dispatch(setHasShownInFastChat(true));
+      }, 3000);
 
-    return () => clearTimeout(timer);
-  }, [messages.length]);
+      return () => clearTimeout(timer);
+    }, [messages.length])
+  );
 
   if (showMessage) {
     return (
