@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 const TALKING_INDICATOR_SUBSCRIPTION = gql`subscription {
     user_voice(
-      where: { showTalkingIndicator: { _eq: true } }
+      where: { talking: { _eq: true } }
       order_by: [{ startTime: asc_nulls_last }]
       limit: 3
     ) {
