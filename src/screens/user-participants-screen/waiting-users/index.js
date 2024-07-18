@@ -1,58 +1,64 @@
-import { useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import { useMutation } from '@apollo/client';
+import { useEffect  } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrientation } from '../../../hooks/use-orientation';
 import ScreenWrapper from '../../../components/screen-wrapper';
 import Styled from './styles';
-import Service from './service';
 import Colors from '../../../constants/colors';
-import { selectWaitingUsers } from '../../../store/redux/slices/guest-users';
-import { isModerator } from '../../../store/redux/slices/current-user';
+import { SUBMIT_APPROVAL_STATUS } from '../../../graphql/mutations/guestPolicy';
+import useGuestWaitingList from '../../../graphql/hooks/useGuestWaitingList'
+import useCurrentUser from '../../../graphql/hooks/useCurrentUser'
 
 const ALLOW_STATUS = 'ALLOW';
 const DENY_STATUS = 'DENY';
 
 const WaitingUsersScreen = ({ navigation }) => {
-  const amIModerator = useSelector(isModerator);
-  const pendingUsers = useSelector(selectWaitingUsers);
   const { t } = useTranslation();
+  const { data: currentUserData, loading, error } = useCurrentUser();
+  const { data: pendingUsersData } = useGuestWaitingList();
+  const currentUser = currentUserData?.user_current[0];
+  const pendingUsers = pendingUsersData?.user_guest || [];
+  const [dispatchSubmitApprovalStatus] = useMutation(SUBMIT_APPROVAL_STATUS);
 
-  const handleUsersName = useCallback(
-    () => pendingUsers.map((user) => {
-      return {
-        name: user.name,
-        role: user.role,
-        color: user.color,
-        // ...other properties
-      };
-    }),
-    [pendingUsers]
-  );
+  const handleDispatchSubmitApprovalStatus = (waitingGuests, status) => {
+    const formattedGuests = Array.isArray(waitingGuests) ? waitingGuests : [waitingGuests];
+    const guests = formattedGuests.map(guest => ({
+      guest: guest.userId,
+      status: status
+    }));
+
+    dispatchSubmitApprovalStatus({
+      variables: {
+        guests
+      }
+    })
+  };
 
   const orientation = useOrientation();
 
   const renderItem = ({ item, index }) => {
+
     return (
       <Styled.UserCard>
         <Styled.UserAvatar
-          userName={item.name}
-          userRole={item.role}
-          userColor={item.color}
+          userName={item.user.name}
+          userRole={item.user.role}
+          userColor={item.user.color}
         />
-        <Styled.UserName>{item.name}</Styled.UserName>
+        <Styled.UserName>{item.user.name}</Styled.UserName>
         <Styled.AllowButton
           icon="check-circle-outline"
           iconColor={Colors.green}
           animated
           size={32}
-          onPress={() => { Service.handleAllowPendingUsers([pendingUsers[index]], ALLOW_STATUS); }}
+          onPress={() => {handleDispatchSubmitApprovalStatus(pendingUsers[index], ALLOW_STATUS)}}
         />
         <Styled.DenyButton
           icon="close-circle-outline"
           iconColor={Colors.red}
           animated
           size={32}
-          onPress={() => { Service.handleAllowPendingUsers([pendingUsers[index]], DENY_STATUS); }}
+          onPress={() => {handleDispatchSubmitApprovalStatus(pendingUsers[index], DENY_STATUS)}}
         />
       </Styled.UserCard>
     );
@@ -62,10 +68,12 @@ const WaitingUsersScreen = ({ navigation }) => {
   useEffect(() => {
     // user got demoted to viewer, go out of this screen as he does not have
     // permission to use it
-    if (!amIModerator) {
-      navigation.goBack();
+    if (!loading) {
+      if (!currentUser?.isModerator || error) {
+        navigation.goBack();
+      }
     }
-  }, [amIModerator]);
+  }, [currentUserData, loading, error]);
 
   return (
     <ScreenWrapper>
@@ -83,9 +91,9 @@ const WaitingUsersScreen = ({ navigation }) => {
           <Styled.AccRejContainer>
             <Styled.AccRejButtons>
               <Styled.AccRejButtonsText
-                disabled={pendingUsers.length === 0}
+                disabled={pendingUsers?.length === 0}
                 onPress={() => {
-                  Service.handleAllowPendingUsers(pendingUsers, ALLOW_STATUS);
+                  handleDispatchSubmitApprovalStatus(pendingUsers, ALLOW_STATUS)
                   navigation.goBack();
                 }}
               >
@@ -94,9 +102,9 @@ const WaitingUsersScreen = ({ navigation }) => {
             </Styled.AccRejButtons>
             <Styled.AccRejButtons>
               <Styled.AccRejButtonsText
-                disabled={pendingUsers.length === 0}
+                disabled={pendingUsers?.length === 0}
                 onPress={() => {
-                  Service.handleAllowPendingUsers(pendingUsers, DENY_STATUS);
+                  handleDispatchSubmitApprovalStatus(pendingUsers, DENY_STATUS)
                   navigation.goBack();
                 }}
               >
@@ -104,8 +112,8 @@ const WaitingUsersScreen = ({ navigation }) => {
               </Styled.AccRejButtonsText>
             </Styled.AccRejButtons>
           </Styled.AccRejContainer>
-          {pendingUsers.length > 0
-            ? <Styled.FlatList data={handleUsersName()} renderItem={renderItem} />
+          {pendingUsers?.length > 0
+            ? <Styled.FlatList data={pendingUsers} renderItem={renderItem} />
             : (
               <Styled.NoPendingUsersText>
                 {t('app.userList.guest.noPendingUsers')}

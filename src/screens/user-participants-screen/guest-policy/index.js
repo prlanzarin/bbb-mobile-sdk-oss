@@ -1,13 +1,13 @@
+import { useMutation, useSubscription } from '@apollo/client';
 import { useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useOrientation } from '../../../hooks/use-orientation';
 import ScreenWrapper from '../../../components/screen-wrapper';
 import Styled from './styles';
-import { selectUsersProp } from '../../../store/redux/slices/meeting';
-import { isModerator } from '../../../store/redux/slices/current-user';
-import Service from './service';
 import Colors from '../../../constants/colors';
+import useCurrentUser from '../../../graphql/hooks/useCurrentUser'
+import { SET_POLICY } from '../../../graphql/mutations/guestPolicy';
+import { GET_POLICY } from '../../../graphql/queries/guestSubscription';
 
 const guestPolicies = {
   ASK_MODERATOR: 'ASK_MODERATOR',
@@ -16,19 +16,34 @@ const guestPolicies = {
 };
 
 const GuestPolicyScreen = ({ navigation }) => {
-  const guestPolicy = useSelector((state) => selectUsersProp(state, 'guestPolicy'));
-  const amIModerator = useSelector(isModerator);
   const orientation = useOrientation();
   const { t } = useTranslation();
+  const [dispatchSetPolicy] = useMutation(SET_POLICY);
+
+  const { data: currentUserData, loading, error } = useCurrentUser();
+  const currentUser = currentUserData?.user_current[0];
+  const { data: guestPolicyData } = useSubscription(GET_POLICY);
+  const guestPolicy = guestPolicyData?.meeting[0]?.usersPolicies?.guestPolicy
+
+  const handleDispatchSetPolicy = (guestPolicy) => {
+    dispatchSetPolicy({
+      variables: {
+        guestPolicy
+      }
+    })
+  };
 
   // lifecycle methods
   useEffect(() => {
     // user got demoted to viewer, go out of this screen as he does not have
     // permission to use it
-    if (!amIModerator) {
-      navigation.goBack();
+    if (!loading) {
+      if (!currentUser?.isModerator || error) {
+        navigation.goBack();
+      }
     }
-  }, [amIModerator]);
+  }, [currentUserData, loading, error]);
+
 
   return (
     <ScreenWrapper>
@@ -48,7 +63,7 @@ const GuestPolicyScreen = ({ navigation }) => {
               selected={guestPolicy === guestPolicies.ASK_MODERATOR}
               disabled={guestPolicy === guestPolicies.ASK_MODERATOR}
               onPress={() => {
-                Service.handleChangeGuestPolicy(guestPolicies.ASK_MODERATOR);
+                handleDispatchSetPolicy(guestPolicies.ASK_MODERATOR);
               }}
             >
               {t('app.guest-policy.button.askModerator')}
@@ -57,7 +72,7 @@ const GuestPolicyScreen = ({ navigation }) => {
               selected={guestPolicy === guestPolicies.ALWAYS_ACCEPT}
               disabled={guestPolicy === guestPolicies.ALWAYS_ACCEPT}
               onPress={() => {
-                Service.handleChangeGuestPolicy(guestPolicies.ALWAYS_ACCEPT);
+                handleDispatchSetPolicy(guestPolicies.ALWAYS_ACCEPT);
               }}
             >
               {t('app.userList.guest.allowEveryone')}
@@ -66,7 +81,7 @@ const GuestPolicyScreen = ({ navigation }) => {
               selected={guestPolicy === guestPolicies.ALWAYS_DENY}
               disabled={guestPolicy === guestPolicies.ALWAYS_DENY}
               onPress={() => {
-                Service.handleChangeGuestPolicy(guestPolicies.ALWAYS_DENY);
+                handleDispatchSetPolicy(guestPolicies.ALWAYS_DENY);
               }}
             >
               {t('app.userList.guest.denyEveryone')}
