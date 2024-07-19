@@ -1,4 +1,5 @@
 import styled from 'styled-components/native';
+import { DrawerItem, DrawerContentScrollView } from '@react-navigation/drawer';
 import { css } from 'styled-components';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import Tag from '../tag';
@@ -97,6 +98,53 @@ const BetaTag = styled(Tag)`
   right: 12px;
 `;
 
+const DrawerItemNotImplemented = ({ label, onPress, iconName }) => {
+  return (
+    <DrawerItem
+      label={label}
+      labelStyle={TextButtonLabel}
+      style={{ opacity: 0.3 }}
+      onPress={onPress}
+      inactiveTintColor={Colors.lightGray400}
+      inactiveBackgroundColor={Colors.lightGray100}
+      icon={() => (
+        <DrawerIcon name={iconName} size={24} color="#1C1B1F" />
+      )}
+    />
+  );
+};
+
+const DrawerItemBottom = ({ label, onPress, iconName }) => {
+  return (
+    <DrawerItem
+      label={label}
+      labelStyle={TextButtonLabel}
+      onPress={onPress}
+      inactiveTintColor={Colors.lightGray400}
+      inactiveBackgroundColor={Colors.lightGray100}
+      icon={() => <DrawerIcon name={iconName} size={24} color="#1C1B1F" />}
+    />
+  );
+};
+
+const DrawerScrollView = ({ children }) => (
+  <DrawerContentScrollView
+    contentContainerStyle={{ backgroundColor: Colors.blue }}
+  >
+    {children}
+  </DrawerContentScrollView>
+);
+
+const UserAvatarDrawer = ({ currentUser }) => (
+  <UserAvatar
+    userName={currentUser?.name}
+    userRole={currentUser?.role}
+    userColor={currentUser?.color}
+    userImage={currentUser?.avatar}
+    presenter={currentUser?.presenter}
+  />
+);
+
 export default {
   ViewContainer,
   CustomDrawerContainer,
@@ -112,4 +160,8 @@ export default {
   ViewShareContainer,
   BetaTag,
   DrawerIcon,
+  DrawerItemNotImplemented,
+  DrawerItemBottom,
+  DrawerScrollView,
+  UserAvatarDrawer
 };
