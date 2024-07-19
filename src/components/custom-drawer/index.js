@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useSubscription } from '@apollo/client';
 import { Share, Platform, NativeModules } from 'react-native';
@@ -24,8 +24,8 @@ const CustomDrawer = (props) => {
   const { data } = useSubscription(queries.USER_CURRENT_SUBSCRIPTION);
   const { t } = useTranslation();
 
-  const isBreakout = useSelector((state) => state.client.meetingData.isBreakout);
   const currentUserObj = data?.user_current[0];
+  const isBreakoutRoom = currentUserObj?.meeting?.isBreakout;
   const isAndroid = Platform.OS === 'android';
   const isLandscape = useOrientation() === 'LANDSCAPE';
 
@@ -75,7 +75,7 @@ const CustomDrawer = (props) => {
         inactiveBackgroundColor={Colors.lightGray100}
         icon={() => <Styled.DrawerIcon name="bluetooth-audio" size={24} color="#1C1B1F" />}
       />
-      {!isBreakout && meetingUrl && (
+      {!isBreakoutRoom && meetingUrl && (
         <DrawerItem
           label={t('mobileSdk.drawer.shareButtonLabel')}
           labelStyle={Styled.TextButtonLabel}
@@ -86,7 +86,7 @@ const CustomDrawer = (props) => {
         />
       )}
       <DrawerItem
-        label={isBreakout ? t('mobileSdk.breakout.leave') : t('app.navBar.settingsDropdown.leaveSessionLabel')}
+        label={isBreakoutRoom ? t('mobileSdk.breakout.leave') : t('app.navBar.settingsDropdown.leaveSessionLabel')}
         labelStyle={Styled.TextButtonLabel}
         onPress={leaveSession}
         inactiveTintColor={Colors.lightGray400}

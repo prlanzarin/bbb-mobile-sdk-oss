@@ -7,6 +7,9 @@ const USER_CURRENT_SUBSCRIPTION = gql`subscription {
       color
       avatar
       presenter
+      meeting {
+        isBreakout
+      }
     }
   }`;
 
