@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { useSubscription } from '@apollo/client';
 import { Share, Platform, NativeModules } from 'react-native';
 import {
   DrawerContentScrollView,
@@ -9,20 +10,22 @@ import {
 import Colors from '../../constants/colors';
 import { useOrientation } from '../../hooks/use-orientation';
 import { setExpandActionsBar } from '../../store/redux/slices/wide-app/layout';
-import { selectCurrentUser } from '../../store/redux/slices/current-user';
 import { setProfile } from '../../store/redux/slices/wide-app/modal';
 import logger from '../../services/api';
 import * as api from '../../services/api';
 import { leave } from '../../store/redux/slices/wide-app/client';
 import Settings from '../../../settings.json';
 import Styled from './styles';
+import queries from './queries';
 
 const CustomDrawer = (props) => {
   const { meetingUrl, navigation } = props;
   const dispatch = useDispatch();
+  const { data } = useSubscription(queries.USER_CURRENT_SUBSCRIPTION);
   const { t } = useTranslation();
-  const currentUserObj = useSelector(selectCurrentUser);
+
   const isBreakout = useSelector((state) => state.client.meetingData.isBreakout);
+  const currentUserObj = data?.user_current[0];
   const isAndroid = Platform.OS === 'android';
   const isLandscape = useOrientation() === 'LANDSCAPE';
 
