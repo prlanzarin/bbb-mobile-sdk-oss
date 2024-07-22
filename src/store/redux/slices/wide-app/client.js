@@ -7,6 +7,10 @@ const JOIN_ENTER_RETRIES = 5;
 const FEEDBACK_ENABLED = Settings.feedback.enabled;
 
 const initialState = {
+  api: {
+    graphqlWebsocketUrl: null,
+    graphqlApiUrl: null,
+  },
   sessionState: {
     connected: false,
     loggedIn: false,
@@ -33,6 +37,7 @@ const initialState = {
     isBreakout: null,
     customdata: null,
   },
+  initialCurrentUser: null,
   breakoutData: {
     parentMeetingJoinUrl: null,
   },
@@ -52,6 +57,21 @@ const clientSlice = createSlice({
   name: 'client',
   initialState,
   reducers: {
+    setApi: (state, action) => {
+      state.api = action.payload;
+    },
+    setHost: (state, action) => {
+      state.meetingData.host = action.payload;
+    },
+    setSessionToken: (state, action) => {
+      state.meetingData.sessionToken = action.payload;
+    },
+    setJoinUrl: (state, action) => {
+      state.meetingData.joinUrl = action.payload;
+    },
+    setInitialCurrentUser: (state, action) => {
+      state.initialCurrentUser = action.payload;
+    },
     setConnected: (state, action) => {
       state.sessionState.connected = action.payload;
     },
@@ -77,9 +97,6 @@ const clientSlice = createSlice({
     },
     setBreakoutData: (state, action) => {
       state.breakoutData = action.payload;
-    },
-    setJoinUrl: (state, action) => {
-      state.meetingData.joinUrl = action.payload;
     },
     setFeedbackEnabled: (state, action) => {
       state.feedbackEnabled = action.payload;
@@ -379,6 +396,10 @@ export {
 };
 
 export const {
+  setApi,
+  setHost,
+  setSessionToken,
+  setInitialCurrentUser,
   setConnected,
   setLoggedIn,
   setLoggingOut,

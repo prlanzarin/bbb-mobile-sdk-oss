@@ -2,25 +2,29 @@ import { useEffect, useState, useRef } from 'react';
 import {
   ApolloClient, InMemoryCache, ApolloLink,
 } from '@apollo/client';
+import { useDispatch } from 'react-redux';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import { onError } from '@apollo/client/link/error';
 import UrlUtils from '../../utils/functions';
+import {
+  setJoinUrl, setApi, setHost, setSessionToken
+} from '../../store/redux/slices/wide-app/client';
 
 const useJoinMeeting = () => {
   const [loginStage, setLoginStage] = useState(0);
-  const [sessionToken, setSessionToken] = useState(null);
+  const [sessionToken, setLocalSessionToken] = useState(null);
   const [urlWithSessionId, setUrlWithSessionId] = useState(null);
   const [graphqlUrlApolloClient, setApolloClient] = useState(null);
   const [graphqlWebsocketUrl, setGraphqlWebsocketUrl] = useState(null);
   const [graphqlApiUrl, setGraphqlApiUrl] = useState(null);
-  const [clientStartupSettings, setClientStartupSettings] = useState(null);
   const [clientSettings, setClientSettings] = useState(null);
-  const [host, setHost] = useState('');
+  const [host, setLocalHost] = useState('');
   const activeSocket = useRef();
   const numberOfAttempts = useRef(20);
   const tsLastMessageRef = useRef(0);
   const tsLastPingMessageRef = useRef(0);
+  const dispatch = useDispatch();
 
   const url = '';
 
@@ -29,8 +33,11 @@ const useJoinMeeting = () => {
       .then((data) => {
         if (data.status === 200) {
           setUrlWithSessionId(data.url);
-          setSessionToken(UrlUtils.parseQueryString(data.url).sessionToken);
-          setHost(UrlUtils.getHostFromUrl(url));
+          setLocalSessionToken(UrlUtils.parseQueryString(data.url).sessionToken);
+          setLocalHost(UrlUtils.getHostFromUrl(url));
+          dispatch(setJoinUrl(url));
+          dispatch(setHost(UrlUtils.getHostFromUrl(url)));
+          dispatch(setSessionToken(UrlUtils.parseQueryString(data.url).sessionToken));
           console.log('DONE STAGE 0');
           setLoginStage(1);
         }
@@ -61,6 +68,10 @@ const useJoinMeeting = () => {
           const gqUrl = data.graphqlApiUrl;
           setGraphqlApiUrl(gqUrl);
           setGraphqlWebsocketUrl(gqWs);
+          dispatch(setApi({
+            graphqlWebsocketUrl: gqWs,
+            graphqlApiUrl: gqUrl,
+          }));
           console.log('DONE STAGE 2');
           setLoginStage(3);
         } catch (error) {
@@ -251,7 +262,6 @@ const useJoinMeeting = () => {
     graphqlUrlApolloClient,
     sessionToken,
     loginStage,
-    clientStartupSettings,
     clientSettings
   };
 };

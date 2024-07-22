@@ -18,10 +18,9 @@ const MainNavigator = () => {
 
   const {
     graphqlUrlApolloClient,
-    sessionToken,
+
     loginStage,
-    clientStartupSettings,
-    clientSettings
+
   } = joinObject;
 
   useEffect(() => {
