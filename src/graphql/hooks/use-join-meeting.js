@@ -73,19 +73,19 @@ const useJoinMeeting = () => {
   }
 
   async function getClientStartupSettings() {
-    fetch(`${graphqlApiUrl}/clientStartupSettings`, {
-      credentials: 'include',
-      headers: {
-        'X-Session-Token': sessionToken,
-      }
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setClientStartupSettings(data.meeting_clientSettings[0]);
-        console.log('DONE STAGE 3');
-        setLoginStage(4);
-      })
-      .catch((error) => console.error('error getClientStartupSettings()', error));
+    // fetch(`${graphqlApiUrl}/clientStartupSettings`, {
+    //   credentials: 'include',
+    //   headers: {
+    //     'X-Session-Token': sessionToken,
+    //   }
+    // })
+    //   .then((response) => response.json())
+    //   .then((data) => {
+    //     setClientStartupSettings(data.meeting_clientSettings[0]);
+    console.log('DONE STAGE 3');
+    setLoginStage(4);
+    // })
+    // .catch((error) => console.error('error getClientStartupSettings()', error));
   }
 
   const errorLink = onError(({ graphQLErrors, networkError }) => {
