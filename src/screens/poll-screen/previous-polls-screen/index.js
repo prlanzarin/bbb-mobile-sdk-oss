@@ -1,5 +1,6 @@
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useSubscription } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useOrientation } from '../../../hooks/use-orientation';
@@ -9,6 +10,7 @@ import { hasCurrentPollSelector, selectCurrentPoll } from '../../../store/redux/
 import ScreenWrapper from '../../../components/screen-wrapper';
 import PreviousPollCard from './poll-card';
 import Styled from './styles';
+import Queries from './queries';
 
 const PreviousPollScreen = () => {
   const { t } = useTranslation();
@@ -16,7 +18,10 @@ const PreviousPollScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  const previousPollPublishedStore = useSelector((state) => state.previousPollPublishedCollection);
+  const { data: pollData } = useSubscription(Queries.POLL_SUBSCRIPTION);
+  const hasPublishedPolls = pollData?.poll?.length > 0;
+  const isRespondingPoll = false;
+
   const currentPollObj = useSelector(selectCurrentPoll);
   const hasCurrentPoll = useSelector(hasCurrentPollSelector);
   const amIPresenter = useSelector(isPresenter);
@@ -41,8 +46,7 @@ const PreviousPollScreen = () => {
     );
   };
 
-  if (Object.keys(previousPollPublishedStore.previousPollPublishedCollection)
-    .length === 0 && (isPresenter && !hasCurrentPoll)) {
+  if (isRespondingPoll && (isPresenter && !hasCurrentPoll)) {
     return (
       <ScreenWrapper>
         <Styled.ContainerCentralizedView>
@@ -66,17 +70,17 @@ const PreviousPollScreen = () => {
   }
 
   const renderMethod = () => {
-    const invertPublishedPolls = Object.values(
-      previousPollPublishedStore.previousPollPublishedCollection
-    );
+    if (!hasPublishedPolls) {
+      return;
+    }
+    const publishedPolls = pollData?.poll;
 
     if (hasCurrentPoll && amIPresenter) {
-      invertPublishedPolls.push({ ...currentPollObj, receivingAnswers: true, id: `${currentPollObj.id}_current` });
+      publishedPolls?.push({ ...currentPollObj, receivingAnswers: true, id: `${currentPollObj.id}_current` });
     }
-    invertPublishedPolls.reverse();
 
     return (
-      invertPublishedPolls.map((pollObj) => <PreviousPollCard pollObj={pollObj} key={pollObj.id} />)
+      publishedPolls?.map((pollObj) => <PreviousPollCard pollObj={pollObj} key={pollObj.id} />)
     );
   };
 

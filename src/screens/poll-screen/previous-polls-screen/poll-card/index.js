@@ -1,82 +1,54 @@
-import { useCallback, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useState } from 'react';
 import { View } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { trigDetailedInfo } from '../../../../store/redux/slices/wide-app/layout';
-import { selectUsersName } from '../../../../store/redux/slices/users';
 import ActivityBar from '../../../../components/activity-bar';
 import PollService from '../../service';
 import Styled from './styles';
 
 const PreviousPollCard = (props) => {
   const { pollObj } = props;
+  const {
+    publishedAt,
+    pollId,
+    type,
+    questionText,
+    responses,
+    multipleResponses,
+    secret,
+    ended
+  } = pollObj;
 
   const { t } = useTranslation();
   const dispatch = useDispatch();
 
-  const noPollLocale = pollObj?.questionType === 'CUSTOM' || pollObj?.questionType === 'R-';
-  const timestamp = new Date(parseInt(pollObj.id.split('/')[2], 10));
-  const isReceivingAnswers = pollObj?.receivingAnswers;
-  const answersType = pollObj?.answers;
-  const usersName = useSelector(selectUsersName);
+  const noPollLocale = type === 'CUSTOM' || type === 'R-';
+  const isReceivingAnswers = !ended;
+  const timestamp = new Date(publishedAt);
 
   const [mappedObject, setMappedObject] = useState({});
   const [showUsersAnswers, setShowUsersAnswers] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      const mapObj = {};
-
-      answersType?.forEach((item) => {
-        const { id, ...rest } = item;
-        mapObj[id] = rest;
-      });
-
-      setMappedObject(mapObj);
-    }, [answersType?.length])
-  );
-
-  const returnStringfyAnswers = (arr) => {
-    const ansArray = [];
-    arr.forEach((item) => {
-      if (mappedObject ?? item) {
-        ansArray.push(mappedObject[item]?.key);
-      }
-    });
-    return ansArray;
-  };
-
-  const renderUsersAnswers = () => (
-    pollObj?.responses?.map((ans) => (
-      <Styled.UserAnswerComponent
-        key={ans.userId}
-        userId={ans.userId}
-        userName={usersName[ans.userId].name}
-        userAnswers={returnStringfyAnswers(ans.answerIds)}
-      />
-    ))
-  );
-
   const renderAnswers = () => (
-    pollObj.answers.map((answer) => (
-      <View key={answer.id}>
+    responses.map((response) => (
+      <View key={response.optionId}>
         <Styled.AnswerContainer>
           <Styled.LabelContainer>
             <Styled.PercentageText numberOfLines={1}>
-              {(pollObj?.numResponders === 0 || !pollObj?.numResponders
+              {(response.optionResponsesCount === 0
                 ? 0
-                : (answer.numVotes / pollObj.numResponders) * 100).toFixed(0)}
+                : (response.optionResponsesCount / response.pollResponsesCount) * 100).toFixed(0)}
               %
             </Styled.PercentageText>
             <Styled.KeyText>
-              {noPollLocale ? answer.key : t(`app.poll.answer.${answer.key}`.toLowerCase())}
+              {noPollLocale ? response.optionDesc : t(`app.poll.answer.${response.optionDesc}`.toLowerCase())}
             </Styled.KeyText>
           </Styled.LabelContainer>
           <ActivityBar
-            width={`${pollObj.numResponders === 0 || !pollObj?.numResponders
+            width={`${response.optionResponsesCount === 0
               ? 0
-              : (((answer.numVotes / pollObj.numResponders) * 100).toFixed(0))}%`}
+              : (((response.optionResponsesCount / response.pollResponsesCount) * 100).toFixed(0))}%`}
           />
         </Styled.AnswerContainer>
       </View>
@@ -87,7 +59,6 @@ const PreviousPollCard = (props) => {
     if (!isReceivingAnswers) {
       return (
         <Styled.PollInfoLabelContainer>
-          <Styled.PollInfoText>{`${pollObj.numResponders} / ${pollObj.numRespondents}`}</Styled.PollInfoText>
           <Styled.PollInfoText>
             {`${String(timestamp.getHours()).padStart(2, '0')}:${String(
               timestamp.getMinutes()
@@ -126,9 +97,9 @@ const PreviousPollCard = (props) => {
     <View>
       <Styled.ContainerPollCard onPress={() => dispatch(trigDetailedInfo())}>
         <Styled.QuestionText>
-          {pollObj?.questionText === '' || !pollObj.questionText
+          {questionText === '' || !questionText
             ? t('mobileSdk.poll.noQuestionTextProvided')
-            : pollObj.questionText}
+            : questionText}
         </Styled.QuestionText>
         {renderAnswers()}
         <Styled.CustomDivider />
