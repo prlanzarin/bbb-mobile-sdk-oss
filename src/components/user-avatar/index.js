@@ -4,7 +4,7 @@ import Styled from './styles';
 
 const UserAvatar = (props) => {
   const {
-    userName, userRole, userColor, userImage, isTalking, mini, userId, presenter
+    userName, userRole, userColor, userImage, isTalking, mini, userId, presenter, away
   } = props;
 
   const userColorByIntId = useSelector((state) => {
@@ -39,6 +39,13 @@ const UserAvatar = (props) => {
       {(presenter || userPresenterByIntId) && (
         <Styled.PresenterIcon
           icon="presentation"
+          size={mini ? 8 : 13}
+          mini={mini}
+        />
+      )}
+      {(away) && (
+        <Styled.AwayIcon
+          icon="clock-time-four-outline"
           size={mini ? 8 : 13}
           mini={mini}
         />

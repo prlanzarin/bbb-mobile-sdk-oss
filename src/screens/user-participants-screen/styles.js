@@ -96,6 +96,16 @@ const DividerTop = styled(Divider)`
   border-color: ${Colors.white};
 `;
 
+const LoadingWrapper = styled.View`
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  alignItems: center;
+  justifyContent: center;
+`;
+
 export default {
   UserAvatar,
   UserName,
@@ -106,5 +116,6 @@ export default {
   GuestPolicyText,
   DividerTop,
   Block,
-  GuestPolicyIcon
+  GuestPolicyIcon,
+  LoadingWrapper
 };

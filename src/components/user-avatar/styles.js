@@ -49,6 +49,21 @@ const PresenterIcon = styled(IconButtonComponent)`
   `}
 `;
 
+const AwayIcon = styled(IconButtonComponent)`
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background-color: ${Colors.white};
+
+  ${({ mini }) => mini && `
+    width: 10px;
+    height: 10px;
+  `}
+`;
+
 const ImageBackground = styled.Image`
   width: 45px;
   height: 45px;
@@ -85,4 +100,5 @@ export default {
   ImageBackground,
   ImageContainer,
   PresenterIcon,
+  AwayIcon
 };
