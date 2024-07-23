@@ -1,15 +1,17 @@
 import { useMutation, useSubscription } from '@apollo/client';
 import { Text } from 'react-native';
+import { useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import Queries from './queries';
+import { setInitialCurrentUser } from '../../store/redux/slices/wide-app/client';
 
 const UserJoinScreen = () => {
   const navigation = useNavigation();
-
   const [dispatchUserJoin] = useMutation(Queries.USER_JOIN_MUTATION);
   const { loading, error, data } = useSubscription(Queries.USER_CURRENT_SUBSCRIPTION);
   const currentUser = data?.user_current[0];
+  const dispatch = useDispatch();
 
   const handleDispatchUserJoin = (authToken) => {
     dispatchUserJoin({
@@ -24,7 +26,7 @@ const UserJoinScreen = () => {
   useEffect(() => {
     if (currentUser) {
       handleDispatchUserJoin(currentUser.authToken);
-
+      dispatch(setInitialCurrentUser(currentUser));
       // redirect to guest screen
       if (currentUser.guestStatus === 'WAIT') {
         navigation.navigate('GuestScreen');
