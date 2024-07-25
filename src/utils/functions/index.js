@@ -15,6 +15,35 @@ const humanizeSeconds = (time) => {
   },).join(':');
 };
 
+const humanizeSecondsWithHours = (time) => {
+  if (time == null || time < 0) {
+    return '00:00';
+  }
+
+  const hours = Math.floor(time / 3600);
+  const minutes = Math.floor((time % 3600) / 60);
+  const seconds = time % 60;
+
+  if (hours > 0) {
+    return [
+      hours,
+      minutes,
+      seconds
+    ]
+    .map(x => x < 10 ? `0${x}` : x)
+    .join(':');
+  } else if (minutes > 0) {
+    return [
+      minutes,
+      seconds
+    ]
+    .map(x => x < 10 ? `0${x}` : x)
+    .join(':');
+  } else {
+    return `00:${seconds < 10 ? `0${seconds}` : seconds}`;
+  }
+};
+
 const arraysEqual = (a1, a2) => {
   // eslint-disable-next-line eqeqeq
   return JSON.stringify(a1) == JSON.stringify(a2);
@@ -74,6 +103,7 @@ function xml2json(xmlString) {
 
 export default {
   humanizeSeconds,
+  humanizeSecondsWithHours,
   arraysEqual,
   parseQueryString,
   getHostFromUrl,

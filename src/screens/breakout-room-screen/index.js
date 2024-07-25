@@ -1,36 +1,65 @@
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from 'react';
-import { selectCurrentUserId } from '../../store/redux/slices/current-user';
+import { useCallback, useEffect, useState } from 'react';
 import { useOrientation } from '../../hooks/use-orientation';
 import AudioManager from '../../services/webrtc/audio-manager';
 import VideoManager from '../../services/webrtc/video-manager';
 import ScreenWrapper from '../../components/screen-wrapper';
-import BreakoutRoomService from './service';
 import UtilsService from '../../utils/functions';
 import Styled from './styles';
 import ExpandedCard from '../../components/expandable-card';
+import { useSubscription, useMutation } from '@apollo/client';
+import {
+  BREAKOUT_ROOM_SUBSCRIPTION,
+  BREAKOUT_ROOM_REQUEST_JOIN_URL,
+  FIRST_BREAKOUT_DURATION_DATA_SUBSCRIPTION
+} from './queries.js'
 
+//TODO: move breakoutTimeRemaining to a component
 const BreakoutRoomScreen = () => {
-  const breakoutsStore = useSelector((state) => state.breakoutsCollection);
-  const breakoutTimeRemaining = useSelector((state) => state.breakoutsCollection.timeRemaining);
-  const currentUserId = useSelector(selectCurrentUserId);
   const localCameraId = useSelector((state) => state.video.localCameraId);
-
-  const [breakoutsList, setBreakoutsList] = useState([]);
-  const [requestedUrl, setRequestedUrl] = useState(false);
   const [time, setTime] = useState(-100);
+  const [requestedUrl, setRequestedUrl] = useState(false);
+
+  const { data: breakoutData, loading: breakoutLoading, error: breakoutError } = useSubscription(BREAKOUT_ROOM_SUBSCRIPTION);
+  const { data: breakoutTimeData, loading: breakoutTimeLoading, error: breakoutTimeError } = useSubscription(FIRST_BREAKOUT_DURATION_DATA_SUBSCRIPTION);
+  const [dispatchRequestJoinUrl] = useMutation(BREAKOUT_ROOM_REQUEST_JOIN_URL);
+
+  const breakoutRoom = breakoutData?.breakoutRoom || [];
+  const hasBreakouts = breakoutRoom?.length !== 0;
+  const breakoutDuration = breakoutTimeData?.breakoutRoom[0]?.durationInSeconds;
+  const breakoutStartedAt = breakoutTimeData?.breakoutRoom[0]?.startedAt;
+  const breakoutStartedTime = new Date(breakoutStartedAt).getTime();
+  const endTime = breakoutStartedTime + (breakoutDuration * 1000);
+  const breakoutTimeRemaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
 
   const orientation = useOrientation();
   const navigation = useNavigation();
   const { t } = useTranslation();
 
-  const hasBreakouts = breakoutsList?.length !== 0;
+  useEffect(() => {
+    if (!breakoutLoading) {
+      if (breakoutError) {
+        console.error("BreakoutError: ", breakoutError)
+      };
+    }
+  }, [breakoutData, breakoutLoading, breakoutError]);
 
-  // ***** REACT LIFECYCLE FUNCTIONS *****
+  useEffect(() => {
+    if (!breakoutTimeLoading) {
+      if (breakoutTimeError) {
+        console.error("BreakoutTimeError: ", breakoutTimeError)
+      };
+    }
+  }, [breakoutTimeData, breakoutTimeLoading, breakoutTimeError]);
 
-  // this useEffect handles the breakout timer
+  useFocusEffect(
+    useCallback(() => {
+      setTime(breakoutTimeRemaining);
+    }, [breakoutTimeRemaining]),
+  );
+
   useFocusEffect(
     useCallback(() => {
       let interval;
@@ -52,41 +81,26 @@ const BreakoutRoomScreen = () => {
     }, [hasBreakouts]),
   );
 
-  // this useEffect handles the breakout timer syncing with server time
-  useFocusEffect(
-    useCallback(() => {
-      setTime(breakoutTimeRemaining);
-    }, [breakoutTimeRemaining]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      setBreakoutsList(Object.values(breakoutsStore.breakoutsCollection)
-        .map((filteredItem) => {
-          return {
-            shortName: filteredItem.shortName,
-            breakoutId: filteredItem.breakoutId,
-            joinedUsers: filteredItem.joinedUsers,
-            timeRemaining: filteredItem.timeRemaining,
-            sequence: filteredItem.sequence,
-            breakoutRoomJoinUrl: filteredItem[`url_${currentUserId}`]?.redirectToHtml5JoinURL
-          };
-        }));
-    }, [breakoutsStore]),
-  );
+  const handleDispatchRequestJoinUrl = (breakoutRoomId) => {
+    dispatchRequestJoinUrl({
+      variables: {
+        breakoutRoomId
+      }
+    })
+  };
 
   // ***** FUNCTIONS *****
 
   const joinSession = (breakoutRoomJoinUrl) => {
     AudioManager.exitAudio();
     VideoManager.unpublish(localCameraId);
-    navigation.navigate('InsideBreakoutRoomScreen', { joinUrl: breakoutRoomJoinUrl });
+    navigation.navigate('InsideBreakoutRoomScreen', { joinURL: breakoutRoomJoinUrl });
   };
 
   const handleJoinButton = (breakoutId, breakoutRoomJoinUrl) => {
     if (!breakoutRoomJoinUrl) {
       setRequestedUrl(true);
-      BreakoutRoomService.requestJoinURL(breakoutId);
+      handleDispatchRequestJoinUrl(breakoutId)
       setTimeout(() => setRequestedUrl(false), 3000);
     } else {
       joinSession(breakoutRoomJoinUrl);
@@ -95,13 +109,13 @@ const BreakoutRoomScreen = () => {
 
   // ***** RENDER FUNCTIONS *****
 
-  const renderUsersJoinedMiniAvatar = (joinedUsers) => {
+  const renderUsersJoinedMiniAvatar = (participants) => {
     return (
-      <Styled.MiniAvatarsContainer participantsCount={joinedUsers.length}>
+      <Styled.MiniAvatarsContainer participantsCount={participants.length}>
         {
-          joinedUsers.slice(0, 3).map((item, idx) => (
+          participants.slice(0, 3).map((item, idx) => (
             // the userId in breakout room has a -\S+/ after the original userId
-            <Styled.MiniAvatar userName={item.name} mini userId={item.userId.replace(/-\S+/, '')} key={item.userId + idx} />
+            <Styled.MiniAvatar userName={item.user.name} mini userId={item.userId.replace(/-\S+/, '')} key={item.userId + idx} />
           ))
         }
       </Styled.MiniAvatarsContainer>
@@ -116,51 +130,51 @@ const BreakoutRoomScreen = () => {
             <>
               <Styled.ShortName>{item.shortName}</Styled.ShortName>
               <Styled.ParticipantsContainer>
-                {renderUsersJoinedMiniAvatar(item.joinedUsers)}
+                {renderUsersJoinedMiniAvatar(item.participants)}
                 <Styled.ParticipantsCount>
-                  {`${item.joinedUsers.length} ${t('mobileSdk.breakout.participantsLabel')}`}
+                  {`${item.participants.length} ${t('mobileSdk.breakout.participantsLabel')}`}
                 </Styled.ParticipantsCount>
               </Styled.ParticipantsContainer>
             </>
-            )}
+          )}
           expandedContent={(
             <>
               <Styled.DividerTinyBottom />
-              {item.joinedUsers.map((user, idx) => {
+              {item.participants.map((user, idx) => {
                 return (
                   <Styled.ParticipantsContainerExpandable key={user.userId + idx}>
                     {/* // the userId in breakout room has a -\S+/ after the original userId */}
-                    <Styled.MiniAvatar userName={user.name} mini userId={user.userId.replace(/-\S+/, '')} />
-                    <Styled.UserNameText>{user.name}</Styled.UserNameText>
+                    <Styled.MiniAvatar userName={user.user.name} mini userId={user.userId.replace(/-\S+/, '')} />
+                    <Styled.UserNameText>{user.user.name}</Styled.UserNameText>
                   </Styled.ParticipantsContainerExpandable>
                 );
               })}
 
               <Styled.ButtonContainer>
                 <Styled.JoinBreakoutButton
-                  onPress={() => handleJoinButton(item.breakoutId, item.breakoutRoomJoinUrl)}
+                  onPress={() => handleJoinButton(item.breakoutRoomId, item.joinURL)}
                   loading={requestedUrl}
                 >
-                  {item.breakoutRoomJoinUrl ? 'Entrar' : 'Pedir para entrar'}
+                  {item.joinURL ? t('mobileSdk.breakout.join') : t('mobileSdk.breakout.askToJoin')}
                 </Styled.JoinBreakoutButton>
               </Styled.ButtonContainer>
             </>
           )}
           // 30px for each participant and 90 for the button
-          expandableHeight={item.joinedUsers.length * 30 + 90}
+          expandableHeight={item.participants.length * 30 + 90}
         />
       </Styled.Card>
     );
   };
 
   const renderBreakoutRoomsView = () => {
-    if (breakoutsList?.length === 0) {
+    if (breakoutRoom?.length === 0) {
       return;
     }
 
     return (
       <Styled.FlatList
-        data={breakoutsList.sort((a, b) => a.sequence - b.sequence)}
+        data={breakoutRoom?.sort((a, b) => a.sequence - b.sequence)}
         renderItem={renderItem}
         keyExtractor={(item) => item.breakoutId}
       />
@@ -175,7 +189,7 @@ const BreakoutRoomScreen = () => {
     if (time <= 0) {
       return t('mobileSdk.breakout.finishing');
     }
-    return UtilsService.humanizeSeconds(time);
+    return UtilsService.humanizeSecondsWithHours(time);
   };
 
   const renderBreakoutDurationCard = () => {

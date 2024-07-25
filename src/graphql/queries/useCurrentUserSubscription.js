@@ -1,6 +1,7 @@
 import { gql } from '@apollo/client';
 
-const USER_CURRENT_SUBSCRIPTION = gql`subscription {
+const USER_CURRENT_SUBSCRIPTION = gql`
+  subscription userCurrentSubscription {
     user_current {
       userId
       authToken
@@ -25,6 +26,7 @@ const USER_CURRENT_SUBSCRIPTION = gql`subscription {
           }
       }
     }
-  }`;
+  }
+`;
 
 export default USER_CURRENT_SUBSCRIPTION;
