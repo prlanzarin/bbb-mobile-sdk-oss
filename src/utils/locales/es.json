@@ -165,6 +165,8 @@
   "mobileSdk.breakout.leave": "Salir grupo de trabajo",
   "mobileSdk.breakout.joinedRoomsLabel": "Grupos de trabajo participantes",
   "mobileSdk.breakout.remainingRoomsLabel": "Otros grupos de trabajo",
+  "mobileSdk.breakout.askToJoin": "Solicitar unirte",
+  "mobileSdk.breakout.join": "Unirte",
   "mobileSdk.chat.breakoutDurationUpdated": "La duración del grupo de trabajo es ahora de {{minutes}} minutos.",
   "mobileSdk.notification.handsUp.title": "Levantaste la mano.",
   "mobileSdk.notification.handsUp.subtitle": "Los moderadores han sido notificados.",

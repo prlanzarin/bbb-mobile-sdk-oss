@@ -166,6 +166,8 @@
   "mobileSdk.breakout.leave": "Leave breakout room",
   "mobileSdk.breakout.joinedRoomsLabel": "Joined rooms",
   "mobileSdk.breakout.remainingRoomsLabel": "Remaining rooms",
+  "mobileSdk.breakout.askToJoin": "Ask to join",
+  "mobileSdk.breakout.join": "Join",
   "mobileSdk.chat.breakoutDurationUpdated": "Breakout time is now {{minutes}} minutes.",
   "mobileSdk.notification.handsUp.title": "You raised your hand",
   "mobileSdk.notification.handsUp.subtitle": "Moderators have been notified.",
@@ -236,5 +238,4 @@
   "mobileSdk.audio.deviceSelector.btPermissionOff": "You have not allowed the use of Bluetooth in this application",
   "mobileSdk.pip.permission.title": "Permission not granted",
   "mobileSdk.pip.permission.subtitle": "You have not permitted the use of Picture-in-Picture in this application"
-
 }
