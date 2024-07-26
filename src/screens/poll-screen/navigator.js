@@ -9,15 +9,15 @@ import queries from './queries';
 
 const PollNavigator = () => {
   const Stack = createStackNavigator();
-  const { data: pollData } = useSubscription(queries.POLL_ACTIVE_SUBSCRIPTION);
+  const { data: pollActiveData } = useSubscription(queries.POLL_ACTIVE_SUBSCRIPTION);
   const { data: userCurrentData } = useSubscription(queries.USER_CURRENT_SUBSCRIPTION);
-  const hasActivePoll = pollData?.poll?.length > 0;
-  const currentUserResponded = pollData?.poll[0]?.userCurrent?.responded;
+  const activePollObject = pollActiveData?.poll[0];
+  const currentUserResponded = pollActiveData?.poll[0]?.userCurrent?.responded;
   const amIPresenter = userCurrentData?.user_current[0]?.presenter;
   const navigation = useNavigation();
 
   useEffect(() => {
-    if (hasActivePoll && !currentUserResponded) {
+    if (activePollObject && !currentUserResponded && !amIPresenter) {
       navigation.reset({
         index: 1,
         routes: [{ name: 'AnswerPollScreen' }]
@@ -28,7 +28,7 @@ const PollNavigator = () => {
       index: 1,
       routes: [{ name: 'PreviousPollsScreen' }]
     });
-  }, [Boolean(hasActivePoll), amIPresenter, currentUserResponded]);
+  }, [Boolean(activePollObject), amIPresenter, currentUserResponded]);
 
   return (
     <Stack.Navigator

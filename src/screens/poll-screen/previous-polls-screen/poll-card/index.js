@@ -1,14 +1,17 @@
+/* eslint-disable camelcase */
 import { useState } from 'react';
 import { View } from 'react-native';
+import { useMutation } from '@apollo/client';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { trigDetailedInfo } from '../../../../store/redux/slices/wide-app/layout';
 import ActivityBar from '../../../../components/activity-bar';
 import PollService from '../../service';
 import Styled from './styles';
+import queries from '../../queries';
 
 const PreviousPollCard = (props) => {
-  const { pollObj } = props;
+  const { pollObj, amIPresenter } = props;
   const {
     publishedAt,
     pollId,
@@ -17,18 +20,47 @@ const PreviousPollCard = (props) => {
     responses,
     multipleResponses,
     secret,
-    ended
+    ended,
+    published,
+    users_aggregate,
+    responses_aggregate,
+    users
   } = pollObj;
 
   const { t } = useTranslation();
   const dispatch = useDispatch();
 
-  const noPollLocale = type === 'CUSTOM' || type === 'R-';
-  const isReceivingAnswers = !ended;
-  const timestamp = new Date(publishedAt);
+  const [pollCancel] = useMutation(queries.POLL_CANCEL);
+  const [pollPublishResult] = useMutation(queries.POLL_PUBLISH_RESULT);
 
-  const [mappedObject, setMappedObject] = useState({});
+  const noPollLocale = type === 'CUSTOM' || type === 'R-';
+  const timestamp = new Date(publishedAt);
+  const isReceivingAnswers = !ended && !published && amIPresenter;
   const [showUsersAnswers, setShowUsersAnswers] = useState(false);
+
+  // ? It means the poll has been canceled
+  if (ended && !published) {
+    return;
+  }
+
+  const handlePollPublish = async () => {
+    pollPublishResult({
+      variables: {
+        pollId
+      },
+    });
+  };
+
+  const renderUsersAnswers = () => (
+    users?.map((usr) => (
+      <Styled.UserAnswerComponent
+        key={usr.user.userId}
+        userId={usr.user.userId}
+        userName={usr.user.name}
+        userAnswers={usr.optionDescIds}
+      />
+    ))
+  );
 
   const renderAnswers = () => (
     responses.map((response) => (
@@ -60,6 +92,9 @@ const PreviousPollCard = (props) => {
       return (
         <Styled.PollInfoLabelContainer>
           <Styled.PollInfoText>
+            TODO / TODO
+          </Styled.PollInfoText>
+          <Styled.PollInfoText>
             {`${String(timestamp.getHours()).padStart(2, '0')}:${String(
               timestamp.getMinutes()
             ).padStart(2, '0')}`}
@@ -72,13 +107,11 @@ const PreviousPollCard = (props) => {
       <>
         <Styled.PollInfoLabelContainer>
           <Styled.PollInfoText>
-            {
-          `${pollObj.numResponders ?? 0} / ${pollObj.numRespondents ?? 0}`
-          }
+            TODO / TODO
           </Styled.PollInfoText>
           <Styled.PresenterContainerOptions>
             <Styled.PressableMinimizeAnswersText
-              secretPoll={pollObj.secretPoll}
+              secretPoll={secret}
               showUsersAnswers={showUsersAnswers}
               anonLabel={t('mobileSdk.poll.createPoll.anonymous')}
               onPress={() => setShowUsersAnswers((prevValue) => !prevValue)}
@@ -109,8 +142,8 @@ const PreviousPollCard = (props) => {
       <Styled.PressableButton
         disabled={!isReceivingAnswers}
         onPress={() => {
-          PollService.handlePublishPoll();
-          PollService.handleStopPoll();
+          handlePollPublish();
+          pollCancel();
         }}
       >
         {isReceivingAnswers ? t('mobileSdk.poll.createPoll.publish') : t('mobileSdk.poll.previousPolls.publishedLabel')}

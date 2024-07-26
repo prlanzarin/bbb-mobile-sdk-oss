@@ -1,43 +1,39 @@
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { useDispatch } from 'react-redux';
+import { useMutation } from '@apollo/client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { trigDetailedInfo } from '../../../store/redux/slices/wide-app/layout';
 import { editSecretPoll } from '../../../store/redux/slices/current-poll';
 import ScreenWrapper from '../../../components/screen-wrapper';
-import PollService from '../service';
 import Styled from './styles';
+import queries from '../queries';
 
 const CreatePoll = () => {
   // Create poll states
-  PollService.handleCurrentPollSubscription();
   const [questionTextInput, setQuestionTextInput] = useState('');
-  // 'YN' = Yes,No
-  // 'YNA' = Yes,No,Abstention
-  // 'TF' = True,False
-  // 'A-2' = A,B
-  // 'A-3' = A,B,C
-  // 'A-4' = A,B,C,D
-  // 'A-5' = A,B,C,D,E
-  // 'CUSTOM' = Custom
-  // 'R-' = Response
   const [answerTypeSelected, setAnswerTypeSelected] = useState('TF');
   const [secretPoll, setSecretPoll] = useState(false);
   const [isMultipleResponse, setIsMultipleResponse] = useState(false);
+
+  const [createPoll] = useMutation(queries.POLL_CREATE);
   const { t } = useTranslation();
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
   const handleCreatePoll = async () => {
+    createPoll({
+      variables: {
+        pollType: answerTypeSelected,
+        pollId: `${questionTextInput}/${new Date().getTime()}`,
+        secretPoll,
+        question: questionTextInput,
+        isMultipleResponse,
+        answers: []
+      },
+    });
     navigation.navigate('PreviousPollsScreen');
-    await PollService.handleCreatePoll(
-      answerTypeSelected,
-      `${questionTextInput}-${Date.now()}`,
-      secretPoll,
-      questionTextInput,
-      isMultipleResponse,
-    );
   };
 
   // * return logic *
