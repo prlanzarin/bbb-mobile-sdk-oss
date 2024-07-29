@@ -1,6 +1,7 @@
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { useSubscription } from '@apollo/client';
+import useCurrentUser from '../../../graphql/hooks/useCurrentUser'
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useOrientation } from '../../../hooks/use-orientation';
@@ -18,13 +19,13 @@ const PreviousPollScreen = () => {
 
   const { data: publishedPollsData } = useSubscription(Queries.PUBLISHED_POLLS_SUBSCRIPTION);
   const { data: allPollsData } = useSubscription(Queries.ALL_POLLS_SUBSCRIPTION);
-  const { data: userCurrentData } = useSubscription(Queries.USER_CURRENT_SUBSCRIPTION);
+  const { data: currentUserData } = useCurrentUser();
   const { data: pollActiveData } = useSubscription(Queries.POLL_ACTIVE_SUBSCRIPTION);
   const hasPublishedPolls = publishedPollsData?.poll?.length > 0;
 
   const allPolls = allPollsData?.poll;
   const hasCurrentPoll = pollActiveData?.poll?.length > 0;
-  const amIPresenter = userCurrentData?.user_current[0]?.presenter;
+  const amIPresenter = currentUserData?.user_current[0]?.presenter;
 
   const renderCreatePollButtonView = () => {
     if (hasCurrentPoll) {

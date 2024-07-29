@@ -1,6 +1,5 @@
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { useSubscription } from '@apollo/client';
 import { Share } from 'react-native';
 import {
   DrawerItemList,
@@ -8,21 +7,21 @@ import {
 import { useOrientation } from '../../hooks/use-orientation';
 import { setExpandActionsBar } from '../../store/redux/slices/wide-app/layout';
 import { setProfile } from '../../store/redux/slices/wide-app/modal';
+import useCurrentUser from '../../graphql/hooks/useCurrentUser'
 import logger from '../../services/api';
 import * as api from '../../services/api';
 import { leave } from '../../store/redux/slices/wide-app/client';
 import Settings from '../../../settings.json';
 import Styled from './styles';
-import Queries from './queries';
 
 const CustomDrawer = (props) => {
   const { meetingUrl, navigation } = props;
   const dispatch = useDispatch();
-  const { data } = useSubscription(Queries.USER_CURRENT_SUBSCRIPTION);
   const { t } = useTranslation();
 
-  const currentUserObj = data?.user_current[0];
-  const isBreakoutRoom = currentUserObj?.meeting?.isBreakout;
+  const { data: currentUserData } = useCurrentUser();
+  const currentUser = currentUserData?.user_current[0];
+  const isBreakoutRoom = currentUser?.meeting?.isBreakout;
   const isLandscape = useOrientation() === 'LANDSCAPE';
 
   const leaveSession = () => {
@@ -88,9 +87,9 @@ const CustomDrawer = (props) => {
     <Styled.ViewContainer>
       <Styled.DrawerScrollView {...props}>
         <Styled.CustomDrawerContainer>
-          <Styled.UserAvatarDrawer currentUser={currentUserObj} />
+          <Styled.UserAvatarDrawer currentUser={currentUser} />
           <Styled.NameUserAvatar numberOfLines={1}>
-            {currentUserObj?.name}
+            {currentUser?.name}
           </Styled.NameUserAvatar>
         </Styled.CustomDrawerContainer>
         <Styled.ContainerDrawerItemList>

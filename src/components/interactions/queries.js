@@ -1,19 +1,19 @@
 import { gql } from '@apollo/client';
 
-const CURRENT_USER_SUBSCRIPTION = gql`
-subscription User_current {
-  user_current {
-    raiseHand
-    userId
+const USER_CURRENT_RAISE_HAND_SUBSCRIPTION = gql`
+  subscription userCurrentRaiseHand {
+    user_current {
+      raiseHand
+    }
   }
-}`;
+`;
 
 const SET_RAISE_HAND = gql`
   mutation UserSetRaiseHand($raiseHand: Boolean!, $userId: String) {
-  userSetRaiseHand(raiseHand: $raiseHand, userId: $userId)
-}
+    userSetRaiseHand(raiseHand: $raiseHand, userId: $userId)
+  }
 `;
 
 export default {
-  CURRENT_USER_SUBSCRIPTION, SET_RAISE_HAND
+  USER_CURRENT_RAISE_HAND_SUBSCRIPTION, SET_RAISE_HAND
 };

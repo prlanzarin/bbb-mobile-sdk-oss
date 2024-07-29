@@ -1,23 +1,23 @@
 import { gql } from '@apollo/client';
 
 const BREAKOUT_ROOM_SUBSCRIPTION = gql`
-subscription breakoutRoom {
-  breakoutRoom {
-    assignedAt
-    name
-    joinURL
-    hasJoined
-    breakoutRoomId
-    freeJoin
-    shortName
-    participants {
-      user {
-        name
+  subscription breakoutRoom {
+    breakoutRoom {
+      assignedAt
+      name
+      joinURL
+      hasJoined
+      breakoutRoomId
+      freeJoin
+      shortName
+      participants {
+        user {
+          name
+        }
+        userId
       }
-      userId
     }
   }
-}
 `;
 
 const BREAKOUT_ROOM_REQUEST_JOIN_URL = gql`
