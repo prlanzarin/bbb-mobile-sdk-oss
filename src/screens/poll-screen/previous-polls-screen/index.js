@@ -1,14 +1,14 @@
 import { KeyboardAvoidingView, Platform } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { useSubscription } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useOrientation } from '../../../hooks/use-orientation';
-import { isPresenter } from '../../../store/redux/slices/current-user';
 import { setProfile } from '../../../store/redux/slices/wide-app/modal';
-import { hasCurrentPollSelector, selectCurrentPoll } from '../../../store/redux/slices/current-poll';
 import ScreenWrapper from '../../../components/screen-wrapper';
 import PreviousPollCard from './poll-card';
 import Styled from './styles';
+import Queries from '../queries';
 
 const PreviousPollScreen = () => {
   const { t } = useTranslation();
@@ -16,10 +16,15 @@ const PreviousPollScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  const previousPollPublishedStore = useSelector((state) => state.previousPollPublishedCollection);
-  const currentPollObj = useSelector(selectCurrentPoll);
-  const hasCurrentPoll = useSelector(hasCurrentPollSelector);
-  const amIPresenter = useSelector(isPresenter);
+  const { data: publishedPollsData } = useSubscription(Queries.PUBLISHED_POLLS_SUBSCRIPTION);
+  const { data: allPollsData } = useSubscription(Queries.ALL_POLLS_SUBSCRIPTION);
+  const { data: userCurrentData } = useSubscription(Queries.USER_CURRENT_SUBSCRIPTION);
+  const { data: pollActiveData } = useSubscription(Queries.POLL_ACTIVE_SUBSCRIPTION);
+  const hasPublishedPolls = publishedPollsData?.poll?.length > 0;
+
+  const allPolls = allPollsData?.poll;
+  const hasCurrentPoll = pollActiveData?.poll?.length > 0;
+  const amIPresenter = userCurrentData?.user_current[0]?.presenter;
 
   const renderCreatePollButtonView = () => {
     if (hasCurrentPoll) {
@@ -41,8 +46,7 @@ const PreviousPollScreen = () => {
     );
   };
 
-  if (Object.keys(previousPollPublishedStore.previousPollPublishedCollection)
-    .length === 0 && (isPresenter && !hasCurrentPoll)) {
+  if (!hasPublishedPolls && (amIPresenter && !hasCurrentPoll)) {
     return (
       <ScreenWrapper>
         <Styled.ContainerCentralizedView>
@@ -66,17 +70,17 @@ const PreviousPollScreen = () => {
   }
 
   const renderMethod = () => {
-    const invertPublishedPolls = Object.values(
-      previousPollPublishedStore.previousPollPublishedCollection
-    );
-
-    if (hasCurrentPoll && amIPresenter) {
-      invertPublishedPolls.push({ ...currentPollObj, receivingAnswers: true, id: `${currentPollObj.id}_current` });
-    }
-    invertPublishedPolls.reverse();
 
     return (
-      invertPublishedPolls.map((pollObj) => <PreviousPollCard pollObj={pollObj} key={pollObj.id} />)
+      allPolls?.map(
+        (pollObj) => (
+          <PreviousPollCard
+            pollObj={pollObj}
+            key={pollObj.pollId}
+            amIPresenter={amIPresenter}
+          />
+        )
+      )
     );
   };
 

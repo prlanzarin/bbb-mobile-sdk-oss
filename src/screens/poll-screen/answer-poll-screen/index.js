@@ -1,25 +1,45 @@
 import { useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Platform } from 'react-native';
-import { selectActivePoll } from '../../../store/redux/slices/polls';
+import { useSubscription, useMutation } from '@apollo/client';
 import ScreenWrapper from '../../../components/screen-wrapper';
-import PollService from '../service';
 import Styled from './styles';
+import queries from '../queries';
 
 const AnswerPollScreen = () => {
   const [selectedAnswers, setSelectedAnswers] = useState([]);
-  const activePollObject = useSelector(selectActivePoll);
+  const { data: pollData } = useSubscription(queries.POLL_ACTIVE_SUBSCRIPTION);
+  const activePollObject = pollData?.poll[0];
   const scrollViewRef = useRef();
   const { t } = useTranslation();
+  const [pollSubmitUserTypedVote] = useMutation(queries.POLL_SUBMIT_TYPED_VOTE);
+  const [pollSubmitUserVote] = useMutation(queries.POLL_SUBMIT_VOTE);
+
+  const handleTypedVote = (pollId, answer) => {
+    pollSubmitUserTypedVote({
+      variables: {
+        pollId,
+        answer,
+      },
+    });
+  };
+
+  const handleVote = (pollId, answerIds) => {
+    pollSubmitUserVote({
+      variables: {
+        pollId,
+        answerIds,
+      },
+    });
+  };
 
   const handleSelectAnswers = (id) => {
     // If is custom input
-    if (activePollObject?.pollType === 'R-') {
+    if (activePollObject?.type === 'R-') {
       return setSelectedAnswers([id.toString()]);
     }
     // If is multiple response
-    if (activePollObject?.isMultipleResponse) {
+    if (activePollObject?.multipleResponses) {
       let updatedList = [...selectedAnswers];
       if (!updatedList.includes(id)) {
         updatedList = [...selectedAnswers, id];
@@ -34,7 +54,7 @@ const AnswerPollScreen = () => {
 
   const handleSecretPollLabel = () => (
     <Styled.SecretLabel>
-      {activePollObject?.secretPoll
+      {activePollObject?.secret
         ? t('app.polling.responseSecret')
         : t('app.polling.responseNotSecret')}
     </Styled.SecretLabel>
@@ -42,17 +62,17 @@ const AnswerPollScreen = () => {
 
   const handleIsMultipleResponseLabel = () => (
     <Styled.SecretLabel>
-      {activePollObject?.isMultipleResponse
+      {activePollObject?.multipleResponses
         ? t('mobileSdk.poll.multipleChoice')
         : t('mobileSdk.poll.oneAnswer')}
     </Styled.SecretLabel>
   );
 
   const handleTypeOfAnswer = () => {
-    const noPollLocale = activePollObject?.pollType === 'CUSTOM' || activePollObject?.pollType === 'R-';
+    const noPollLocale = activePollObject?.type === 'CUSTOM' || activePollObject?.type === 'R-';
 
     // 'R-' === custom input
-    if (activePollObject?.pollType === 'R-') {
+    if (activePollObject?.type === 'R-') {
       return (
         <Styled.TextInput
           label={t('app.questions.modal.answerLabel')}
@@ -60,28 +80,40 @@ const AnswerPollScreen = () => {
         />
       );
     }
-    return activePollObject?.answers?.map((question) => (
+    return activePollObject?.options?.map((option) => (
       <Styled.OptionsButton
-        key={question.id}
-        selected={selectedAnswers.includes(question.id)}
+        key={option.optionId}
+        selected={selectedAnswers.includes(option.optionId)}
         onPress={() => {
-          handleSelectAnswers(question.id);
+          handleSelectAnswers(option.optionId);
         }}
       >
-        {noPollLocale ? question.key : t(`app.poll.answer.${question.key}`.toLowerCase())}
+        {noPollLocale ? option?.optionDesc : t(`app.poll.answer.${option.optionDesc}`.toLowerCase())}
       </Styled.OptionsButton>
     ));
   };
 
   const renderMethod = () => (
     <>
-      <Styled.Title>{activePollObject?.question}</Styled.Title>
+      <Styled.Title>{activePollObject?.questionText}</Styled.Title>
       {handleSecretPollLabel()}
       {handleIsMultipleResponseLabel()}
       <Styled.ButtonsContainer>{handleTypeOfAnswer()}</Styled.ButtonsContainer>
 
       <Styled.ConfirmButton
-        onPress={() => PollService.handleAnswerPoll(selectedAnswers)}
+        onPress={() => {
+          if (activePollObject?.type === 'R-') {
+            handleTypedVote(
+              activePollObject.pollId,
+              selectedAnswers
+            );
+            return;
+          }
+          handleVote(
+            activePollObject.pollId,
+            selectedAnswers
+          );
+        }}
       >
         {t('mobileSdk.poll.sendAnswer')}
       </Styled.ConfirmButton>
