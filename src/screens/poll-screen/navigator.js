@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useSubscription } from '@apollo/client';
 import { useNavigation } from '@react-navigation/native';
+import useCurrentUser from '../../graphql/hooks/useCurrentUser'
 import CreatePollScreen from './create-poll-screen';
 import PreviousPollsScreen from './previous-polls-screen';
 import AnswerPollScreen from './answer-poll-screen';
@@ -10,10 +11,10 @@ import queries from './queries';
 const PollNavigator = () => {
   const Stack = createStackNavigator();
   const { data: pollActiveData } = useSubscription(queries.POLL_ACTIVE_SUBSCRIPTION);
-  const { data: userCurrentData } = useSubscription(queries.USER_CURRENT_SUBSCRIPTION);
+  const { data: currentUserData } = useCurrentUser();
   const activePollObject = pollActiveData?.poll[0];
   const currentUserResponded = pollActiveData?.poll[0]?.userCurrent?.responded;
-  const amIPresenter = userCurrentData?.user_current[0]?.presenter;
+  const amIPresenter = currentUserData?.user_current[0]?.presenter;
   const navigation = useNavigation();
 
   useEffect(() => {

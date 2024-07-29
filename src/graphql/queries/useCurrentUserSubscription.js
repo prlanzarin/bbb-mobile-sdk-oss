@@ -6,6 +6,7 @@ const USER_CURRENT_SUBSCRIPTION = gql`
       userId
       authToken
       name
+      color
       loggedOut
       ejected
       isOnline
@@ -21,6 +22,7 @@ const USER_CURRENT_SUBSCRIPTION = gql`
       meeting {
           name
           ended
+          isBreakout
           learningDashboard {
             learningDashboardAccessToken
           }

@@ -1,10 +1,9 @@
-import { useSubscription } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
+import useCurrentUser from '../../graphql/hooks/useCurrentUser';
 import Styled from './styles';
-import Queries from './queries';
 
 const GuestScreen = () => {
-  const { data } = useSubscription(Queries.GUEST_STATUS_DETAILED_SUBSCRIPTION);
+  const { data } = useCurrentUser();
   const guestStatusDetails = data?.user_current[0].guestStatusDetails;
   const { t } = useTranslation();
 

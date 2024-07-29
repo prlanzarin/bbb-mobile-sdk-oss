@@ -89,14 +89,6 @@ const ALL_POLLS_SUBSCRIPTION = gql`
   }
 `;
 
-const USER_CURRENT_SUBSCRIPTION = gql`subscription {
-  user_current {
-    role
-    presenter
-    userId
-  }
-}`;
-
 const POLL_SUBMIT_TYPED_VOTE = gql`
   mutation PollSubmitTypedVote($pollId: String!, $answer: String!) {
     pollSubmitUserTypedVote(
@@ -151,7 +143,6 @@ export default {
   POLL_ACTIVE_SUBSCRIPTION,
   POLL_SUBMIT_TYPED_VOTE,
   POLL_SUBMIT_VOTE,
-  USER_CURRENT_SUBSCRIPTION,
   POLL_CREATE,
   PUBLISHED_POLLS_SUBSCRIPTION,
   ALL_POLLS_SUBSCRIPTION,
