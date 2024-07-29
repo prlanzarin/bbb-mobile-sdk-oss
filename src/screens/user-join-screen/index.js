@@ -37,7 +37,7 @@ const UserJoinScreen = () => {
         navigation.navigate('DrawerNavigator');
       }
     }
-  }, [currentUser?.guestStatus, currentUser?.joined]);
+  }, [currentUser?.guestStatus, currentUser?.joined, currentUser?.loggedOut]);
 
   if (!loading && !error) {
     // eslint-disable-next-line no-prototype-builtins
