@@ -25,12 +25,6 @@ const CustomDrawer = (props) => {
 
   const leaveSession = () => {
     dispatchLeaveSession();
-    navigation.navigate('FeedbackScreen', {
-      currentUser: {
-        ...currentUser,
-        loggedOut: true
-      }
-    });
   };
 
   const onClickFeatureNotImplemented = () => {

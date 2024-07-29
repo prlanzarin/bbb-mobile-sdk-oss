@@ -21,9 +21,10 @@ const POST_ROUTE = Settings.feedback.route;
 const APP_IDENTIFIER = Settings.feedback.custom.appIdentifier;
 const CUSTOMER_METADATA = Settings.feedback.custom.customerMetadata;
 
-const FeedbackScreen = () => {
+const FeedbackScreen = (props) => {
   const { t } = useTranslation();
-  const title = t(Service.parseEndReason('loggedOut'));
+  const leaveReason = props?.route?.params?.currentUser?.leaveReason;
+  const title = t(Service.parseEndReason(leaveReason));
   const navigation = useNavigation();
   const [rating, setRating] = useState(undefined);
   const currentMeeting = useSelector(selectMeeting);

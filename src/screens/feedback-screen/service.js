@@ -12,6 +12,10 @@ const parseEndReason = (endReason) => {
   switch (endReason) {
     case 'loggedOut':
       return 'app.feedback.title';
+    case 'kicked':
+      return 'app.error.403';
+    case 'meetingEnded':
+      return 'app.guest.meetingEnded';
     default:
       return 'mobileSdk.error.fallback';
   }
