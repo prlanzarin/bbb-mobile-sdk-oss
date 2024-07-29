@@ -33,6 +33,8 @@ const UserJoinScreen = () => {
         navigation.navigate('GuestScreen');
       } else if (currentUser.loggedOut) {
         navigation.navigate('FeedbackScreen', { currentUser });
+      } else if (currentUser.ejected) {
+        navigation.navigate('FeedbackScreen', { currentUser });
       } else if (currentUser.joined) {
         navigation.navigate('DrawerNavigator');
       }
@@ -42,8 +44,8 @@ const UserJoinScreen = () => {
   if (!loading && !error) {
     // eslint-disable-next-line no-prototype-builtins
     if (!data?.hasOwnProperty('user_current')
-          // eslint-disable-next-line eqeqeq
-          || data.user_current.length == 0
+      // eslint-disable-next-line eqeqeq
+      || data.user_current.length == 0
     ) {
       return (
         <Text>
