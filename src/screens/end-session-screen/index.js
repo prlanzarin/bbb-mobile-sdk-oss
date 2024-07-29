@@ -15,7 +15,9 @@ const EndSessionScreen = (props) => {
   const leaveText = t('app.leaveModal.confirm');
 
   const handleLeaveSessionButtonPress = () => {
-    if (!onLeaveSession()) navigation.navigate('DrawerNavigator');
+    if (!onLeaveSession) {
+      return navigation.navigate('DrawerNavigator');
+    }
   };
 
   return (

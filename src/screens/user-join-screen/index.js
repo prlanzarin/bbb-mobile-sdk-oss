@@ -31,6 +31,8 @@ const UserJoinScreen = () => {
       // redirect to guest screen
       if (currentUser.guestStatus === 'WAIT') {
         navigation.navigate('GuestScreen');
+      } else if (currentUser.loggedOut) {
+        navigation.navigate('FeedbackScreen', { currentUser });
       } else if (currentUser.joined) {
         navigation.navigate('DrawerNavigator');
       }

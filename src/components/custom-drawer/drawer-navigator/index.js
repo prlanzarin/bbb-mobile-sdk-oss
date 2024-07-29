@@ -1,15 +1,7 @@
-import { Audio } from 'expo-av';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { useSelector } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { selectCurrentUser } from '../../../store/redux/slices/current-user';
-import { selectWaitingUsers } from '../../../store/redux/slices/guest-users';
-import { selectRecordMeeting } from '../../../store/redux/slices/record-meetings';
 import useAppState from '../../../hooks/use-app-state';
-import usePrevious from '../../../hooks/use-previous';
-import logger from '../../../services/logger';
 // screens
 import PollNavigator from '../../../screens/poll-screen/navigator';
 import UserParticipantsNavigator from '../../../screens/user-participants-screen/navigator';
@@ -24,78 +16,20 @@ import UserNotesScreen from '../../../screens/user-notes-screen';
 import CustomDrawer from '../index';
 // constants
 import Settings from '../../../../settings.json';
-import Colors from '../../../constants/colors';
 import Styled from './styles';
+import useCurrentUser from '../../../graphql/hooks/useCurrentUser';
 
 const DrawerNavigator = ({
-  onLeaveSession, jUrl, navigationRef, meetingUrl
+  onLeaveSession, jUrl, meetingUrl
 }) => {
   const Drawer = createDrawerNavigator();
-  const navigation = useNavigation();
   const appState = useAppState();
   const { t } = useTranslation();
-  const ended = useSelector((state) => state.client.sessionState.ended);
-  const joinUrl = useSelector((state) => state.client.meetingData.joinUrl);
-  const meetingData = useSelector((state) => state.client.meetingData);
-  const currentUser = useSelector(selectCurrentUser);
-  const feedbackEnabled = useSelector((state) => state.client.feedbackEnabled);
-  const recordMeeting = useSelector(selectRecordMeeting);
+  const { data: userCurrentData } = useCurrentUser();
 
-  const guestUsersReady = useSelector((state) => state.guestUsersCollection.ready);
-  const pendingUsers = useSelector(selectWaitingUsers);
-  const previousPendingUsers = usePrevious(pendingUsers);
-  const [doorBellSound, setDoorBellSound] = useState();
-  const { isBreakout } = meetingData;
-
-  // this effect controls the guest user waiting notification sound
-  useEffect(() => {
-    const playSound = async () => {
-      const url = new URL(joinUrl);
-      const doorbellUri = {
-        uri: `https://${url.host}/html5client/resources/sounds/doorbell.mp3`
-      };
-      try {
-        if (doorBellSound) {
-          const status = await doorBellSound.getStatusAsync();
-          if (status.isLoaded) {
-            await doorBellSound.replayAsync();
-            return;
-          }
-        }
-        const { sound } = await Audio.Sound.createAsync(doorbellUri);
-        setDoorBellSound(sound);
-        await sound.playAsync();
-      } catch (error) {
-        logger.debug({
-          logCode: 'play_sound_exception',
-          extraInfo: { error },
-        }, `Exception thrown while playing doorbell sound: ${error}`);
-      }
-    };
-
-    const currentScreen = navigationRef?.current?.getCurrentRoute()?.name;
-    if (joinUrl && currentScreen !== 'WaitingUsersScreen' && guestUsersReady && previousPendingUsers && pendingUsers.length > previousPendingUsers.length) {
-      playSound();
-    }
-  }, [guestUsersReady, previousPendingUsers, pendingUsers]);
-
-  // unload sound
-  React.useEffect(() => {
-    return () => {
-      doorBellSound?.unloadAsync();
-    };
-  }, []);
-
-  // this effect controls the meeting ended
-  // useEffect(() => {
-  //   if (ended) {
-  //     if (feedbackEnabled && currentUser && meetingData && !isBreakout) {
-  //       navigation.navigate('FeedbackScreen');
-  //     } else {
-  //       navigation.navigate('EndSessionScreen');
-  //     }
-  //   }
-  // }, [ended]);
+  const meetingName = userCurrentData?.meeting?.name;
+  const recordMeeting = false;
+  const isBreakout = false;
 
   return (
     <Drawer.Navigator
@@ -113,7 +47,7 @@ const DrawerNavigator = ({
         name="Main"
         component={MainConferenceScreen}
         options={{
-          title: meetingData?.confname || t('mobileSdk.meeting.label'),
+          title: meetingName || t('mobileSdk.meeting.label'),
           unmountOnBlur: true,
           headerShown: appState !== 'background',
           headerRight: () => (
@@ -160,20 +94,11 @@ const DrawerNavigator = ({
             <RecordingIndicator recordMeeting={recordMeeting} />
           ),
           drawerIcon: (config) => (
-            <>
-              <Styled.DrawerIcon
-                icon="account-multiple-outline"
-                size={24}
-                iconColor={config.color}
-              />
-              {pendingUsers.length > 0 && (
-                <Styled.NotificationIcon
-                  icon="circle"
-                  size={12}
-                  iconColor={Colors.orange}
-                />
-              )}
-            </>
+            <Styled.DrawerIcon
+              icon="account-multiple-outline"
+              size={24}
+              iconColor={config.color}
+            />
           ),
         }}
       />

@@ -1,16 +1,12 @@
 import { gql } from '@apollo/client';
 
-const USER_CURRENT_SUBSCRIPTION = gql`subscription {
-    user_current {
-      name
-      role
-      color
-      avatar
-      presenter
-      meeting {
-        isBreakout
-      }
-    }
-  }`;
 
-export default { USER_CURRENT_SUBSCRIPTION };
+const USER_LEAVE_MEETING = gql`
+  mutation UserLeaveMeeting {
+    userLeaveMeeting
+  }
+`;
+
+export default {
+  USER_LEAVE_MEETING
+};
