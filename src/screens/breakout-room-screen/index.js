@@ -92,9 +92,11 @@ const BreakoutRoomScreen = () => {
   // ***** FUNCTIONS *****
 
   const joinSession = (breakoutRoomJoinUrl) => {
-    AudioManager.exitAudio();
-    VideoManager.unpublish(localCameraId);
-    navigation.navigate('InsideBreakoutRoomScreen', { joinURL: breakoutRoomJoinUrl });
+    // TODO: update when audio/video are working
+    console.log(breakoutRoomJoinUrl);
+    // AudioManager.exitAudio();
+    // VideoManager.unpublish(localCameraId);
+    // navigation.navigate('InsideBreakoutRoomScreen', { joinURL: breakoutRoomJoinUrl });
   };
 
   const handleJoinButton = (breakoutId, breakoutRoomJoinUrl) => {
