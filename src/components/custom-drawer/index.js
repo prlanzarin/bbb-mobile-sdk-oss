@@ -9,8 +9,8 @@ import { setProfile } from '../../store/redux/slices/wide-app/modal';
 import useCurrentUser from '../../graphql/hooks/useCurrentUser';
 import logger from '../../services/api';
 import Settings from '../../../settings.json';
-import Styled from './styles';
 import Queries from './queries';
+import Styled from './styles';
 
 const CustomDrawer = (props) => {
   const { meetingUrl, navigation } = props;

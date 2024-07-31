@@ -1,6 +1,7 @@
 import { gql } from '@apollo/client';
 
-const CHAT_MESSAGE_PUBLIC_SUB = gql`subscription {
+const CHAT_MESSAGE_PUBLIC_SUB = gql`
+  subscription chatMessagePublic {
     chat_message_public(limit: 20, order_by: {createdAt: desc}) {
       chatId
       chatEmphasizedText
@@ -12,15 +13,16 @@ const CHAT_MESSAGE_PUBLIC_SUB = gql`subscription {
       senderName
       senderRole
     }
-  }`;
+  }
+`;
 
 const SEND_MESSAGE_MUTATION = gql`
-mutation ChatSendMessage($chatId: String!, $chatMessageInMarkdownFormat: String!) {
-  chatSendMessage(
-    chatId: $chatId,
-    chatMessageInMarkdownFormat: $chatMessageInMarkdownFormat
-  )
-}
+  mutation chatSendMessage($chatId: String!, $chatMessageInMarkdownFormat: String!) {
+    chatSendMessage(
+      chatId: $chatId,
+      chatMessageInMarkdownFormat: $chatMessageInMarkdownFormat
+    )
+  }
 `;
 
 export default {
