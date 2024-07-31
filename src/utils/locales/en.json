@@ -237,5 +237,10 @@
   "mobileSdk.transfer.button.title": "Join",
   "mobileSdk.audio.deviceSelector.btPermissionOff": "You have not allowed the use of Bluetooth in this application",
   "mobileSdk.pip.permission.title": "Permission not granted",
-  "mobileSdk.pip.permission.subtitle": "You have not permitted the use of Picture-in-Picture in this application"
+  "mobileSdk.pip.permission.subtitle": "You have not permitted the use of Picture-in-Picture in this application",
+  "mobileSdk.join.loading.label1": "Balancing recording coefficients",
+  "mobileSdk.join.loading.label2": "Calculating server supply",
+  "mobileSdk.join.loading.label3": "Adjusting internet quotients",
+  "mobileSdk.join.loading.label4": "Normalizing audio devices",
+  "mobileSdk.join.loading.label5": "Simulating session loading"
 }
