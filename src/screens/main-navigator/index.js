@@ -7,9 +7,9 @@ import useJoinMeeting from '../../graphql/hooks/use-join-meeting';
 import DrawerNavigator from '../../components/custom-drawer/drawer-navigator';
 import UserJoinScreen from '../user-join-screen';
 import GuestScreen from '../guest-screen';
+import FeedbackScreen from '../feedback-screen';
+import EndSessionScreen from '../end-session-screen';
 import Styled from './styles';
-
-// Screens
 
 const MainNavigator = () => {
   const Stack = createStackNavigator();
@@ -18,9 +18,7 @@ const MainNavigator = () => {
 
   const {
     graphqlUrlApolloClient,
-
     loginStage,
-
   } = joinObject;
 
   useEffect(() => {
@@ -78,7 +76,23 @@ const MainNavigator = () => {
             />
           )}
         </Stack.Screen>
-        {/* <GuestScreen />
+        <Stack.Screen
+          name="FeedbackScreen"
+          component={FeedbackScreen}
+          options={{
+            title: 'FeedbackScreen',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="EndSessionScreen"
+          component={EndSessionScreen}
+          options={{
+            title: 'EndSessionScreen',
+            headerShown: false,
+          }}
+        />
+        {/*
       <EndNavigator />
       <TransferScreen /> */}
       </Stack.Navigator>

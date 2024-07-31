@@ -1,31 +1,30 @@
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { useMutation } from '@apollo/client';
 import { Share } from 'react-native';
-import {
-  DrawerItemList,
-} from '@react-navigation/drawer';
+import { DrawerItemList } from '@react-navigation/drawer';
 import { useOrientation } from '../../hooks/use-orientation';
 import { setExpandActionsBar } from '../../store/redux/slices/wide-app/layout';
 import { setProfile } from '../../store/redux/slices/wide-app/modal';
-import useCurrentUser from '../../graphql/hooks/useCurrentUser'
+import useCurrentUser from '../../graphql/hooks/useCurrentUser';
 import logger from '../../services/api';
-import * as api from '../../services/api';
-import { leave } from '../../store/redux/slices/wide-app/client';
 import Settings from '../../../settings.json';
+import Queries from './queries';
 import Styled from './styles';
 
 const CustomDrawer = (props) => {
   const { meetingUrl, navigation } = props;
   const dispatch = useDispatch();
+  const { data } = useCurrentUser();
+  const [dispatchLeaveSession] = useMutation(Queries.USER_LEAVE_MEETING);
   const { t } = useTranslation();
 
-  const { data: currentUserData } = useCurrentUser();
-  const currentUser = currentUserData?.user_current[0];
+  const currentUser = data?.user_current[0];
   const isBreakoutRoom = currentUser?.meeting?.isBreakout;
   const isLandscape = useOrientation() === 'LANDSCAPE';
 
   const leaveSession = () => {
-    dispatch(leave(api));
+    dispatchLeaveSession();
   };
 
   const onClickFeatureNotImplemented = () => {

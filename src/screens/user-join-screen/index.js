@@ -28,20 +28,40 @@ const UserJoinScreen = () => {
     if (currentUser) {
       handleDispatchUserJoin(currentUser.authToken);
       dispatch(setInitialCurrentUser(currentUser));
-      // redirect to guest screen
       if (currentUser.guestStatus === 'WAIT') {
         navigation.navigate('GuestScreen');
+      } else if (currentUser?.meeting?.ended) {
+        navigation.navigate('FeedbackScreen', {
+          currentUser: {
+            ...currentUser,
+            leaveReason: 'meetingEnded'
+          }
+        });
+      } else if (currentUser.loggedOut) {
+        navigation.navigate('FeedbackScreen', {
+          currentUser: {
+            ...currentUser,
+            leaveReason: 'loggedOut'
+          }
+        });
+      } else if (currentUser.ejected) {
+        navigation.navigate('FeedbackScreen', {
+          currentUser: {
+            ...currentUser,
+            leaveReason: 'kicked'
+          }
+        });
       } else if (currentUser.joined) {
         navigation.navigate('DrawerNavigator');
       }
     }
-  }, [currentUser?.guestStatus, currentUser?.joined]);
+  }, [currentUser?.guestStatus, currentUser?.joined, currentUser?.loggedOut]);
 
   if (!loading && !error) {
     // eslint-disable-next-line no-prototype-builtins
     if (!data?.hasOwnProperty('user_current')
-          // eslint-disable-next-line eqeqeq
-          || data.user_current.length == 0
+      // eslint-disable-next-line eqeqeq
+      || data.user_current.length == 0
     ) {
       return (
         <Text>

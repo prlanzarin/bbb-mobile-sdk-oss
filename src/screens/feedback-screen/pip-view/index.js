@@ -1,12 +1,12 @@
+import { useTranslation } from 'react-i18next';
 import Styled from './styles';
-import useEndReason from '../../../hooks/use-end-reason';
 
 const PiPView = () => {
-  const title = useEndReason();
+  const { t } = useTranslation();
 
   return (
     <Styled.ContainerView>
-      <Styled.Title>{title}</Styled.Title>
+      <Styled.Title>{t('app.customFeedback.email.thank')}</Styled.Title>
     </Styled.ContainerView>
   );
 };

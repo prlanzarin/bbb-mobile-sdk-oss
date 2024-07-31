@@ -10,7 +10,6 @@ const ContainerView = styled.View`
   align-items: center;
   justify-content: space-around;
   padding: 10px;
-  background-color: #06172A;
 `;
 
 const ContainerFeedbackCard = styled.View`
@@ -143,6 +142,31 @@ const TrackStyle = {
   height: 8,
 };
 
+const StarRatingComponent = ({ value, onValueChange }) => (
+  <StarsRating
+    minimumValue={1}
+    maximumValue={10}
+    value={value || 5}
+    step={1}
+    animateTransitions
+    thumbImage={require('../../assets/application/star.png')}
+    thumbStyle={ThumbStyle}
+    trackStyle={TrackStyle}
+    minimumTrackTintColor={Colors.blue}
+    maximumTrackTintColor={Colors.white}
+    renderAboveThumbComponent={
+      () => (
+        <ThumbContainer>
+          <ThumbLabel>
+            {value || 5}
+          </ThumbLabel>
+        </ThumbContainer>
+      )
+    }
+    onValueChange={onValueChange}
+  />
+);
+
 export default {
   ConfirmButton,
   ContainerView,
@@ -162,4 +186,5 @@ export default {
   ThumbStyle,
   TrackStyle,
   ThumbContainer,
+  StarRatingComponent,
 };
