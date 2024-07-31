@@ -11,10 +11,12 @@ import FeedbackScreen from '../feedback-screen';
 import EndSessionScreen from '../end-session-screen';
 import Styled from './styles';
 
-const MainNavigator = () => {
+const MainNavigator = (props) => {
+  const { joinURL } = props;
+
   const Stack = createStackNavigator();
   const navigation = useNavigation();
-  const joinObject = useJoinMeeting();
+  const joinObject = useJoinMeeting(joinURL);
 
   const {
     graphqlUrlApolloClient,

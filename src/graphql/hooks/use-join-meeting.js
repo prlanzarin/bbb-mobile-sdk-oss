@@ -11,7 +11,7 @@ import {
   setJoinUrl, setApi, setHost, setSessionToken
 } from '../../store/redux/slices/wide-app/client';
 
-const useJoinMeeting = () => {
+const useJoinMeeting = (url) => {
   const [loginStage, setLoginStage] = useState(0);
   const [sessionToken, setLocalSessionToken] = useState(null);
   const [urlWithSessionId, setUrlWithSessionId] = useState(null);
@@ -25,8 +25,6 @@ const useJoinMeeting = () => {
   const tsLastMessageRef = useRef(0);
   const tsLastPingMessageRef = useRef(0);
   const dispatch = useDispatch();
-
-  const url = '';
 
   async function requestSessionToken() {
     fetch(`${url}`)
