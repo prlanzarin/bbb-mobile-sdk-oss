@@ -103,7 +103,6 @@ const DrawerNavigator = ({
         }}
       />
 
-      {Settings.showLanguageScreen && (
       <Drawer.Screen
         name="Language"
         component={SelectLanguageScreen}
@@ -122,9 +121,8 @@ const DrawerNavigator = ({
           ),
         }}
       />
-      )}
 
-      {!isBreakout && Settings.showBreakouts && (
+      {!isBreakout && (
       <Drawer.Screen
         name="BreakoutRoomScreen"
         component={BreakoutRoomScreen}
@@ -158,7 +156,7 @@ const DrawerNavigator = ({
         }}
       />
 
-      {!isBreakout && Settings.showBreakouts && (
+      {!isBreakout && (
       <Drawer.Screen
         name="InsideBreakoutRoomScreen"
         component={InsideBreakoutRoomScreen}

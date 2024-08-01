@@ -244,5 +244,10 @@
   "mobileSdk.transfer.button.title": "Entrar",
   "mobileSdk.audio.deviceSelector.btPermissionOff": "Você não permitiu o uso do bluetooth nesse aplicativo",
   "mobileSdk.pip.permission.title": "Permissão não concedida",
-  "mobileSdk.pip.permission.subtitle": "Você não permitiu o uso de Picture-in-Picture neste aplicativo"
+  "mobileSdk.pip.permission.subtitle": "Você não permitiu o uso de Picture-in-Picture neste aplicativo",
+  "mobileSdk.join.loading.label.1": "Balanceando coeficientes de gravação",
+  "mobileSdk.join.loading.label.2": "Calculando suprimento de servidores",
+  "mobileSdk.join.loading.label.3": "Ajustando quocientes de internet",
+  "mobileSdk.join.loading.label.4": "Normalizando dispositivos de áudio",
+  "mobileSdk.join.loading.label.5": "Simulando carregamento da sessão"
 }

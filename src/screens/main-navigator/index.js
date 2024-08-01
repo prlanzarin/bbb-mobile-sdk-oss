@@ -11,10 +11,12 @@ import FeedbackScreen from '../feedback-screen';
 import EndSessionScreen from '../end-session-screen';
 import Styled from './styles';
 
-const MainNavigator = () => {
+const MainNavigator = (props) => {
+  const { joinURL, onLeaveSession, meetingUrl } = props;
+
   const Stack = createStackNavigator();
   const navigation = useNavigation();
-  const joinObject = useJoinMeeting();
+  const joinObject = useJoinMeeting(joinURL);
 
   const {
     graphqlUrlApolloClient,
@@ -71,8 +73,8 @@ const MainNavigator = () => {
             <DrawerNavigator
               navigationRef="test"
               jUrl="test"
-              onLeaveSession={() => console.log('leave')}
-              meetingUrl="test"
+              onLeaveSession={onLeaveSession}
+              meetingUrl={meetingUrl}
             />
           )}
         </Stack.Screen>
@@ -86,12 +88,17 @@ const MainNavigator = () => {
         />
         <Stack.Screen
           name="EndSessionScreen"
-          component={EndSessionScreen}
           options={{
             title: 'EndSessionScreen',
             headerShown: false,
           }}
-        />
+        >
+          {() => (
+            <EndSessionScreen
+              onLeaveSession={onLeaveSession}
+            />
+          )}
+        </Stack.Screen>
         {/*
       <EndNavigator />
       <TransferScreen /> */}

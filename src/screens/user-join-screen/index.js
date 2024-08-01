@@ -1,4 +1,5 @@
 import { useMutation } from '@apollo/client';
+import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
@@ -6,6 +7,9 @@ import React, { useEffect } from 'react';
 import Queries from './queries';
 import { setInitialCurrentUser } from '../../store/redux/slices/wide-app/client';
 import useCurrentUser from '../../graphql/hooks/useCurrentUser';
+import Styled from './styles';
+
+const r = Math.floor(Math.random() * 5) + 1;
 
 const UserJoinScreen = () => {
   const navigation = useNavigation();
@@ -13,6 +17,7 @@ const UserJoinScreen = () => {
   const { data, loading, error } = useCurrentUser();
   const currentUser = data?.user_current[0];
   const dispatch = useDispatch();
+  const { t } = useTranslation();
 
   const handleDispatchUserJoin = (authToken) => {
     dispatchUserJoin({
@@ -71,7 +76,12 @@ const UserJoinScreen = () => {
     }
 
     return (
-      <Text style={{ color: 'black' }}>Loading...</Text>
+      <Styled.ContainerView>
+        <Styled.Loading />
+        <Styled.TitleText>
+          {t(`mobileSdk.join.loading.label.${r}`)}
+        </Styled.TitleText>
+      </Styled.ContainerView>
     );
   }
 };
