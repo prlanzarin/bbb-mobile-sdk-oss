@@ -18,16 +18,26 @@ const MyTheme = {
   },
 };
 
+// ! Define this values if running sdk only
+const defaultOnLeaveSession = () => console.log('leave session not defined');
+const defaultJoinURL = () => '';
+
 const App = (props) => {
-  const { joinURL, defaultLanguage } = props;
+  const { joinURL, defaultLanguage, onLeaveSession } = props;
   const _joinURL = joinURL
-  || '';
+    || defaultJoinURL();
+  const _onLeaveSession = onLeaveSession
+    || defaultOnLeaveSession;
 
   return (
     <Provider store={store}>
-      <NavigationContainer theme={MyTheme}>
+      <NavigationContainer theme={MyTheme} independent>
         <OrientationLocker orientation={PORTRAIT} />
-        <MainNavigator {...props} joinURL={_joinURL} />
+        <MainNavigator
+          {...props}
+          joinURL={_joinURL}
+          onLeaveSession={_onLeaveSession}
+        />
         <AppStatusBar />
         <InCallManagerController />
         <LocalesController defaultLanguage={defaultLanguage} />
