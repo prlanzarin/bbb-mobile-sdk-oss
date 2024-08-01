@@ -13,7 +13,7 @@ import Queries from './queries';
 import Styled from './styles';
 
 const CustomDrawer = (props) => {
-  const { meetingUrl, navigation, onLeaveSession } = props;
+  const { meetingUrl, navigation } = props;
   const dispatch = useDispatch();
   const { data } = useCurrentUser();
   const [dispatchLeaveSession] = useMutation(Queries.USER_LEAVE_MEETING);
@@ -25,7 +25,6 @@ const CustomDrawer = (props) => {
 
   const leaveSession = () => {
     dispatchLeaveSession();
-    onLeaveSession();
   };
 
   const onClickFeatureNotImplemented = () => {
