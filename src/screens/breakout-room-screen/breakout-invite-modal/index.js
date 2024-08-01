@@ -8,7 +8,6 @@ import { useOrientation } from '../../../hooks/use-orientation';
 import { hide } from '../../../store/redux/slices/wide-app/modal';
 import AudioManager from '../../../services/webrtc/audio-manager';
 import VideoManager from '../../../services/webrtc/video-manager';
-import Settings from '../../../../settings.json';
 import Styled from './styles';
 
 const BreakoutInviteModal = () => {
@@ -70,10 +69,6 @@ const BreakoutInviteModal = () => {
       </Styled.JoinBreakoutButton>
     </Styled.Container>
   );
-
-  if (!Settings.showBreakouts) {
-    return null;
-  }
 
   return (
     <Modal
