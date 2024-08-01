@@ -9,6 +9,8 @@ import { setInitialCurrentUser } from '../../store/redux/slices/wide-app/client'
 import useCurrentUser from '../../graphql/hooks/useCurrentUser';
 import Styled from './styles';
 
+const r = Math.floor(Math.random() * 5) + 1;
+
 const UserJoinScreen = () => {
   const navigation = useNavigation();
   const [dispatchUserJoin] = useMutation(Queries.USER_JOIN_MUTATION);
@@ -16,7 +18,6 @@ const UserJoinScreen = () => {
   const currentUser = data?.user_current[0];
   const dispatch = useDispatch();
   const { t } = useTranslation();
-  const r = Math.floor(Math.random() * 5) + 1;
 
   const handleDispatchUserJoin = (authToken) => {
     dispatchUserJoin({
