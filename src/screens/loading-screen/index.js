@@ -10,7 +10,7 @@ const LoadingScreen = () => {
     <Styled.ContainerView>
       <Styled.Loading />
       <Styled.TitleText>
-        {t(`mobileSdk.join.loading.label${r}`)}
+        {t(`mobileSdk.join.loading.label.${r}`)}
       </Styled.TitleText>
     </Styled.ContainerView>
   );
