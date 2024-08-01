@@ -12,7 +12,7 @@ import EndSessionScreen from '../end-session-screen';
 import Styled from './styles';
 
 const MainNavigator = (props) => {
-  const { joinURL } = props;
+  const { joinURL, onLeaveSession, meetingUrl } = props;
 
   const Stack = createStackNavigator();
   const navigation = useNavigation();
@@ -73,8 +73,8 @@ const MainNavigator = (props) => {
             <DrawerNavigator
               navigationRef="test"
               jUrl="test"
-              onLeaveSession={() => console.log('leave')}
-              meetingUrl="test"
+              onLeaveSession={onLeaveSession}
+              meetingUrl={meetingUrl}
             />
           )}
         </Stack.Screen>
@@ -88,12 +88,17 @@ const MainNavigator = (props) => {
         />
         <Stack.Screen
           name="EndSessionScreen"
-          component={EndSessionScreen}
           options={{
             title: 'EndSessionScreen',
             headerShown: false,
           }}
-        />
+        >
+          {() => (
+            <EndSessionScreen
+              onLeaveSession={onLeaveSession}
+            />
+          )}
+        </Stack.Screen>
         {/*
       <EndNavigator />
       <TransferScreen /> */}

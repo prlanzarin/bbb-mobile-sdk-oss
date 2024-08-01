@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useOrientation } from '../../hooks/use-orientation';
 import Styled from './styles';
@@ -9,12 +8,9 @@ const EndSessionScreen = (props) => {
 
   const { t } = useTranslation();
   const orientation = useOrientation();
-  const navigation = useNavigation();
 
   const handleLeaveSessionButtonPress = () => {
-    if (!onLeaveSession) {
-      return navigation.navigate('DrawerNavigator');
-    }
+    return onLeaveSession();
   };
 
   return (
