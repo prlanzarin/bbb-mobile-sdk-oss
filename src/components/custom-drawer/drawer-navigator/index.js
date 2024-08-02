@@ -32,6 +32,8 @@ const DrawerNavigator = ({
   const recordMeeting = false;
   const isBreakout = false;
 
+  useModalListener();
+
   return (
     <Drawer.Navigator
       independent

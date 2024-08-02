@@ -17,6 +17,8 @@ const modalSlice = createSlice({
     },
     hide: (state) => {
       state.isShow = false;
+      state.profile = null;
+      state.extraInfo = null;
     },
     setProfile: (state, action) => {
       state.profile = action.payload.profile;
