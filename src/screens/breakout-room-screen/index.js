@@ -178,7 +178,6 @@ const BreakoutRoomScreen = () => {
       <Styled.FlatList
         data={breakoutRoom?.sort((a, b) => a.sequence - b.sequence)}
         renderItem={renderItem}
-        keyExtractor={(item) => item.breakoutId}
       />
     );
   };

@@ -10,9 +10,6 @@ import VideoManager from '../../../services/webrtc/video-manager';
 import Styled from './styles';
 
 const BreakoutInviteModal = () => {
-  const { data: currentUser } = useCurrentUser();
-  const amIModerator = currentUser?.isModerator;
-  const localCameraId = useSelector((state) => state.video.localCameraId);
   const modalCollection = useSelector((state) => state.modal);
 
   const navigation = useNavigation();
@@ -28,7 +25,7 @@ const BreakoutInviteModal = () => {
 
   // *** RENDER FUNCTIONS *** //
 
-  const renderIsModeratorView = () => (
+  const renderNavigateToBreakoutListScreen = () => (
     <Styled.Container orientation={orientation}>
       <Styled.TitleModal>
         {t('mobileSdk.breakout.inviteModal.title')}
@@ -47,7 +44,7 @@ const BreakoutInviteModal = () => {
     </Styled.Container>
   );
 
-  const renderAtendeeView = () => (
+  const renderNavigateToInsideBreakout = () => (
     <Styled.Container>
       <Styled.TitleModal>
         {t('mobileSdk.breakout.inviteModal.title')}
@@ -74,9 +71,9 @@ const BreakoutInviteModal = () => {
       visible={modalCollection.isShow}
       onDismiss={() => dispatch(hide())}
     >
-      {amIModerator
-        ? renderIsModeratorView()
-        : renderAtendeeView()}
+      {modalCollection.extraInfo.amIModerator || modalCollection.extraInfo.freeJoin
+        ? renderNavigateToBreakoutListScreen()
+        : renderNavigateToInsideBreakout()}
     </Modal>
   );
 };
