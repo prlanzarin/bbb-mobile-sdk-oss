@@ -14,6 +14,7 @@ import RecordingIndicator from '../../record/record-indicator';
 import UserNotesScreen from '../../../screens/user-notes-screen';
 // components
 import CustomDrawer from '../index';
+import useModalListener from '../../../hooks/listeners/use-modal-listener';
 // constants
 import Settings from '../../../../settings.json';
 import Styled from './styles';
@@ -30,6 +31,8 @@ const DrawerNavigator = ({
   const meetingName = userCurrentData?.meeting?.name;
   const recordMeeting = false;
   const isBreakout = false;
+
+  useModalListener();
 
   return (
     <Drawer.Navigator
