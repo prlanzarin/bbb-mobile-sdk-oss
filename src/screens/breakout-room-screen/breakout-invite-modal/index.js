@@ -71,7 +71,7 @@ const BreakoutInviteModal = () => {
       visible={modalCollection.isShow}
       onDismiss={() => dispatch(hide())}
     >
-      {modalCollection.extraInfo.amIModerator || modalCollection.extraInfo.freeJoin
+      {modalCollection.extraInfo.freeJoinOrModerator
         ? renderNavigateToBreakoutListScreen()
         : renderNavigateToInsideBreakout()}
     </Modal>

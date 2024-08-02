@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useSubscription } from "@apollo/client";
 import { setProfile } from "../../store/redux/slices/wide-app/modal";
@@ -14,10 +14,11 @@ const useModalListener = () => {
   const currentUserId = currentUser?.userId;
 
   // Breakouts
-  const [selectedBreakout, setSelectedBreakout] = useState([]);
   const { data: breakoutInviteData } = useSubscription(Queries.BREAKOUT_INVITE_SUBSCRIPTION);
   const breakoutsData = breakoutInviteData?.breakoutRoom;
+  const isFreeJoin = breakoutInviteData?.breakoutRoom[0]?.freeJoin;
   const hasBreakouts = breakoutsData?.length > 0;
+  const amIModerator = currentUser?.isModerator;
 
   useEffect(() => {
     if (hasBreakouts && currentUserId) {
@@ -26,17 +27,16 @@ const useModalListener = () => {
       );
 
       if (!isUserCurrentlyInRoom) {
-        if (breakoutsData[0].freeJoin) {
+        if (isFreeJoin || amIModerator) {
           handleDispatch();
         }
 
         const lastAssignedRoom = breakoutsData.find(
           (room) => room.isLastAssignedRoom,
         );
-        setSelectedBreakout(lastAssignedRoom);
 
-        if (selectedBreakout) {
-          handleDispatch(selectedBreakout);
+        if (lastAssignedRoom) {
+          handleDispatch(lastAssignedRoom);
         }
       }
     }
@@ -49,8 +49,7 @@ const useModalListener = () => {
         extraInfo: {
           shortName: breakout?.shortName,
           joinURL: breakout?.joinURL,
-          freeJoin: breakoutsData[0]?.freeJoin,
-          amIModerator: currentUser?.isModerator
+          freeJoinOrModerator: isFreeJoin || amIModerator,
         },
       }),
     );
