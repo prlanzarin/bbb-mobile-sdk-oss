@@ -1,34 +1,48 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { Modal } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { useFocusEffect } from '@react-navigation/native';
+import { useMutation } from '@apollo/client';
 import { hide } from '../../../../store/redux/slices/wide-app/modal';
-import PollService from '../../service';
 import Styled from './styles';
+import queries from '../../queries';
 
 const ReceivePollModal = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const isShow = useSelector((state) => state.modal.isShow);
-  const extraInfo = useSelector((state) => state.modal.extraInfo);
+  const modalCollection = useSelector((state) => state.modal);
+  const activePollObject = modalCollection.extraInfo.activePollData;
 
   const [selectedAnswers, setSelectedAnswers] = useState([]);
-  const activePollObject = extraInfo;
 
-  useFocusEffect(
-    useCallback(() => {
-      setSelectedAnswers([]);
-    }, [isShow])
-  );
+  const [pollSubmitUserTypedVote] = useMutation(queries.POLL_SUBMIT_TYPED_VOTE);
+  const [pollSubmitUserVote] = useMutation(queries.POLL_SUBMIT_VOTE);
+
+  const handleTypedVote = (pollId, answer) => {
+    pollSubmitUserTypedVote({
+      variables: {
+        pollId,
+        answer,
+      },
+    });
+  };
+
+  const handleVote = (pollId, answerIds) => {
+    pollSubmitUserVote({
+      variables: {
+        pollId,
+        answerIds,
+      },
+    });
+  };
 
   const handleSelectAnswers = (id) => {
     // If is custom input
-    if (activePollObject?.pollType === 'R-') {
+    if (activePollObject?.type === 'R-') {
       return setSelectedAnswers([id.toString()]);
     }
     // If is multiple response
-    if (activePollObject?.isMultipleResponse) {
+    if (activePollObject?.multipleResponses) {
       let updatedList = [...selectedAnswers];
       if (!updatedList.includes(id)) {
         updatedList = [...selectedAnswers, id];
@@ -43,7 +57,7 @@ const ReceivePollModal = () => {
 
   const handleSecretPollLabel = () => (
     <Styled.SecretLabel>
-      {activePollObject?.secretPoll
+      {activePollObject?.secret
         ? t('app.polling.responseSecret')
         : t('app.polling.responseNotSecret')}
     </Styled.SecretLabel>
@@ -51,17 +65,17 @@ const ReceivePollModal = () => {
 
   const handleIsMultipleResponseLabel = () => (
     <Styled.SecretLabel>
-      {activePollObject?.isMultipleResponse
+      {activePollObject?.multipleResponses
         ? t('mobileSdk.poll.multipleChoice')
         : t('mobileSdk.poll.oneAnswer')}
     </Styled.SecretLabel>
   );
 
   const handleTypeOfAnswer = () => {
-    const noPollLocale = activePollObject?.pollType === 'CUSTOM' || activePollObject?.pollType === 'R-';
+    const noPollLocale = activePollObject?.type === 'CUSTOM' || activePollObject?.type === 'R-';
 
     // 'R-' === custom input
-    if (activePollObject?.pollType === 'R-') {
+    if (activePollObject?.type === 'R-') {
       return (
         <Styled.TextInput
           label={t('app.questions.modal.answerLabel')}
@@ -69,33 +83,41 @@ const ReceivePollModal = () => {
         />
       );
     }
-    return activePollObject?.answers?.map((question) => (
+    return activePollObject?.options?.map((option) => (
       <Styled.OptionsButton
-        key={question.id}
-        selected={selectedAnswers.includes(question.id)}
+        key={option.optionId}
+        selected={selectedAnswers.includes(option.optionId)}
         onPress={() => {
-          handleSelectAnswers(question.id);
+          handleSelectAnswers(option.optionId);
         }}
       >
-        {noPollLocale ? question.key : t(`app.poll.answer.${question.key}`.toLowerCase())}
+        {noPollLocale ? option?.optionDesc : t(`app.poll.answer.${option.optionDesc}`.toLowerCase())}
       </Styled.OptionsButton>
     ));
   };
 
+
   const renderMethod = () => (
     <>
-      <Styled.Title numberOfLines={7}>{activePollObject?.question}</Styled.Title>
-      <Styled.ButtonsContainer>
-        {handleSecretPollLabel()}
-        {handleIsMultipleResponseLabel()}
-      </Styled.ButtonsContainer>
-
+      <Styled.Title numberOfLines={7}>{activePollObject?.questionText}</Styled.Title>
+      {handleSecretPollLabel()}
+      {handleIsMultipleResponseLabel()}
       <Styled.ButtonsContainer>{handleTypeOfAnswer()}</Styled.ButtonsContainer>
 
       <Styled.PressableButton
         disabled={selectedAnswers.length === 0}
         onPress={() => {
-          PollService.handleAnswerPoll(selectedAnswers);
+          if (activePollObject?.type === 'R-') {
+            handleTypedVote(
+              activePollObject.pollId,
+              selectedAnswers
+            );
+            return;
+          }
+          handleVote(
+            activePollObject.pollId,
+            selectedAnswers
+          );
           dispatch(hide());
         }}
       >
@@ -106,7 +128,7 @@ const ReceivePollModal = () => {
 
   return (
     <Modal
-      visible={isShow}
+      visible={modalCollection.isShow}
       onDismiss={() => dispatch(hide())}
     >
       <Styled.Container onPress={() => dispatch(hide())}>
