@@ -8,8 +8,8 @@ import Styled from './styles';
 
 const PublishedPollModal = () => {
   const dispatch = useDispatch();
-  const isShow = useSelector((state) => state.modal.isShow);
-  const extraInfo = useSelector((state) => state.modal.extraInfo);
+  const modalCollection = useSelector((state) => state.modal);
+  const lastPublishedPoll = modalCollection.extraInfo.lastPublishedPoll;
   const amIPresenter = useSelector(isPresenter);
 
   if (amIPresenter) {
@@ -19,12 +19,12 @@ const PublishedPollModal = () => {
 
   return (
     <Modal
-      visible={isShow}
+      visible={modalCollection.isShow}
       onDismiss={() => dispatch(hide())}
     >
       <Styled.Container onPress={() => dispatch(hide())}>
         <Styled.InsideContainer>
-          <PreviousPollCard pollObj={extraInfo} />
+          <PreviousPollCard pollObj={lastPublishedPoll} />
         </Styled.InsideContainer>
       </Styled.Container>
     </Modal>
