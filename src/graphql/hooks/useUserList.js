@@ -7,7 +7,7 @@ const useUserList = () => {
 
   const currentUserList = useMemo(() => {
     return {
-      data: data ? data : null,
+      data: data || null,
       loading,
       error
     };

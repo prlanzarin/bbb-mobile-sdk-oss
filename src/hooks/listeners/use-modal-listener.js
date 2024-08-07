@@ -21,6 +21,7 @@ const useModalListener = () => {
   const amIModerator = currentUser?.isModerator;
 
   useEffect(() => {
+    // Breakouts
     if (hasBreakouts && currentUserId) {
       const isUserCurrentlyInRoom = breakoutsData.find(
         (room) => room.isUserCurrentlyInRoom,
@@ -28,7 +29,9 @@ const useModalListener = () => {
 
       if (!isUserCurrentlyInRoom) {
         if (isFreeJoin || amIModerator) {
-          handleDispatch();
+          handleDispatch("breakout_invite", {
+            freeJoinOrModerator: isFreeJoin || amIModerator,
+          });
         }
 
         const lastAssignedRoom = breakoutsData.find(
@@ -36,20 +39,22 @@ const useModalListener = () => {
         );
 
         if (lastAssignedRoom) {
-          handleDispatch(lastAssignedRoom);
+          handleDispatch("breakout_invite", {
+            shortName: lastAssignedRoom?.shortName,
+            joinURL: lastAssignedRoom?.joinURL,
+            freeJoinOrModerator: isFreeJoin || amIModerator,
+          });
         }
       }
     }
   }, [breakoutsData?.length, currentUserId]);
 
-  const handleDispatch = (breakout = {}) => {
+  const handleDispatch = (profile, extraArgs = {}) => {
     dispatch(
       setProfile({
-        profile: "breakout_invite",
+        profile,
         extraInfo: {
-          shortName: breakout?.shortName,
-          joinURL: breakout?.joinURL,
-          freeJoinOrModerator: isFreeJoin || amIModerator,
+          ...extraArgs,
         },
       }),
     );

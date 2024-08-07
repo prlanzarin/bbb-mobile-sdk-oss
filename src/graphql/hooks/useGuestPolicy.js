@@ -6,7 +6,7 @@ const useGuestWaitingList = () => {
 
   const guestWaitingList = useMemo(() => {
     return {
-      data: data ? data : null,
+      data: data || null,
       loading,
       error
     };
