@@ -29,4 +29,28 @@ const POLL_ACTIVE_SUBSCRIPTION = gql`
   }
 `;
 
-export default POLL_ACTIVE_SUBSCRIPTION;
+const PUBLISHED_POLLS_SUBSCRIPTION = gql`
+  subscription PollResults {
+    poll (where: {published: {_eq: true}}, order_by: [{ publishedAt: desc }], limit: 100) {
+      ended
+      published
+      publishedAt
+      pollId
+      type
+      questionText
+      multipleResponses
+      secret
+      responses {
+        optionDesc
+        optionId
+        optionResponsesCount
+        pollResponsesCount
+      }
+    }
+  }
+`;
+
+export {
+  POLL_ACTIVE_SUBSCRIPTION,
+  PUBLISHED_POLLS_SUBSCRIPTION
+};

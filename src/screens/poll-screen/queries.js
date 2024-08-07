@@ -1,26 +1,5 @@
 import { gql } from '@apollo/client';
 
-const PUBLISHED_POLLS_SUBSCRIPTION = gql`
-  subscription PollResults {
-    poll (where: {published: {_eq: true}}, order_by: [{ publishedAt: desc }], limit: 100) {
-      ended
-      published
-      publishedAt
-      pollId
-      type
-      questionText
-      multipleResponses
-      secret
-      responses {
-        optionDesc
-        optionId
-        optionResponsesCount
-        pollResponsesCount
-      }
-    }
-  }
-`;
-
 const ALL_POLLS_SUBSCRIPTION = gql`
   subscription PollResults {
     poll (order_by: [{ publishedAt: desc }], limit: 100) {
@@ -114,7 +93,6 @@ export default {
   POLL_SUBMIT_TYPED_VOTE,
   POLL_SUBMIT_VOTE,
   POLL_CREATE,
-  PUBLISHED_POLLS_SUBSCRIPTION,
   ALL_POLLS_SUBSCRIPTION,
   POLL_PUBLISH_RESULT,
   POLL_CANCEL

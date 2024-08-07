@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useSubscription } from '@apollo/client';
-import POLL_ACTIVE_SUBSCRIPTION from '../queries/useCurrentPollSubscription';
+import { POLL_ACTIVE_SUBSCRIPTION } from '../queries/usePollSubscription';
 
 const useCurrentPoll = () => {
   const { data, loading, error } = useSubscription(POLL_ACTIVE_SUBSCRIPTION);
