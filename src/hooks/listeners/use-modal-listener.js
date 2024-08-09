@@ -43,29 +43,34 @@ const useModalListener = () => {
       );
 
       if (!isUserCurrentlyInRoom) {
-        if (isFreeJoin || amIModerator) {
-          handleDispatch("breakout_invite", {
-            freeJoinOrModerator: isFreeJoin || amIModerator,
-          });
-        }
-
         const lastAssignedRoom = breakoutsData.find(
           (room) => room.isLastAssignedRoom,
         );
 
-        if (lastAssignedRoom) {
+        if (isFreeJoin || amIModerator) {
+          handleDispatch("breakout_invite", {
+            freeJoinOrModerator: isFreeJoin || amIModerator,
+          });
+
+          return;
+        }
+
+        if (lastAssignedRoom && !isFreeJoin) {
           handleDispatch("breakout_invite", {
             shortName: lastAssignedRoom?.shortName,
             joinURL: lastAssignedRoom?.joinURL,
             freeJoinOrModerator: isFreeJoin || amIModerator,
           });
+
+          return;
         }
       }
     }
+  }, [breakoutsData?.length, currentUserId]);
 
-    // Polls
+  useEffect(() => {
+    // Active Poll
     if (hasCurrentPoll && currentUserId) {
-      // Responded
       if (!activePollData?.userCurrent?.responded) {
         handleDispatch("receive_poll", {
           isModerator: amIModerator,
@@ -73,14 +78,15 @@ const useModalListener = () => {
         });
       }
     }
+  }, [activePollData, currentUserId]);
 
-    // Published
+  useEffect(() => {
+    // Published Poll
     if (hasPublishedPolls && currentUserId) {
       const currentCount = publishedPollData?.length;
 
       if (prevPublishedPollCount.current === undefined) {
         prevPublishedPollCount.current = currentCount;
-
       } else if (currentCount > prevPublishedPollCount.current) {
         prevPublishedPollCount.current = currentCount;
 
@@ -89,12 +95,7 @@ const useModalListener = () => {
         });
       }
     }
-  }, [
-    breakoutsData?.length,
-    activePollData,
-    publishedPollData?.length,
-    currentUserId,
-  ]);
+  }, [publishedPollData?.length, currentUserId]);
 
   const handleDispatch = (profile, extraArgs = {}) => {
     dispatch(
