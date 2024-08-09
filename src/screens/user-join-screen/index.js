@@ -1,20 +1,19 @@
-import { useMutation } from '@apollo/client';
+import { useMutation, useSubscription } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import Queries from './queries';
+import { GET_USER_CURRENT, USER_JOIN_MUTATION } from './queries';
 import { setInitialCurrentUser } from '../../store/redux/slices/wide-app/client';
-import useCurrentUser from '../../graphql/hooks/useCurrentUser';
 import Styled from './styles';
 
 const r = Math.floor(Math.random() * 5) + 1;
 
 const UserJoinScreen = () => {
   const navigation = useNavigation();
-  const [dispatchUserJoin] = useMutation(Queries.USER_JOIN_MUTATION);
-  const { data, loading, error } = useCurrentUser();
+  const [dispatchUserJoin] = useMutation(USER_JOIN_MUTATION);
+  const { data, loading, error } = useSubscription(GET_USER_CURRENT)
   const currentUser = data?.user_current[0];
   const dispatch = useDispatch();
   const { t } = useTranslation();
