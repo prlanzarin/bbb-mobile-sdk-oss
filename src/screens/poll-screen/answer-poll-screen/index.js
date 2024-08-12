@@ -1,14 +1,15 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Platform } from 'react-native';
-import { useSubscription, useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import ScreenWrapper from '../../../components/screen-wrapper';
 import Styled from './styles';
+import useCurrentPoll from '../../../graphql/hooks/useCurrentPoll';
 import queries from '../queries';
 
 const AnswerPollScreen = () => {
   const [selectedAnswers, setSelectedAnswers] = useState([]);
-  const { data: pollData } = useSubscription(queries.POLL_ACTIVE_SUBSCRIPTION);
+  const { data: pollData } = useCurrentPoll();
   const activePollObject = pollData?.poll[0];
   const scrollViewRef = useRef();
   const { t } = useTranslation();

@@ -7,7 +7,7 @@ const useCurrentUser = () => {
 
   const currentUserData = useMemo(() => {
     return {
-      data: data ? data : null,
+      data: data || null,
       loading,
       error
     };

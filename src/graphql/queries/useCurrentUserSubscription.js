@@ -6,6 +6,8 @@ const USER_CURRENT_SUBSCRIPTION = gql`
       userId
       authToken
       name
+      role
+      avatar
       color
       loggedOut
       ejected

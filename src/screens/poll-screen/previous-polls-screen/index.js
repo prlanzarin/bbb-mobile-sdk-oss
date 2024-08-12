@@ -9,6 +9,8 @@ import { setProfile } from '../../../store/redux/slices/wide-app/modal';
 import ScreenWrapper from '../../../components/screen-wrapper';
 import PreviousPollCard from './poll-card';
 import Styled from './styles';
+import useCurrentPoll from '../../../graphql/hooks/useCurrentPoll';
+import usePublishedPolls from '../../../graphql/hooks/usePublishedPolls';
 import Queries from '../queries';
 
 const PreviousPollScreen = () => {
@@ -17,10 +19,11 @@ const PreviousPollScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  const { data: publishedPollsData } = useSubscription(Queries.PUBLISHED_POLLS_SUBSCRIPTION);
   const { data: allPollsData } = useSubscription(Queries.ALL_POLLS_SUBSCRIPTION);
   const { data: currentUserData } = useCurrentUser();
-  const { data: pollActiveData } = useSubscription(Queries.POLL_ACTIVE_SUBSCRIPTION);
+  const { data: pollActiveData } = useCurrentPoll();
+  const { data: publishedPollsData } = usePublishedPolls();
+
   const hasPublishedPolls = publishedPollsData?.poll?.length > 0;
 
   const allPolls = allPollsData?.poll;

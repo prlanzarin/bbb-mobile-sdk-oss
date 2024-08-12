@@ -1,8 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { useSubscription } from "@apollo/client";
 import { setProfile } from "../../store/redux/slices/wide-app/modal";
 import useCurrentUser from "../../graphql/hooks/useCurrentUser";
+import useCurrentPoll from "../../graphql/hooks/useCurrentPoll";
+import usePublishedPolls from "../../graphql/hooks/usePublishedPolls.js";
 import Queries from "./queries";
 
 const useModalListener = () => {
@@ -14,42 +16,93 @@ const useModalListener = () => {
   const currentUserId = currentUser?.userId;
 
   // Breakouts
-  const { data: breakoutInviteData } = useSubscription(Queries.BREAKOUT_INVITE_SUBSCRIPTION);
+  const { data: breakoutInviteData } = useSubscription(
+    Queries.BREAKOUT_INVITE_SUBSCRIPTION,
+  );
   const breakoutsData = breakoutInviteData?.breakoutRoom;
   const isFreeJoin = breakoutInviteData?.breakoutRoom[0]?.freeJoin;
   const hasBreakouts = breakoutsData?.length > 0;
   const amIModerator = currentUser?.isModerator;
 
+  // Active Polls
+  const { data: pollData } = useCurrentPoll();
+  const activePollData = pollData?.poll[0];
+  const hasCurrentPoll = pollData?.poll?.length > 0;
+
+  // Published Polls
+  const { data: publishedData } = usePublishedPolls();
+  const publishedPollData = publishedData?.poll;
+  const hasPublishedPolls = publishedPollData?.length > 0;
+  const prevPublishedPollCount = useRef(undefined);
+
   useEffect(() => {
+    // Breakouts
     if (hasBreakouts && currentUserId) {
       const isUserCurrentlyInRoom = breakoutsData.find(
         (room) => room.isUserCurrentlyInRoom,
       );
 
       if (!isUserCurrentlyInRoom) {
-        if (isFreeJoin || amIModerator) {
-          handleDispatch();
-        }
-
         const lastAssignedRoom = breakoutsData.find(
           (room) => room.isLastAssignedRoom,
         );
 
-        if (lastAssignedRoom) {
-          handleDispatch(lastAssignedRoom);
+        if (isFreeJoin || amIModerator) {
+          handleDispatch("breakout_invite", {
+            freeJoinOrModerator: isFreeJoin || amIModerator,
+          });
+
+          return;
+        }
+
+        if (lastAssignedRoom && !isFreeJoin) {
+          handleDispatch("breakout_invite", {
+            shortName: lastAssignedRoom?.shortName,
+            joinURL: lastAssignedRoom?.joinURL,
+            freeJoinOrModerator: isFreeJoin || amIModerator,
+          });
+
+          return;
         }
       }
     }
   }, [breakoutsData?.length, currentUserId]);
 
-  const handleDispatch = (breakout = {}) => {
+  useEffect(() => {
+    // Active Poll
+    if (hasCurrentPoll && currentUserId) {
+      if (!activePollData?.userCurrent?.responded) {
+        handleDispatch("receive_poll", {
+          isModerator: amIModerator,
+          activePollData: activePollData,
+        });
+      }
+    }
+  }, [activePollData, currentUserId]);
+
+  useEffect(() => {
+    // Published Poll
+    if (hasPublishedPolls && currentUserId) {
+      const currentCount = publishedPollData?.length;
+
+      if (prevPublishedPollCount.current === undefined) {
+        prevPublishedPollCount.current = currentCount;
+      } else if (currentCount > prevPublishedPollCount.current) {
+        prevPublishedPollCount.current = currentCount;
+
+        handleDispatch("poll_published", {
+          lastPublishedPoll: publishedPollData[0],
+        });
+      }
+    }
+  }, [publishedPollData?.length, currentUserId]);
+
+  const handleDispatch = (profile, extraArgs = {}) => {
     dispatch(
       setProfile({
-        profile: "breakout_invite",
+        profile,
         extraInfo: {
-          shortName: breakout?.shortName,
-          joinURL: breakout?.joinURL,
-          freeJoinOrModerator: isFreeJoin || amIModerator,
+          ...extraArgs,
         },
       }),
     );
