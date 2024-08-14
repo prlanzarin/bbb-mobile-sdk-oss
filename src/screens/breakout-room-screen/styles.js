@@ -2,6 +2,7 @@ import styled from 'styled-components/native';
 import { Divider, Button } from 'react-native-paper';
 import Colors from '../../constants/colors';
 import UserAvatar from '../../components/user-avatar';
+import ContentLoader, { Rect } from 'react-content-loader/native';
 
 const ContainerView = styled.View`
   ${({ orientation }) => orientation === 'LANDSCAPE'
@@ -30,13 +31,13 @@ const CardView = styled.View`
 `;
 
 const Card = styled.View`
-    background-color: ${Colors.white};
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    display: flex;
-    flex-direction: column;
-  `;
+  background-color: ${Colors.white};
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+`;
 
 const ShortName = styled.Text`
   color: black;
@@ -168,6 +169,43 @@ const ButtonContainer = styled.View`
   width: 100%;
 `;
 
+const BreakoutsSkeletonLoading = ({ DEVICE_HEIGHT, DEVICE_WIDTH }) => (
+  <ContainerView>
+    <ContentLoader
+      speed={0.5}
+      width="100%"
+      height="100%"
+      viewBox={`0 0 ${DEVICE_WIDTH} ${DEVICE_HEIGHT}`}
+      backgroundColor={Colors.contentLetterboxColor}
+      foregroundColor={Colors.contentForegroundColor}
+    >
+      <Rect
+        x="5"
+        y="30"
+        width={DEVICE_WIDTH - 10}
+        height={parseInt(DEVICE_HEIGHT / 9, 10)}
+      />
+      <DividerLoad />
+      <Rect
+        x="5"
+        y={parseInt(DEVICE_HEIGHT / 6 + 10, 10)}
+        width={parseInt(DEVICE_WIDTH - 10)}
+        height={parseInt(DEVICE_HEIGHT / 9, 10)}
+      />
+      <Rect
+        x={"5"}
+        y={parseInt(DEVICE_HEIGHT / 3.4 + 10, 10)}
+        width={parseInt(DEVICE_WIDTH - 10)}
+        height={parseInt(DEVICE_HEIGHT / 9, 10)}
+      />
+    </ContentLoader>
+  </ContainerView>
+);
+
+const DividerLoad = styled(Divider)`
+  margin: 130px 16px 24px 16px;
+`;
+
 export default {
   ShortName,
   Card,
@@ -190,5 +228,6 @@ export default {
   UserNameText,
   ParticipantsContainerExpandable,
   JoinBreakoutButton,
-  ButtonContainer
+  ButtonContainer,
+  BreakoutsSkeletonLoading,
 };
