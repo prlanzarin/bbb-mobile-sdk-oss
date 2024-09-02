@@ -2,35 +2,77 @@ import { gql } from '@apollo/client';
 
 const USER_CURRENT_SUBSCRIPTION = gql`
   subscription userCurrentSubscription {
-    user_current {
-      userId
-      authToken
+  user_current {
+    authToken
+    avatar
+    webcamBackground
+    away
+    clientType
+    color
+    ejectReason
+    ejectReasonCode
+    ejected
+    reactionEmoji
+    enforceLayout
+    extId
+    guest
+    guestStatus
+    hasDrawPermissionOnCurrentPage
+    inactivityWarningDisplay
+    inactivityWarningTimeoutSecs
+    isDialIn
+    isModerator
+    currentlyInMeeting
+    joinErrorCode
+    joinErrorMessage
+    joined
+    locked
+    loggedOut
+    mobile
+    name
+    nameSortable
+    pinned
+    presenter
+    raiseHand
+    registeredAt
+    role
+    speechLocale
+    captionLocale
+    userId
+    breakoutRooms {
+      hasJoined
+      assignedAt
+      breakoutRoomId
+      isLastAssignedRoom
+      durationInSeconds
+      endedAt
+      freeJoin
+      inviteDismissedAt
+      isDefaultName
+      joinURL
       name
-      role
-      avatar
-      color
-      loggedOut
-      ejected
-      isOnline
-      isModerator
+      sendInvitationToModerators
+      sequence
+      shortName
+      showInvitation
+      startedAt
+      isUserCurrentlyInRoom
+    }
+    lastBreakoutRoom {
+      currentlyInRoom
+      sequence
+      shortName
+    }
+    cameras {
+      streamId
+    }
+    voice {
       joined
-      joinErrorCode
-      joinErrorMessage
-      guestStatus
-      guestStatusDetails {
-        guestLobbyMessage
-        positionInWaitingQueue
-      }
-      meeting {
-          name
-          ended
-          isBreakout
-          learningDashboard {
-            learningDashboardAccessToken
-          }
-      }
+      spoke
+      listenOnly
     }
   }
+}
 `;
 
 export default USER_CURRENT_SUBSCRIPTION;
