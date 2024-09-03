@@ -20,7 +20,7 @@ export default class WebRtcPeer extends EventEmitter2 {
     this.videoStream = this.options.videoStream;
     this.audioStream = this.options.audioStream;
     this.mediaConstraints = this.options.mediaConstraints;
-    this.trace = this.options.trace;
+    this.trace = true;
     this.configuration = this.options.configuration;
     this.onicecandidate = this.options.onicecandidate;
     this.oncandidategatheringdone = this.options.oncandidategatheringdone;

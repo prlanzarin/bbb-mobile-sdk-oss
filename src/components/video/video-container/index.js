@@ -21,7 +21,7 @@ const VideoContainer = (props) => {
     userName,
     style,
     local,
-    visible,
+    // visible,
     isGrid,
     userRole,
     raiseHand,
@@ -29,14 +29,11 @@ const VideoContainer = (props) => {
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const clientIsReady = useSelector(({ client }) => {
-    return client.connectionStatus.isConnected
-      && client.sessionState.connected
-      && client.sessionState.loggedIn;
-  });
   const mediaStreamId = useSelector((state) => state.video.videoStreams[cameraId]);
   const signalingTransportOpen = useSelector((state) => state.video.signalingTransportOpen);
   const mediaServer = useSelector((state) => selectMetadata(state, 'media-server-video'));
+  const clientIsReady = true;
+  const visible = true;
 
   useEffect(() => {
     if (signalingTransportOpen && clientIsReady) {
