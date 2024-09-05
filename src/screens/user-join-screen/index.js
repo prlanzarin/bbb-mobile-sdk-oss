@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { GET_USER_CURRENT, USER_JOIN_MUTATION } from './queries';
-import { setInitialCurrentUser } from '../../store/redux/slices/wide-app/client';
+import { setConnected, setInitialCurrentUser, setLoggedIn } from '../../store/redux/slices/wide-app/client';
 import VideoManager from '../../services/webrtc/video-manager';
 import logger from '../../services/logger';
 import Styled from './styles';
@@ -64,6 +64,8 @@ const UserJoinScreen = () => {
     if (currentUser) {
       handleDispatchUserJoin(currentUser.authToken);
       dispatch(setInitialCurrentUser(currentUser));
+      dispatch(setConnected(true));
+      dispatch(setLoggedIn(true));
       if (currentUser.guestStatus === 'WAIT') {
         navigation.navigate('GuestScreen');
       } else if (currentUser?.meeting?.ended) {
