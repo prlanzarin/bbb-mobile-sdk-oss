@@ -416,7 +416,6 @@ class VideoManager {
   onVideoPublished(cameraId) {
     store.dispatch(setIsConnected(true));
     store.dispatch(setIsConnecting(false));
-    this._makeCall('userShareWebcam', cameraId);
     this.logger.info({
       logCode: 'video_joined',
       extraInfo: {
@@ -505,16 +504,16 @@ class VideoManager {
 
     this._unpublish(cameraId);
 
-    return this._makeCall('userUnshareWebcam', cameraId).catch((error) => {
-      this.logger.error({
-        logCode: 'videomanager_userUnshareWebcam_failed',
-        extraInfo: {
-          cameraId,
-          errorName: error.name,
-          errorMessage: error.name
-        }
-      }, `makeCall(userUnshareWebcam) failed: ${error.message}`);
-    });
+    // return this._makeCall('userUnshareWebcam', cameraId).catch((error) => {
+    //   this.logger.error({
+    //     logCode: 'videomanager_userUnshareWebcam_failed',
+    //     extraInfo: {
+    //       cameraId,
+    //       errorName: error.name,
+    //       errorMessage: error.name
+    //     }
+    //   }, `makeCall(userUnshareWebcam) failed: ${error.message}`);
+    // });
   }
 
   onLocalVideoExit(cameraId) {

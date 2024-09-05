@@ -1,4 +1,5 @@
 import * as Linking from 'expo-linking';
+import { useMutation } from '@apollo/client';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -18,9 +19,9 @@ import { isLocked } from '../../../store/redux/slices/current-user';
 import { selectLocalVideoStreams } from '../../../store/redux/slices/video-streams';
 import { isClientReady } from '../../../store/redux/slices/wide-app/client';
 import useAppState from '../../../hooks/use-app-state';
+import Queries from './queries';
 
-const VideoControls = (props) => {
-  const { isLandscape } = props;
+const VideoControls = () => {
   const { t } = useTranslation();
   const isConnected = useSelector((state) => state.video.isConnected);
   const isConnecting = useSelector((state) => state.video.isConnecting);
@@ -31,11 +32,21 @@ const VideoControls = (props) => {
   const ready = useSelector((state) => isClientReady(state) && state.video.signalingTransportOpen);
   const isActive = isConnected || isConnecting;
   const iconColor = isActive ? Colors.white : Colors.lightGray300;
-  const buttonSize = isLandscape ? 24 : 32;
   const appState = useAppState();
   const [publishOnActive, setPublishOnActive] = useState(false);
   const mediaServer = useSelector((state) => selectMetadata(state, 'media-server-video'));
   const recordingAdapter = useSelector((state) => selectMetadata(state, 'sfu-recording-adapter'));
+
+  const [cameraBroadcastStart] = useMutation(Queries.CAMERA_BROADCAST_START);
+  const [cameraBroadcastStop] = useMutation(Queries.CAMERA_BROADCAST_STOP);
+
+  const sendUserShareWebcam = (cameraId) => {
+    return cameraBroadcastStart({ variables: { cameraId } });
+  };
+
+  const sendUserStopWebcam = (cameraId) => {
+    return cameraBroadcastStop({ variables: { cameraId } });
+  };
 
   const fireDisabledCamAlert = () => {
     // TODO localization, programmatically dismissable Dialog that is reusable
@@ -98,6 +109,18 @@ const VideoControls = (props) => {
   };
 
   useEffect(() => {
+    if (localCameraId) {
+      sendUserShareWebcam(localCameraId);
+    }
+  }, [localCameraId]);
+
+  useEffect(() => {
+    if (userRequestedHangup && localCameraId) {
+      sendUserStopWebcam(localCameraId);
+    }
+  }, [userRequestedHangup]);
+
+  useEffect(() => {
     if (appState.match(/inactive|background/) && isActive) {
       // Only schedule a re-share if the camera was connected in the first place.
       // If it's still connecting, just stop it.
@@ -136,7 +159,7 @@ const VideoControls = (props) => {
   return (
     <View>
       <IconButtonComponent
-        size={buttonSize}
+        size={32}
         icon={isActive ? 'video' : 'video-off'}
         iconColor={iconColor}
         containerColor={isActive ? Colors.blue : Colors.lightGray100}
@@ -145,7 +168,7 @@ const VideoControls = (props) => {
       />
       <Styled.LoadingWrapper pointerEvents="none">
         <ActivityIndicator
-          size={buttonSize * 1.5}
+          size={32 * 1.5}
           color={iconColor}
           animating={isConnecting}
           hidesWhenStopped

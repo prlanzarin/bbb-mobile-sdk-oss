@@ -31,6 +31,7 @@ const UserJoinScreen = () => {
       sessionToken,
       logger
     };
+    console.log({ userId, host, sessionToken });
     VideoManager.init(mediaManagerConfigs);
     // AudioManager.init(mediaManagerConfigs);
     // ScreenshareManager.init(mediaManagerConfigs);
