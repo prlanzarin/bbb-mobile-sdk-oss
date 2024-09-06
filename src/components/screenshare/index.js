@@ -1,24 +1,26 @@
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import Styled from './styles';
-import ScreenshareManager from '../../services/webrtc/screenshare-manager';
-import { selectScreenshare } from '../../store/redux/slices/screenshare';
+import { useSubscription } from '@apollo/client';
 import { isClientReady } from '../../store/redux/slices/wide-app/client';
 import { selectMetadata } from '../../store/redux/slices/meeting';
+import ScreenshareManager from '../../services/webrtc/screenshare-manager';
+import Styled from './styles';
+import Queries from './queries';
 
-const Screenshare = (props) => {
-  const { style } = props;
-  const screenshare = useSelector(selectScreenshare);
+const Screenshare = () => {
+  const { data: screenshareData } = useSubscription(Queries.SCREENSHARE_SUBSCRIPTION);
   const mediaStreamId = useSelector((state) => state.screenshare.screenshareStream);
   const isConnected = useSelector((state) => state.screenshare.isConnected);
   const clientIsReady = useSelector(isClientReady);
   const mediaServer = useSelector((state) => selectMetadata(state, 'media-server-screenshare'));
 
+  const hasScreenshare = screenshareData?.screenshare.length > 0;
+
   useEffect(() => {
-    if (clientIsReady && !mediaStreamId && screenshare) {
+    if (clientIsReady && !mediaStreamId && hasScreenshare) {
       ScreenshareManager.subscribe({ mediaServer });
     }
-  }, [clientIsReady, mediaStreamId, screenshare]);
+  }, [clientIsReady, mediaStreamId, hasScreenshare]);
 
   if (isConnected && mediaStreamId) {
     return (

@@ -7,6 +7,7 @@ import React, { useEffect } from 'react';
 import { GET_USER_CURRENT, USER_JOIN_MUTATION } from './queries';
 import { setConnected, setInitialCurrentUser, setLoggedIn } from '../../store/redux/slices/wide-app/client';
 import VideoManager from '../../services/webrtc/video-manager';
+import ScreenshareManager from '../../services/webrtc/screenshare-manager';
 import logger from '../../services/logger';
 import Styled from './styles';
 
@@ -31,16 +32,15 @@ const UserJoinScreen = () => {
       sessionToken,
       logger
     };
-    console.log({ userId, host, sessionToken });
     VideoManager.init(mediaManagerConfigs);
+    ScreenshareManager.init(mediaManagerConfigs);
     // AudioManager.init(mediaManagerConfigs);
-    // ScreenshareManager.init(mediaManagerConfigs);
   };
 
   const destroyMediaManagers = () => {
     VideoManager.destroy();
+    ScreenshareManager.destroy();
     // AudioManager.destroy();
-    // ScreenshareManager.destroy();
   };
 
   useEffect(() => {
