@@ -380,6 +380,7 @@ const leave = createAsyncThunk(
 
 const isClientReady = ({ client }) => {
   return client.sessionState.connected
+    // && client.connectionStatus.isConnected
     && client.sessionState.loggedIn;
 };
 
