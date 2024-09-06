@@ -130,7 +130,6 @@ class ScreenshareManager {
     sessionToken,
     logger,
   }) {
-    console.log({userId, host, sessionToken, logger})
     if (typeof host !== 'string'
       || typeof sessionToken !== 'string'
       || typeof userId !== 'string') {
