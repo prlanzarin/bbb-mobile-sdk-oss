@@ -23,19 +23,20 @@ const ContentArea = (props) => {
   const { PictureInPictureModule } = NativeModules;
 
   const isPiPEnabled = useSelector((state) => state.layout.isPiPEnabled);
-  const { data } = useSubscription(Queries.CURRENT_PRESENTATION_PAGE_SUBSCRIPTION);
-  const screenshare = useSelector(selectScreenshare);
+  const { data: currentPageData } = useSubscription(Queries.CURRENT_PRESENTATION_PAGE_SUBSCRIPTION);
+  const { data: screenshareData } = useSubscription(Queries.SCREENSHARE_SUBSCRIPTION);
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const { t } = useTranslation();
 
-  const currentSlide = data?.pres_page_curr[0].svgUrl;
+  const currentSlide = currentPageData?.pres_page_curr[0].svgUrl;
+  const hasScreenshare = screenshareData?.screenshare.length > 0;
   const isAndroid = Platform.OS === 'android';
 
   const handleFullscreenClick = () => {
     dispatch(setIsFocused(true));
-    dispatch(setFocusedId(screenshare ? 'screenshare' : 'whiteboard'));
+    dispatch(setFocusedId(hasScreenshare ? 'screenshare' : 'whiteboard'));
     dispatch(setFocusedElement('contentArea'));
     navigation.navigate('FullscreenWrapperScreen');
   };
@@ -87,8 +88,8 @@ const ContentArea = (props) => {
   if (fullscreen) {
     return (
       <>
-        {!screenshare && <WhiteboardScreen />}
-        {screenshare && screenshareView()}
+        {!hasScreenshare && <WhiteboardScreen />}
+        {hasScreenshare && screenshareView()}
       </>
     );
   }
@@ -101,7 +102,7 @@ const ContentArea = (props) => {
     return (
       <>
         <Styled.FullscreenIcon
-          isScreensharing={screenshare}
+          isScreensharing={hasScreenshare}
           onPress={handleFullscreenClick}
         />
         <Styled.MinimizeIcon
@@ -118,8 +119,8 @@ const ContentArea = (props) => {
 
   return (
     <Styled.ContentAreaPressable>
-      {!screenshare && presentationView()}
-      {screenshare && screenshareView()}
+      {!hasScreenshare && presentationView()}
+      {hasScreenshare && screenshareView()}
       {renderIcons()}
     </Styled.ContentAreaPressable>
 

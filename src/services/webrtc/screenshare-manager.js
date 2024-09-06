@@ -21,8 +21,7 @@ class ScreenshareManager {
       const currentState = store.getState();
       if (!currentState) return false;
       const { client } = currentState;
-      return client.connectionStatus.isConnected
-        && client.sessionState.connected
+      return client.sessionState.connected
         && client.sessionState.loggedIn;
     } catch (error) {
       this.logger.error({
@@ -128,20 +127,18 @@ class ScreenshareManager {
     userId,
     host,
     sessionToken,
-    makeCall,
     logger,
   }) {
+    console.log({userId, host, sessionToken, logger})
     if (typeof host !== 'string'
-      || typeof sessionToken !== 'string') {
+      || typeof sessionToken !== 'string'
+      || typeof userId !== 'string') {
       throw new TypeError('Screenshare manager: invalid init data');
     }
 
     this._userId = userId;
     this._host = host;
     this._sessionToken = sessionToken;
-    // FIXME temporary - we need to refactor sockt-connection to use makeCall
-    // as a proper util method without creating circular dependencies
-    this._makeCall = makeCall;
     this.logger = logger;
     this.initialized = true;
     try {
@@ -233,7 +230,6 @@ class ScreenshareManager {
     this.userId = null;
     this._host = null;
     this._sessionToken = null;
-    this._makeCall = null;
     this.iceServers = null;
   }
 
