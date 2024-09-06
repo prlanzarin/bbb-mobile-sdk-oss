@@ -8,6 +8,7 @@ import {
   setIsFocused
 } from '../../../store/redux/slices/wide-app/layout';
 import { selectMetadata } from '../../../store/redux/slices/meeting';
+import { isClientReady } from '../../../store/redux/slices/wide-app/client';
 import UserAvatar from '../../user-avatar';
 import VideoManager from '../../../services/webrtc/video-manager';
 import Styled from './styles';
@@ -21,7 +22,7 @@ const VideoContainer = (props) => {
     userName,
     style,
     local,
-    visible,
+    // visible,
     isGrid,
     userRole,
     raiseHand,
@@ -29,14 +30,11 @@ const VideoContainer = (props) => {
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const clientIsReady = useSelector(({ client }) => {
-    return client.connectionStatus.isConnected
-      && client.sessionState.connected
-      && client.sessionState.loggedIn;
-  });
   const mediaStreamId = useSelector((state) => state.video.videoStreams[cameraId]);
   const signalingTransportOpen = useSelector((state) => state.video.signalingTransportOpen);
   const mediaServer = useSelector((state) => selectMetadata(state, 'media-server-video'));
+  const clientIsReady = useSelector(isClientReady);
+  const visible = true;
 
   useEffect(() => {
     if (signalingTransportOpen && clientIsReady) {

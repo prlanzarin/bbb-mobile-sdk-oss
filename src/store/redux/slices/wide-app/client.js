@@ -379,8 +379,8 @@ const leave = createAsyncThunk(
 // Selectors
 
 const isClientReady = ({ client }) => {
-  return client.connectionStatus.isConnected
-    && client.sessionState.connected
+  return client.sessionState.connected
+    // && client.connectionStatus.isConnected
     && client.sessionState.loggedIn;
 };
 

@@ -1,15 +1,9 @@
-import * as Linking from 'expo-linking';
 import { useEffect, useState } from 'react';
+import * as Linking from 'expo-linking';
+import { Alert } from 'react-native';
+import { useMutation } from '@apollo/client';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { Alert, View } from 'react-native';
-import { ActivityIndicator } from 'react-native-paper';
-import useDebounce from '../../../hooks/use-debounce';
-import IconButtonComponent from '../../icon-button';
-import Colors from '../../../constants/colors';
-import VideoManager from '../../../services/webrtc/video-manager';
-import Styled from './styles';
-import logger from '../../../services/logger';
 import {
   selectLockSettingsProp,
   selectMetadata,
@@ -18,10 +12,13 @@ import { isLocked } from '../../../store/redux/slices/current-user';
 import { selectLocalVideoStreams } from '../../../store/redux/slices/video-streams';
 import { isClientReady } from '../../../store/redux/slices/wide-app/client';
 import useAppState from '../../../hooks/use-app-state';
+import useDebounce from '../../../hooks/use-debounce';
+import VideoManager from '../../../services/webrtc/video-manager';
+import logger from '../../../services/logger';
+import Queries from './queries';
+import Styled from './styles';
 
-const VideoControls = (props) => {
-  const { isLandscape } = props;
-  const { t } = useTranslation();
+const VideoControls = () => {
   const isConnected = useSelector((state) => state.video.isConnected);
   const isConnecting = useSelector((state) => state.video.isConnecting);
   const localCameraId = useSelector((state) => state.video.localCameraId);
@@ -29,16 +26,25 @@ const VideoControls = (props) => {
   const userRequestedHangup = useSelector((state) => state.video.userRequestedHangup);
   const localVideoStreams = useSelector(selectLocalVideoStreams);
   const ready = useSelector((state) => isClientReady(state) && state.video.signalingTransportOpen);
-  const isActive = isConnected || isConnecting;
-  const iconColor = isActive ? Colors.white : Colors.lightGray300;
-  const buttonSize = isLandscape ? 24 : 32;
-  const appState = useAppState();
-  const [publishOnActive, setPublishOnActive] = useState(false);
   const mediaServer = useSelector((state) => selectMetadata(state, 'media-server-video'));
   const recordingAdapter = useSelector((state) => selectMetadata(state, 'sfu-recording-adapter'));
+  const [publishOnActive, setPublishOnActive] = useState(false);
+  const [cameraBroadcastStart] = useMutation(Queries.CAMERA_BROADCAST_START);
+  const [cameraBroadcastStop] = useMutation(Queries.CAMERA_BROADCAST_STOP);
+  const appState = useAppState();
+  const { t } = useTranslation();
+
+  const isActive = isConnected || isConnecting;
+
+  const sendUserShareWebcam = (cameraId) => {
+    return cameraBroadcastStart({ variables: { cameraId } });
+  };
+
+  const sendUserStopWebcam = (cameraId) => {
+    return cameraBroadcastStop({ variables: { cameraId } });
+  };
 
   const fireDisabledCamAlert = () => {
-    // TODO localization, programmatically dismissable Dialog that is reusable
     Alert.alert(
       t('mobileSdk.webcam.blockedLabel'),
       t('mobileSdk.permission.moderator'),
@@ -70,7 +76,6 @@ const VideoControls = (props) => {
       }, `Video published failed: ${error.message} - ${error.name}`);
 
       if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
-        // TODO localization
         const buttons = [
           {
             text: t('app.settings.main.cancel.label'),
@@ -93,9 +98,20 @@ const VideoControls = (props) => {
           { cancelable: true },
         );
       }
-      // FIXME surface the rest of the errors via toast or chain a retry.
     });
   };
+
+  useEffect(() => {
+    if (localCameraId) {
+      sendUserShareWebcam(localCameraId);
+    }
+  }, [localCameraId]);
+
+  useEffect(() => {
+    if (userRequestedHangup && localCameraId) {
+      sendUserStopWebcam(localCameraId);
+    }
+  }, [userRequestedHangup]);
 
   useEffect(() => {
     if (appState.match(/inactive|background/) && isActive) {
@@ -134,24 +150,11 @@ const VideoControls = (props) => {
   }, [userRequestedHangup, localVideoStreams, isConnected, localCameraId, ready]);
 
   return (
-    <View>
-      <IconButtonComponent
-        size={buttonSize}
-        icon={isActive ? 'video' : 'video-off'}
-        iconColor={iconColor}
-        containerColor={isActive ? Colors.blue : Colors.lightGray100}
-        animated
-        onPress={onButtonPress}
-      />
-      <Styled.LoadingWrapper pointerEvents="none">
-        <ActivityIndicator
-          size={buttonSize * 1.5}
-          color={iconColor}
-          animating={isConnecting}
-          hidesWhenStopped
-        />
-      </Styled.LoadingWrapper>
-    </View>
+    <Styled.VideoButton
+      isActive={isActive}
+      onPress={onButtonPress}
+      isConnecting={isConnecting}
+    />
   );
 };
 

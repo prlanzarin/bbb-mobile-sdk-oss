@@ -16,7 +16,6 @@ import UserNotesScreen from '../../../screens/user-notes-screen';
 import CustomDrawer from '../index';
 import useModalListener from '../../../hooks/listeners/use-modal-listener';
 // constants
-import Settings from '../../../../settings.json';
 import Styled from './styles';
 import useCurrentUser from '../../../graphql/hooks/useCurrentUser';
 
@@ -27,7 +26,6 @@ const DrawerNavigator = ({
   const appState = useAppState();
   const { t } = useTranslation();
   const { data: userCurrentData } = useCurrentUser();
-
   const meetingName = userCurrentData?.meeting?.name;
   const recordMeeting = false;
   const isBreakout = false;

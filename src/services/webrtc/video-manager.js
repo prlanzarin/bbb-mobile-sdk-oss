@@ -361,20 +361,18 @@ class VideoManager {
     userId,
     host,
     sessionToken,
-    makeCall,
     logger,
   }) {
     if (typeof host !== 'string'
-      || typeof sessionToken !== 'string') {
+      || typeof sessionToken !== 'string'
+      || typeof userId !== 'string'
+    ) {
       throw new TypeError('Video manager: invalid init data');
     }
 
     this.userId = userId;
     this._host = host;
     this._sessionToken = sessionToken;
-    // FIXME temporary - we need to refactor sockt-connection to use makeCall
-    // as a proper util method without creating circular dependencies
-    this._makeCall = makeCall;
     this.logger = logger;
     this.initialized = true;
     try {
@@ -418,7 +416,6 @@ class VideoManager {
   onVideoPublished(cameraId) {
     store.dispatch(setIsConnected(true));
     store.dispatch(setIsConnecting(false));
-    this._makeCall('userShareWebcam', cameraId);
     this.logger.info({
       logCode: 'video_joined',
       extraInfo: {
@@ -507,16 +504,16 @@ class VideoManager {
 
     this._unpublish(cameraId);
 
-    return this._makeCall('userUnshareWebcam', cameraId).catch((error) => {
-      this.logger.error({
-        logCode: 'videomanager_userUnshareWebcam_failed',
-        extraInfo: {
-          cameraId,
-          errorName: error.name,
-          errorMessage: error.name
-        }
-      }, `makeCall(userUnshareWebcam) failed: ${error.message}`);
-    });
+    // return this._makeCall('userUnshareWebcam', cameraId).catch((error) => {
+    //   this.logger.error({
+    //     logCode: 'videomanager_userUnshareWebcam_failed',
+    //     extraInfo: {
+    //       cameraId,
+    //       errorName: error.name,
+    //       errorMessage: error.name
+    //     }
+    //   }, `makeCall(userUnshareWebcam) failed: ${error.message}`);
+    // });
   }
 
   onLocalVideoExit(cameraId) {
