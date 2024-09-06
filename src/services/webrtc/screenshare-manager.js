@@ -22,6 +22,7 @@ class ScreenshareManager {
       if (!currentState) return false;
       const { client } = currentState;
       return client.sessionState.connected
+        // && client.connectionStatus.isConnected
         && client.sessionState.loggedIn;
     } catch (error) {
       this.logger.error({
