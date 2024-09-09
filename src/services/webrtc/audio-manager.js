@@ -23,8 +23,8 @@ class AudioManager {
       const currentState = store.getState();
       if (!currentState) return false;
       const { client } = currentState;
-      return client.connectionStatus.isConnected
-        && client.sessionState.connected
+      return client.sessionState.connected
+        // && client.connectionStatus.isConnected
         && client.sessionState.loggedIn;
     } catch (error) {
       this.logger.error({
@@ -201,20 +201,17 @@ class AudioManager {
     userId,
     host,
     sessionToken,
-    makeCall,
     logger,
   }) {
     if (typeof host !== 'string'
-      || typeof sessionToken !== 'string') {
+      || typeof sessionToken !== 'string'
+      || typeof userId !== 'string') {
       throw new TypeError('Audio manager: invalid init data');
     }
 
     this.userId = userId;
     this._host = host;
     this._sessionToken = sessionToken;
-    // FIXME temporary - we need to refactor sockt-connection to use makeCall
-    // as a proper util method without creating circular dependencies
-    this._makeCall = makeCall;
     this.logger = logger;
     this.initialized = true;
     try {
@@ -250,6 +247,18 @@ class AudioManager {
         role,
       },
     }, `Audio connected (${clientSessionNumber})`);
+
+    // REMOVE THIS and use onAudioJoin when voice-call-states is ported from 3.0
+    store.dispatch(setIsConnected(true));
+    store.dispatch(setIsConnecting(false));
+    store.dispatch(setIsReconnecting(false));
+    this.logger.info({
+      logCode: 'audio_joined',
+      extraInfo: {
+        clientSessionNumber,
+        role: this.bridge?.role || 'Unknown',
+      },
+    }, `Audio Joined (${clientSessionNumber})`);
 
     // Listen only doesn't wait for server side confirmation to flag join, so
     // do it once connected.
