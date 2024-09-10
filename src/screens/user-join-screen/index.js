@@ -8,6 +8,7 @@ import { GET_USER_CURRENT, USER_JOIN_MUTATION } from './queries';
 import { setConnected, setInitialCurrentUser, setLoggedIn } from '../../store/redux/slices/wide-app/client';
 import VideoManager from '../../services/webrtc/video-manager';
 import ScreenshareManager from '../../services/webrtc/screenshare-manager';
+import AudioManager from '../../services/webrtc/audio-manager';
 import logger from '../../services/logger';
 import Styled from './styles';
 
@@ -34,13 +35,13 @@ const UserJoinScreen = () => {
     };
     VideoManager.init(mediaManagerConfigs);
     ScreenshareManager.init(mediaManagerConfigs);
-    // AudioManager.init(mediaManagerConfigs);
+    AudioManager.init(mediaManagerConfigs);
   };
 
   const destroyMediaManagers = () => {
     VideoManager.destroy();
     ScreenshareManager.destroy();
-    // AudioManager.destroy();
+    AudioManager.destroy();
   };
 
   useEffect(() => {

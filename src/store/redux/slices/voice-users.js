@@ -147,10 +147,13 @@ const joinAudioOnLoginListener = (action, listenerApi) => {
 const joinAudio = createAsyncThunk(
   'client/joinAudio',
   async (_, thunkAPI) => {
-    const state = thunkAPI.getState();
-    const muteOnStart = selectMeeting(state)?.voiceProp?.muteOnStart;
-    const micDisabled = selectLockSettingsProp(state, 'disableMic') && isLocked(state);
-    const transparentListenOnly = selectMetadata(state, 'transparent-listen-only');
+    // const state = thunkAPI.getState();
+    // const muteOnStart = selectMeeting(state)?.voiceProp?.muteOnStart;
+    // const micDisabled = selectLockSettingsProp(state, 'disableMic') && isLocked(state);
+    // const transparentListenOnly = selectMetadata(state, 'transparent-listen-only');
+    const muteOnStart = true;
+    const micDisabled = false;
+    const transparentListenOnly = false;
 
     if (Platform.OS === 'android' && Platform.Version >= ANDROID_SDK_MIN_BTCONNECT) {
       const checkStatus = await PermissionsAndroid.check(
