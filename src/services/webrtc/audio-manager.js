@@ -42,7 +42,7 @@ class AudioManager {
     this.initialized = false;
     this.inputStream = null;
     this.bridge = null;
-    this.audioSessionNumber = Date.now();
+    this.audioSessionNumber = 0;
     this.iceServers = null;
     this.isListenOnly = false;
   }
@@ -75,7 +75,7 @@ class AudioManager {
   }
 
   bumpSessionNumber() {
-    this.audioSessionNumber = Date.now();
+    this.audioSessionNumber++;
     return this.audioSessionNumber;
   }
 
