@@ -2,14 +2,15 @@ import React, { useCallback, useState } from 'react';
 import { FlatList, Dimensions } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
-import useUserList from '../../../graphql/hooks/useUserList';
+import { useSubscription } from '@apollo/client';
 import Styled from './styles';
+import Queries from './queries';
 
 const DEVICE_HEIGHT = parseInt(Dimensions.get('window').height, 10);
 
 const GridView = () => {
   const isPresentationOpen = useSelector((state) => state.layout.isPresentationOpen);
-  const { data } = useUserList();
+  const { data } = useSubscription(Queries.USER_LIST_SUBSCRIPTION);
   const videoUsers = data?.user;
   const [numOfColumns, setNumOfColumns] = useState(1);
 
