@@ -240,5 +240,6 @@
   "mobileSdk.join.loading.label.2": "Calculando suministro de servidores",
   "mobileSdk.join.loading.label.3": "Ajustando cocientes de internet",
   "mobileSdk.join.loading.label.4": "Normalizando dispositivos de audio",
-  "mobileSdk.join.loading.label.5": "Simulando carga de la sesión"
+  "mobileSdk.join.loading.label.5": "Simulando carga de la sesión",
+  "mobileSdk.audio.join": "Entrar no audio"
 }

@@ -1,12 +1,9 @@
 import * as Linking from 'expo-linking';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Alert, View } from 'react-native';
-import { ActivityIndicator } from 'react-native-paper';
+import { Alert } from 'react-native';
 import { useMutation, useSubscription } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import Colors from '../../../constants/colors';
-import IconButtonComponent from '../../icon-button';
 import AudioManager from '../../../services/webrtc/audio-manager';
 import { selectLockSettingsProp } from '../../../store/redux/slices/meeting';
 import { joinAudio } from '../../../store/redux/slices/voice-users';
@@ -25,11 +22,9 @@ const AudioControls = () => {
   const isListenOnly = useSelector((state) => state.audio.isListenOnly);
   const audioError = useSelector((state) => state.audio.audioError);
   const isActive = isConnected || isConnecting;
-  const joinAudioIconColor = isActive ? Colors.white : Colors.lightGray300;
   const { data: currentUserVoiceData } = useSubscription(Queries.USER_CURRENT_VOICE);
   const isMuted = currentUserVoiceData?.user_current[0]?.voice?.muted;
   const unmutedAndConnected = !isMuted && isConnected;
-  const muteIconColor = unmutedAndConnected ? Colors.white : Colors.lightGray300;
 
   const [userSetMuted] = useMutation(Queries.USER_SET_MUTED);
 
@@ -103,56 +98,38 @@ const AudioControls = () => {
     }
   };
 
+  const onPressMic = () => {
+    if (micDisabled) {
+      // TODO localization, programmatically dismissable Dialog that is reusable
+      Alert.alert(
+        t('mobileSdk.error.microphone.blocked'),
+        t('mobileSdk.permission.moderator'),
+        null,
+        { cancelable: true },
+      );
+      return;
+    }
+    toggleVoice();
+  };
+
+  const onPressHeadphone = () => {
+    if (isActive) {
+      AudioManager.exitAudio();
+    } else {
+      joinMicrophone();
+    }
+  };
+
   return (
-    <>
-      {(isConnected && !isListenOnly) && (
-        <IconButtonComponent
-          size={32}
-          icon={unmutedAndConnected ? 'microphone' : 'microphone-off'}
-          iconColor={muteIconColor}
-          containerColor={unmutedAndConnected ? Colors.blue : Colors.lightGray100}
-          animated
-          onPress={() => {
-            if (micDisabled) {
-              // TODO localization, programmatically dismissable Dialog that is reusable
-              Alert.alert(
-                t('mobileSdk.error.microphone.blocked'),
-                t('mobileSdk.permission.moderator'),
-                null,
-                { cancelable: true },
-              );
-              return;
-            }
-            toggleVoice();
-          }}
-        />
-      )}
-      <View>
-        <IconButtonComponent
-          size={32}
-          icon={isActive ? 'headphones' : 'headphones-off'}
-          iconColor={joinAudioIconColor}
-          containerColor={isActive ? Colors.blue : Colors.lightGray100}
-          loading={isConnecting}
-          animated
-          onPress={() => {
-            if (isActive) {
-              AudioManager.exitAudio();
-            } else {
-              joinMicrophone();
-            }
-          }}
-        />
-        <Styled.LoadingWrapper pointerEvents="none">
-          <ActivityIndicator
-            size={32 * 1.5}
-            color={joinAudioIconColor}
-            animating={isConnecting}
-            hidesWhenStopped
-          />
-        </Styled.LoadingWrapper>
-      </View>
-    </>
+    <Styled.AudioButtonComponent
+      isConnected={isConnected}
+      isConnecting={isConnecting}
+      isListenOnly={isListenOnly}
+      unmutedAndConnected={unmutedAndConnected}
+      isActive={isActive}
+      onPressJoined={onPressMic}
+      onPressNotJoined={onPressHeadphone}
+    />
   );
 };
 

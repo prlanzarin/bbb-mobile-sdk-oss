@@ -1,5 +1,5 @@
 import styled from 'styled-components/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { TouchableRipple } from 'react-native-paper';
 import { View } from 'react-native';
 import Colors from '../../../constants/colors';
@@ -16,37 +16,29 @@ const ContainerPressable = styled(TouchableRipple)`
   gap: 12px;
 `;
 
-const AudioIcon = styled(MaterialCommunityIcons)`
+const HeadphoneIcon = styled(MaterialIcons)`
   padding: 4px;
 `;
 
-const AudioIconContainer = () => (
+const HeadphoneIconContainer = ({ isActive }) => (
   <View style={{
     display: 'flex', alignItems: 'center', justifyContent: 'center'
   }}
   >
-    <AudioIcon name="headphones-settings" size={24} color={Colors.white} />
+    <HeadphoneIcon name={isActive ? 'headset-off' : 'headset'} size={24} color={Colors.white} />
   </View>
 );
 
-const AudioText = styled.Text`
+const HeadphoneText = styled.Text`
   font-size: 16px;
   font-weight: 500;
   color: ${Colors.white}
   flex: 1;
 `;
 
-const OpenAudioSelectorIcon = () => (
-  <View style={{
-    width: 50, display: 'flex', alignItems: 'center', justifyContent: 'center'
-  }}
-  />
-);
-
 export default {
-  AudioIcon,
-  AudioText,
-  OpenAudioSelectorIcon,
+  HeadphoneIcon,
+  HeadphoneText,
   ContainerPressable,
-  AudioIconContainer
+  HeadphoneIconContainer
 };

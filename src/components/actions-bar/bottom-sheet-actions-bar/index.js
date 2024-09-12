@@ -9,6 +9,7 @@ import { useOrientation } from '../../../hooks/use-orientation';
 import ActionsBar from '../index';
 import { setExpandActionsBar, setDetailedInfo } from '../../../store/redux/slices/wide-app/layout';
 import DebugControl from '../debug-control';
+import AudioButton from '../audio-button';
 import Screenshare from '../screenshare-button';
 import DeviceSelectorControl from '../audio-device-selector-control';
 import Settings from '../../../../settings.json';
@@ -31,7 +32,7 @@ const BottomSheetActionsBar = ({ alwaysOpen }) => {
 
   // variables
   const handleSizeOfActionsBar = () => {
-    const variables = [showDebugToggle, showNotImplementedFeatures, true];
+    const variables = [showDebugToggle, showNotImplementedFeatures, true, true];
     return variables.reduce((base, item) => base + (item ? 85 : 0), 110);
   };
 
@@ -89,6 +90,7 @@ const BottomSheetActionsBar = ({ alwaysOpen }) => {
         <BottomSheetScrollView>
           <Styled.ControlsContainer>
             <DeviceSelectorControl />
+            <AudioButton />
             <DebugControl />
             <Screenshare />
           </Styled.ControlsContainer>
