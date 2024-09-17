@@ -6,10 +6,10 @@ import Styled from './styles';
 
 const DraggableCamera = () => {
   const { data: currentUserData } = useCurrentUser();
-  const currentUserStreamId = currentUserData?.user_current[0]?.cameras[0]?.streamId;
-  const mediaStreamId = useSelector((state) => state.screenshare.screenshareStream);
+  const currentUserCameraId = currentUserData?.user_current[0]?.cameras[0]?.streamId;
+  const mediaStreamId = useSelector((state) => state.video.videoStreams[currentUserCameraId]);
 
-  if (!currentUserStreamId) {
+  if (!mediaStreamId) {
     return null;
   }
 
@@ -25,9 +25,10 @@ const DraggableCamera = () => {
         <View style={{
           width: 90,
           height: 160,
+          zIndex: 1200
         }}
         >
-          <Styled.ScreenshareStream streamURL={currentUserStreamId} />
+          <Styled.ScreenshareStream streamURL={mediaStreamId} />
         </View>
       </DraggableView>
     </View>
