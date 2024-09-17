@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useState, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Platform, Dimensions } from 'react-native';
+import { setIsPiPEnabled } from '../../store/redux/slices/wide-app/layout';
 import ScreenWrapper from '../../components/screen-wrapper';
 import VideoGrid from '../../components/video/video-grid';
 import MiniAudioPlayerIcon from '../../components/audio-player/mini-audio-player-icon';
@@ -9,7 +10,6 @@ import TalkingIndicator from '../../components/talking-indicator';
 import useAppState from '../../hooks/use-app-state';
 import PiPView from './pip-view';
 import Styled from './styles';
-import { setIsPiPEnabled } from '../../store/redux/slices/wide-app/layout';
 
 const DEVICE_HEIGHT = parseInt(Dimensions.get('window').height, 10);
 const DEVICE_WIDTH = parseInt(Dimensions.get('window').width, 10);
@@ -34,15 +34,6 @@ const MainConferenceScreen = () => {
       dispatch(setIsPiPEnabled(false));
     }
   }, [appState]);
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     setIsLoading(true);
-  //     if (initialChatMsgsFetched) {
-  //       setIsLoading(false);
-  //     }
-  //   }, [initialChatMsgsFetched])
-  // );
 
   /* view components */
   const renderGridLayout = () => {
