@@ -15,7 +15,6 @@ const DraggableCamera = () => {
 
   return (
     <Styled.Container>
-
       <DraggableView
         initValue={{ x: 42, y: 42 }}
       >

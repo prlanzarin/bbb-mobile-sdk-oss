@@ -11,6 +11,8 @@ const Colors = {
   lightGray300: '#667080',
   lightGray400: '#28282D',
   blueGray: '#566984',
+  blueIconColor: '#203C8A',
+  blueActionsBar: '#0B1E3E',
   blueBackgroundColor: '#06172A',
   contentLetterboxColor: '#1b2a3a',
   contentForegroundColor: '#3B4A5C',

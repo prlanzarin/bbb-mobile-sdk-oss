@@ -6,13 +6,13 @@ const RaiseHandButton = ({ isHandRaised, onPress }) => {
     <IconButtonComponent
       size={32}
       icon={isHandRaised
-        ? 'hand-back-left-outline'
-        : 'hand-back-left-off-outline'}
+        ? 'hand-back-right-outline'
+        : 'hand-back-right-off-outline'}
       iconColor={
-        isHandRaised ? Colors.white : Colors.lightGray300
+        isHandRaised ? Colors.blueIconColor : Colors.lightGray300
       }
       containerColor={
-        isHandRaised ? Colors.blue : Colors.lightGray100
+        isHandRaised ? Colors.white : Colors.lightGray200
       }
       animated
       onPress={onPress}

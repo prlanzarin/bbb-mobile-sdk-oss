@@ -1,5 +1,6 @@
 import styled from 'styled-components/native';
 import { StyleSheet } from 'react-native';
+import Colors from '../../../constants/colors';
 
 const opacityStyles = StyleSheet.create({
   container: {
@@ -33,19 +34,19 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#0e2a50',
+    backgroundColor: Colors.blueActionsBar,
     padding: 8,
   },
   indicatorStyle: {
     backgroundColor: 'white',
   },
   handleStyle: {
-    backgroundColor: '#0e2a50',
+    backgroundColor: Colors.blueActionsBar,
     borderTopStartRadius: 20,
     borderTopEndRadius: 20,
   },
   backgroundStyle: {
-    backgroundColor: '#0e2a50',
+    backgroundColor: Colors.blueActionsBar,
   },
   style: {
   }
