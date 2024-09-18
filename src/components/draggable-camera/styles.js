@@ -2,14 +2,19 @@ import { RTCView } from 'react-native-webrtc';
 import styled from 'styled-components';
 import Colors from '../../constants/colors';
 
-const ScreenshareStream = styled(RTCView)`
+const VideoStream = styled(RTCView)`
   width: 100%;
   height: 100%;
-  object-fit: contain;
   background-color: ${Colors.contentLetterboxColor};
+  border-radius: 20px;
   object-fit: cover;
 `;
 
+const Container = styled.View`
+  position: absolute;
+`;
+
 export default {
-  ScreenshareStream
+  VideoStream,
+  Container
 };

@@ -14,24 +14,21 @@ const DraggableCamera = () => {
   }
 
   return (
-    <View style={{
-      position: 'absolute',
-    }}
-    >
+    <Styled.Container>
 
       <DraggableView
         initValue={{ x: 42, y: 42 }}
       >
         <View style={{
-          width: 90,
-          height: 160,
+          width: 90 * 1.25,
+          height: 160 * 1.25,
           zIndex: 1200
         }}
         >
-          <Styled.ScreenshareStream streamURL={mediaStreamId} />
+          <Styled.VideoStream streamURL={mediaStreamId} zOrder={2} />
         </View>
       </DraggableView>
-    </View>
+    </Styled.Container>
   );
 };
 
