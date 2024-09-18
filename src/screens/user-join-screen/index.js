@@ -6,6 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { GET_USER_CURRENT, USER_JOIN_MUTATION } from './queries';
 import { setConnected, setInitialCurrentUser, setLoggedIn } from '../../store/redux/slices/wide-app/client';
+import { setAudioError } from '../../store/redux/slices/wide-app/audio';
+import { joinAudio } from '../../store/redux/slices/voice-users';
 import VideoManager from '../../services/webrtc/video-manager';
 import ScreenshareManager from '../../services/webrtc/screenshare-manager';
 import AudioManager from '../../services/webrtc/audio-manager';
@@ -44,12 +46,26 @@ const UserJoinScreen = () => {
     AudioManager.destroy();
   };
 
+  const joinMicrophone = () => {
+    dispatch(joinAudio()).unwrap().then(() => {
+      // If user joined as listen only, it means they are locked which is a soft
+      // error that needs to be surfaced
+      if (AudioManager.isListenOnly) dispatch(setAudioError('ListenOnly'));
+    }).catch((errorMic) => {
+      dispatch(setAudioError(errorMic.name));
+    });
+  };
+
   useEffect(() => {
     if (sessionToken && host && userId) {
       initializeMediaManagers();
     }
     // destroyMediaManagers();
   }, [sessionToken, host, userId]);
+
+  useEffect(() => {
+    joinMicrophone();
+  });
 
   const handleDispatchUserJoin = (authToken) => {
     dispatchUserJoin({
