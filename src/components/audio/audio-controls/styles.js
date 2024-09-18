@@ -28,8 +28,8 @@ const AudioButtonComponent = ({
       <IconButtonComponent
         size={32}
         icon={unmutedAndConnected ? 'microphone' : 'microphone-off'}
-        iconColor={unmutedAndConnected ? Colors.white : Colors.lightGray300}
-        containerColor={unmutedAndConnected ? Colors.blue : Colors.lightGray100}
+        iconColor={unmutedAndConnected ? Colors.blueIconColor : Colors.lightGray300}
+        containerColor={unmutedAndConnected ? Colors.white : Colors.lightGray200}
         animated
         onPress={onPressJoined}
       />
@@ -40,8 +40,8 @@ const AudioButtonComponent = ({
       <IconButtonComponent
         size={32}
         icon={isActive ? 'headphones' : 'headphones-off'}
-        iconColor={isActive ? Colors.white : Colors.lightGray300}
-        containerColor={isActive ? Colors.blue : Colors.lightGray100}
+        iconColor={isActive ? Colors.blueIconColor : Colors.lightGray300}
+        containerColor={isActive ? Colors.white : Colors.lightGray200}
         loading={isConnecting}
         animated
         onPress={onPressNotJoined}
@@ -49,7 +49,7 @@ const AudioButtonComponent = ({
       <LoadingWrapper pointerEvents="none">
         <ActivityIndicator
           size={32 * 1.5}
-          color={isActive ? Colors.white : Colors.lightGray300}
+          color={isActive ? Colors.blueIconColor : Colors.blueIconColor}
           animating={isConnecting}
           hidesWhenStopped
         />
