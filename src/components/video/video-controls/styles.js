@@ -20,14 +20,14 @@ const VideoButton = ({ isActive, isConnecting, onPress }) => (
       onPress={onPress}
       size={32}
       icon={isActive ? 'video' : 'video-off'}
-      iconColor={isActive ? Colors.white : Colors.lightGray300}
-      containerColor={isActive ? Colors.blue : Colors.lightGray100}
+      iconColor={isActive ? Colors.blueIconColor : Colors.lightGray300}
+      containerColor={isActive ? Colors.white : Colors.lightGray200}
       animated
     />
     <LoadingWrapper pointerEvents="none">
       <ActivityIndicator
         size={32 * 1.5}
-        color={isActive ? Colors.white : Colors.lightGray300}
+        color={Colors.blueIconColor}
         animating={isConnecting}
         hidesWhenStopped
       />
