@@ -241,5 +241,7 @@
   "mobileSdk.join.loading.label.3": "Ajustando cocientes de internet",
   "mobileSdk.join.loading.label.4": "Normalizando dispositivos de audio",
   "mobileSdk.join.loading.label.5": "Simulando carga de la sesión",
-  "mobileSdk.audio.join": "Entrar no audio"
+  "mobileSdk.audio.join": "Entrar no audio",
+  "mobileSdk.mainscreen.foreveralone.title": "Eres el único aquí",
+  "mobileSdk.mainscreen.foreveralone.desc": "Comparta el enlace de la reunión con cualquier persona a la que desee asistir."
 }

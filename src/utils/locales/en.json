@@ -243,5 +243,7 @@
   "mobileSdk.join.loading.label.3": "Adjusting internet quotients",
   "mobileSdk.join.loading.label.4": "Normalizing audio devices",
   "mobileSdk.join.loading.label.5": "Simulating session loading",
-  "mobileSdk.audio.join": "Join audio"
+  "mobileSdk.audio.join": "Join audio",
+  "mobileSdk.mainscreen.foreveralone.title": "You are the only one here",
+  "mobileSdk.mainscreen.foreveralone.desc": "Share the meeting link with anyone you want to attend."
 }

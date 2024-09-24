@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { FlatList, Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSubscription } from '@apollo/client';
@@ -13,27 +14,28 @@ const GridView = () => {
   const isPresentationOpen = useSelector((state) => state.layout.isPresentationOpen);
   const { data: userData } = useSubscription(Queries.USER_LIST_SUBSCRIPTION);
   const { data: currentUserData } = useCurrentUser();
-  const videoUsers = userData?.user;
+  const videoUsersCopy = userData?.user.filter(() => true);
   const [numOfColumns, setNumOfColumns] = useState(1);
   const currentUserId = currentUserData?.user_current[0].userId;
+  const { t } = useTranslation();
 
   const removeCurrentUserFromVideoUsers = () => {
-    const index = videoUsers?.findIndex((user) => user.userId === currentUserId);
-    if (index !== -1 && videoUsers?.length > 0) {
-      videoUsers.splice(index, 1);
+    const index = videoUsersCopy?.findIndex((user) => user.userId === currentUserId);
+    if (index !== -1 && videoUsersCopy?.length > 0) {
+      videoUsersCopy.splice(index, 1);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
       setNumOfColumns(userData?.user.length > 2 ? 2 : 1);
-    }, [videoUsers])
+    }, [videoUsersCopy])
   );
 
   useFocusEffect(
     useCallback(() => {
       removeCurrentUserFromVideoUsers();
-    }, [videoUsers, currentUserId])
+    }, [videoUsersCopy, currentUserId])
   );
 
   const renderItem = (videoUser) => {
@@ -56,7 +58,7 @@ const GridView = () => {
 
     return (
       <Styled.Item
-        usersCount={videoUsers.length}
+        usersCount={videoUsersCopy.length}
         dimensionHeight={DEVICE_HEIGHT - 90}
         isPresentationOpen={isPresentationOpen}
       >
@@ -69,7 +71,7 @@ const GridView = () => {
           local={local}
           visible={visible}
           isGrid
-          usersCount={videoUsers.length}
+          usersCount={videoUsersCopy.length}
           userRole={role}
           userEmoji={emoji}
           raiseHand={raiseHand}
@@ -77,6 +79,24 @@ const GridView = () => {
       </Styled.Item>
     );
   };
+
+  if (userData?.user?.length === 1) {
+    return (
+      <>
+        <Styled.ContainerViewItem
+          isPresentationOpen={isPresentationOpen}
+          dimensionHeight={DEVICE_HEIGHT - 90}
+        >
+          <Styled.ContentArea />
+        </Styled.ContainerViewItem>
+        <Styled.RenderSessionAlone
+          sessionAloneTitle={t('mobileSdk.mainscreen.foreveralone.title')}
+          sessionAloneDesc={t('mobileSdk.mainscreen.foreveralone.desc')}
+          isPresentationOpen={isPresentationOpen}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -87,7 +107,7 @@ const GridView = () => {
         <Styled.ContentArea />
       </Styled.ContainerViewItem>
       <FlatList
-        data={videoUsers}
+        data={videoUsersCopy}
         style={Styled.styles.container}
         renderItem={renderItem}
         numColumns={numOfColumns}
