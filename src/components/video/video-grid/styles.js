@@ -2,6 +2,7 @@ import styled from 'styled-components/native';
 import { StyleSheet } from 'react-native';
 import VideoContainer from '../video-container';
 import contentArea from '../../content-area';
+import Colors from '../../../constants/colors';
 
 const VideoListItem = styled(VideoContainer)`
   width: 100%;
@@ -130,10 +131,86 @@ const ContainerViewItem = styled.View`
   `}
 `;
 
+const SessionAloneTitle = styled.Text`
+  color: white;
+  font-weight: 600;
+  font-size: 24px;
+  text-align: center;
+`;
+
+const SessionAloneDesc = styled.Text`
+  color: white;
+  font-weight: 400;
+  font-size: 18px;
+  text-align: center;
+`;
+
+const ContainerSessionAlone = styled.View`
+  display: flex;
+  width: 100%;
+  padding-top: 50px;
+
+  ${({ dimensionHeight }) => dimensionHeight
+  && `
+    height: ${parseInt((dimensionHeight), 10)}px;
+  `}
+`;
+
+const ContainerTextSessionAlone = styled.View`
+  width: 100%;
+  flex: 1;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  ${({ isPresentationOpen }) => !isPresentationOpen
+  && `
+    justify-content: center;
+  `}
+`;
+
+const NoPollsImage = styled.Image``;
+
+const NoPollsLabelTitle = styled.Text`
+  color: ${Colors.white};
+  font-size: 21px;
+  text-align: center;
+  font-weight: 500;
+`;
+
+const NoPollsLabelSubtitle = styled.Text`
+  color: ${Colors.white};
+  font-size: 16px;
+  text-align: center;
+`;
+
+const RenderSessionAlone = ({
+  sessionAloneTitle, sessionAloneDesc, isPresentationOpen
+}) => {
+  return (
+    <ContainerTextSessionAlone isPresentationOpen={isPresentationOpen}>
+      <NoPollsImage
+        source={require('../../../assets/application/service-off.png')}
+        resizeMode="contain"
+        style={{ width: 173, height: 130 }}
+      />
+      <NoPollsLabelTitle>
+        {sessionAloneTitle}
+      </NoPollsLabelTitle>
+      <NoPollsLabelSubtitle>
+        {sessionAloneDesc}
+      </NoPollsLabelSubtitle>
+    </ContainerTextSessionAlone>
+  );
+};
+
 export default {
   VideoListItem,
   ContentArea,
   styles,
   Item,
-  ContainerViewItem
+  ContainerViewItem,
+  SessionAloneTitle,
+  RenderSessionAlone,
+  ContainerSessionAlone,
+  SessionAloneDesc
 };

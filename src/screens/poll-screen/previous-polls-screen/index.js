@@ -1,9 +1,9 @@
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { useSubscription } from '@apollo/client';
-import useCurrentUser from '../../../graphql/hooks/useCurrentUser'
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
+import useCurrentUser from '../../../graphql/hooks/useCurrentUser';
 import { useOrientation } from '../../../hooks/use-orientation';
 import { setProfile } from '../../../store/redux/slices/wide-app/modal';
 import ScreenWrapper from '../../../components/screen-wrapper';
@@ -74,7 +74,6 @@ const PreviousPollScreen = () => {
   }
 
   const renderMethod = () => {
-
     return (
       allPolls?.map(
         (pollObj) => (
