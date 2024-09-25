@@ -30,7 +30,7 @@ const ContentArea = (props) => {
   const navigation = useNavigation();
   const { t } = useTranslation();
 
-  const currentSlide = currentPageData?.pres_page_curr[0].svgUrl;
+  const currentSlide = currentPageData?.pres_page_curr[0]?.svgUrl;
   const hasScreenshare = screenshareData?.screenshare.length > 0;
   const isAndroid = Platform.OS === 'android';
 
