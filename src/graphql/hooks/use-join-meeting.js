@@ -32,9 +32,9 @@ const useJoinMeeting = (url) => {
         if (data.status === 200) {
           setUrlWithSessionId(data.url);
           setLocalSessionToken(UrlUtils.parseQueryString(data.url).sessionToken);
-          setLocalHost(UrlUtils.getHostFromUrl(url));
-          dispatch(setJoinUrl(url));
-          dispatch(setHost(UrlUtils.getHostFromUrl(url)));
+          setLocalHost(UrlUtils.getHostFromUrl(data.url));
+          dispatch(setJoinUrl(data.url));
+          dispatch(setHost(UrlUtils.getHostFromUrl(data.url)));
           dispatch(setSessionToken(UrlUtils.parseQueryString(data.url).sessionToken));
           console.log('DONE STAGE 0');
           setLoginStage(1);
@@ -166,7 +166,7 @@ const useJoinMeeting = (url) => {
         },
         on: {
           error: (error) => {
-            console.error(`Error: on subscription to server: ${error}`);
+            console.error(`Error: on subscription to server: ${JSON.stringify(error, null, 2)}`);
           },
           closed: () => {
             console.error('socket closed');
