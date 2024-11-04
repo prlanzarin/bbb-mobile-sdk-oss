@@ -26,10 +26,6 @@
       "bitcode": false,
       "bundleIdentifier": "org.bbb.mobilesdk"
     },
-    "plugins": [
-      "@config-plugins/react-native-webrtc",
-      "@notifee/react-native"
-    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/native/adaptive-icon.png",
@@ -49,6 +45,7 @@
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_CONNECT"
       ],
+      "usesClearTextTraffic": true,
       "package": "org.bbb.mobilesdk"
     },
     "web": {
