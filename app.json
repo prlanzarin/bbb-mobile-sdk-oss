@@ -45,7 +45,6 @@
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_CONNECT"
       ],
-      "usesClearTextTraffic": true,
       "package": "org.bbb.mobilesdk"
     },
     "web": {
