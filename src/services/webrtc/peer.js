@@ -2,6 +2,7 @@ import {
   RTCPeerConnection,
   RTCIceCandidate,
   RTCSessionDescription,
+  MediaStream,
 } from 'react-native-webrtc';
 import { EventEmitter2 } from 'eventemitter2';
 import {
@@ -209,15 +210,27 @@ export default class WebRtcPeer extends EventEmitter2 {
   }
 
   getLocalStream() {
-    if (this.localStream) {
+    if (this.peerConnection) {
+      if (this.localStream == null) this.localStream = new MediaStream();
+      const senders = this.peerConnection.getSenders();
+      const oldTracks = this.localStream.getTracks();
+
+      senders.forEach(({ track }) => {
+        if (track && !oldTracks.includes(track)) {
+          this.localStream.addTrack(track);
+        }
+      });
+
+      oldTracks.forEach((oldTrack) => {
+        if (!senders.some(({ track }) => track && track.id === oldTrack.id)) {
+          this.localStream.removeTrack(oldTrack);
+        }
+      });
+
       return this.localStream;
     }
 
-    if (this.peerConnection) {
-      this.localStream = this.peerConnection.getLocalStreams()[0];
-    }
-
-    return this.localStream;
+    return null;
   }
 
   getRemoteStream() {
@@ -226,10 +239,16 @@ export default class WebRtcPeer extends EventEmitter2 {
     }
 
     if (this.peerConnection) {
-      this.remoteStream = this.peerConnection.getRemoteStreams()[0];
+      this.remoteStream = new MediaStream();
+      this.peerConnection.getReceivers().forEach(({ track }) => {
+        if (track) {
+          this.remoteStream.addTrack(track);
+        }
+      });
+      return this.remoteStream;
     }
 
-    return this.remoteStream;
+    return null;
   }
 
   isPeerConnectionClosed() {
@@ -291,7 +310,7 @@ export default class WebRtcPeer extends EventEmitter2 {
 
     switch (this.mode) {
       case 'recvonly': {
-        const useAudio = this.mediaConstraints
+      const useAudio = this.mediaConstraints
         && ((typeof this.mediaConstraints.audio === 'boolean' && this.mediaConstraints.audio)
           || (typeof this.mediaConstraints.audio === 'object'));
         const useVideo = this.mediaConstraints
@@ -313,13 +332,16 @@ export default class WebRtcPeer extends EventEmitter2 {
         await this.mediaStreamFactory();
 
         if (this.videoStream) {
-          this.peerConnection.addStream(this.videoStream);
+          this.videoStream.getTracks().forEach((track) => {
+            this.peerConnection.addTrack(track, this.videoStream);
+          });
         }
 
         if (this.audioStream) {
-          this.peerConnection.addStream(this.audioStream);
+          this.audioStream.getTracks().forEach((track) => {
+            this.peerConnection.addTrack(track, this.audioStream);
+          });
         }
-
         break;
       }
 
@@ -404,11 +426,15 @@ export default class WebRtcPeer extends EventEmitter2 {
           await this.mediaStreamFactory();
 
           if (this.videoStream) {
-            this.peerConnection.addStream(this.videoStream);
+            this.videoStream.getTracks().forEach((track) => {
+              this.peerConnection.addTrack(track, this.videoStream);
+            });
           }
 
           if (this.audioStream) {
-            this.peerConnection.addStream(this.audioStream);
+            this.audioStream.getTracks().forEach((track) => {
+              this.peerConnection.addTrack(track, this.audioStream);
+            });
           }
         }
       })
