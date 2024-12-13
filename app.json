@@ -5,6 +5,7 @@
     "owner": "mconf",
     "scheme": "bigbluebutton",
     "version": "1.0.0",
+    "newArchEnabled": false,
     "orientation": "default",
     "icon": "./src/assets/native/icon.png",
     "userInterfaceStyle": "dark",
