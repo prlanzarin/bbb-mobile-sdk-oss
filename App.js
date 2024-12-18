@@ -5,7 +5,7 @@ import { OrientationLocker, PORTRAIT } from 'react-native-orientation-locker';
 import { store } from './src/store/redux/store';
 // components
 import InCallManagerController from './src/app-content/in-call-manager';
-import NotifeeController from './src/app-content/notifee';
+// import NotifeeController from './src/app-content/notifee';
 import LocalesController from './src/app-content/locales';
 import AppStatusBar from './src/components/status-bar';
 import MainNavigator from './src/screens/main-navigator';
@@ -58,7 +58,6 @@ const App = (props) => {
         <AppStatusBar />
         <InCallManagerController />
         <LocalesController defaultLanguage={defaultLanguage} />
-        <NotifeeController />
       </NavigationContainer>
     </Provider>
   );

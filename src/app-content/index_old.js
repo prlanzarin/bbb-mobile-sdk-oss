@@ -20,7 +20,7 @@ import GuestScreen from '../screens/guest-screen';
 import TransferScreen from '../screens/transfer-screen';
 import InCallManagerController from './in-call-manager';
 import LocalesController from './locales';
-import NotifeeController from './notifee';
+// import NotifeeController from './notifee';
 // services
 import { injectStore as injectStoreVM } from '../services/webrtc/video-manager';
 import { injectStore as injectStoreSM } from '../services/webrtc/screenshare-manager';
@@ -180,7 +180,6 @@ const AppContent = ({
       </NavigationContainer>
       {!isBreakout && <InCallManagerController />}
       {!isBreakout && <LocalesController defaultLanguage={defaultLanguage} />}
-      <NotifeeController />
     </>
   );
 };
