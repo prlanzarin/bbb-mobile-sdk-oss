@@ -5,6 +5,7 @@
     "owner": "mconf",
     "scheme": "bigbluebutton",
     "version": "1.0.0",
+    "newArchEnabled": false,
     "orientation": "default",
     "icon": "./src/assets/native/icon.png",
     "userInterfaceStyle": "dark",
@@ -26,10 +27,6 @@
       "bitcode": false,
       "bundleIdentifier": "org.bbb.mobilesdk"
     },
-    "plugins": [
-      "@config-plugins/react-native-webrtc",
-      "@notifee/react-native"
-    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/native/adaptive-icon.png",
@@ -51,6 +48,7 @@
       ],
       "package": "org.bbb.mobilesdk"
     },
+    "plugins": ["@config-plugins/react-native-webrtc"],
     "web": {
       "favicon": "./src/assets/native/favicon.png"
     },
