@@ -4,6 +4,7 @@ const CAMERA_BROADCAST_START = gql`
   mutation CameraBroadcastStart($cameraId: String!) {
     cameraBroadcastStart(
       stream: $cameraId
+      contentType: camera
     )
   }
 `;

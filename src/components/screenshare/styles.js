@@ -1,5 +1,5 @@
 import { ActivityIndicator } from 'react-native-paper';
-import { RTCView } from 'react-native-webrtc';
+import { RTCView } from '@livekit/react-native-webrtc';
 import styled from 'styled-components/native';
 import Colors from '../../constants/colors';
 

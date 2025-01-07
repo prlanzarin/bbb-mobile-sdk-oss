@@ -3,7 +3,7 @@ import {
   RTCIceCandidate,
   RTCSessionDescription,
   MediaStream,
-} from 'react-native-webrtc';
+} from '@livekit/react-native-webrtc';
 import { EventEmitter2 } from 'eventemitter2';
 import {
   stopStream,

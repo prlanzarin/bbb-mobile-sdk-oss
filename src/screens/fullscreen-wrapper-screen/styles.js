@@ -1,7 +1,7 @@
 import styled from 'styled-components/native';
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 import { IconButton } from 'react-native-paper';
-import { RTCView } from 'react-native-webrtc';
+import { RTCView } from '@livekit/react-native-webrtc';
 import { OrientationLocker, LANDSCAPE } from 'react-native-orientation-locker';
 import { useDispatch, useSelector } from 'react-redux';
 import { trigDetailedInfo } from '../../store/redux/slices/wide-app/layout';

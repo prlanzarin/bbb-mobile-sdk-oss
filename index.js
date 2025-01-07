@@ -1,6 +1,8 @@
 import 'react-native-gesture-handler';
 import { registerRootComponent } from 'expo';
 import Settings from './settings.json';
+import { registerGlobals } from '@livekit/react-native';
+registerGlobals();
 
 import App from './App';
 

@@ -1,5 +1,5 @@
 import ReconnectingWebSocket from 'reconnecting-websocket';
-import { mediaDevices } from 'react-native-webrtc';
+import { mediaDevices } from '@livekit/react-native-webrtc';
 import VideoBroker from './video-broker';
 import fetchIceServers from './fetch-ice-servers';
 import {

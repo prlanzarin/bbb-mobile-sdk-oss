@@ -1,4 +1,4 @@
-import { mediaDevices } from 'react-native-webrtc';
+import { mediaDevices } from '@livekit/react-native-webrtc';
 import AudioBroker from './audio-broker';
 import fetchIceServers from './fetch-ice-servers';
 import {

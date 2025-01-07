@@ -1,4 +1,4 @@
-import { RTCView } from 'react-native-webrtc';
+import { RTCView } from '@livekit/react-native-webrtc';
 import styled from 'styled-components';
 import Colors from '../../constants/colors';
 
