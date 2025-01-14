@@ -18,6 +18,7 @@ import useModalListener from '../../../hooks/listeners/use-modal-listener';
 // constants
 import Styled from './styles';
 import useCurrentUser from '../../../graphql/hooks/useCurrentUser';
+import NotificationController from '../../../app-content/notification';
 
 const DrawerNavigator = ({
   onLeaveSession, jUrl, meetingUrl
@@ -33,161 +34,164 @@ const DrawerNavigator = ({
   useModalListener();
 
   return (
-    <Drawer.Navigator
-      independent
-      drawerContent={(props) => (
-        <CustomDrawer
-          {...props}
-          onLeaveSession={onLeaveSession}
-          meetingUrl={meetingUrl}
+    <>
+      <Drawer.Navigator
+        independent
+        drawerContent={(props) => (
+          <CustomDrawer
+            {...props}
+            onLeaveSession={onLeaveSession}
+            meetingUrl={meetingUrl}
+          />
+        )}
+        screenOptions={Styled.ScreenOptions}
+      >
+        <Drawer.Screen
+          name="Main"
+          component={MainConferenceScreen}
+          options={{
+            title: meetingName || t('mobileSdk.meeting.label'),
+            unmountOnBlur: true,
+            headerShown: appState !== 'background',
+            headerRight: () => (
+              <RecordingIndicator recordMeeting={recordMeeting} />
+            ),
+            drawerIcon: (config) => (
+              <Styled.DrawerIcon
+                icon="home"
+                size={24}
+                iconColor={config.color}
+              />
+            ),
+          }}
         />
-      )}
-      screenOptions={Styled.ScreenOptions}
-    >
-      <Drawer.Screen
-        name="Main"
-        component={MainConferenceScreen}
-        options={{
-          title: meetingName || t('mobileSdk.meeting.label'),
-          unmountOnBlur: true,
-          headerShown: appState !== 'background',
-          headerRight: () => (
-            <RecordingIndicator recordMeeting={recordMeeting} />
-          ),
-          drawerIcon: (config) => (
-            <Styled.DrawerIcon
-              icon="home"
-              size={24}
-              iconColor={config.color}
-            />
-          ),
-        }}
-      />
 
-      { !isBreakout && (
-      <Drawer.Screen
-        name="PollScreen"
-        component={PollNavigator}
-        options={{
-          title: t('mobileSdk.poll.label'),
-          unmountOnBlur: true,
-          headerRight: () => (
-            <RecordingIndicator recordMeeting={recordMeeting} />
-          ),
-          drawerIcon: (config) => (
-            <Styled.DrawerIcon
-              icon="poll"
-              size={24}
-              iconColor={config.color}
-            />
-          ),
-        }}
-      />
-      )}
+        { !isBreakout && (
+          <Drawer.Screen
+            name="PollScreen"
+            component={PollNavigator}
+            options={{
+              title: t('mobileSdk.poll.label'),
+              unmountOnBlur: true,
+              headerRight: () => (
+                <RecordingIndicator recordMeeting={recordMeeting} />
+              ),
+              drawerIcon: (config) => (
+                <Styled.DrawerIcon
+                  icon="poll"
+                  size={24}
+                  iconColor={config.color}
+                />
+              ),
+            }}
+          />
+        )}
 
-      <Drawer.Screen
-        name="UserParticipantsScreen"
-        component={UserParticipantsNavigator}
-        options={{
-          title: t('app.userList.label'),
-          unmountOnBlur: true,
-          headerRight: () => (
-            <RecordingIndicator recordMeeting={recordMeeting} />
-          ),
-          drawerIcon: (config) => (
-            <Styled.DrawerIcon
-              icon="account-multiple-outline"
-              size={24}
-              iconColor={config.color}
-            />
-          ),
-        }}
-      />
+        <Drawer.Screen
+          name="UserParticipantsScreen"
+          component={UserParticipantsNavigator}
+          options={{
+            title: t('app.userList.label'),
+            unmountOnBlur: true,
+            headerRight: () => (
+              <RecordingIndicator recordMeeting={recordMeeting} />
+            ),
+            drawerIcon: (config) => (
+              <Styled.DrawerIcon
+                icon="account-multiple-outline"
+                size={24}
+                iconColor={config.color}
+              />
+            ),
+          }}
+        />
 
-      <Drawer.Screen
-        name="Language"
-        component={SelectLanguageScreen}
-        options={{
-          title: t('mobileSdk.locales.label'),
-          unmountOnBlur: true,
-          headerRight: () => (
-            <RecordingIndicator recordMeeting={recordMeeting} />
-          ),
-          drawerIcon: (config) => (
-            <Styled.DrawerIcon
-              icon="web"
-              size={24}
-              iconColor={config.color}
-            />
-          ),
-        }}
-      />
+        <Drawer.Screen
+          name="Language"
+          component={SelectLanguageScreen}
+          options={{
+            title: t('mobileSdk.locales.label'),
+            unmountOnBlur: true,
+            headerRight: () => (
+              <RecordingIndicator recordMeeting={recordMeeting} />
+            ),
+            drawerIcon: (config) => (
+              <Styled.DrawerIcon
+                icon="web"
+                size={24}
+                iconColor={config.color}
+              />
+            ),
+          }}
+        />
 
-      {!isBreakout && (
-      <Drawer.Screen
-        name="BreakoutRoomScreen"
-        component={BreakoutRoomScreen}
-        options={{
-          title: t('app.createBreakoutRoom.title'),
-          unmountOnBlur: true,
-          drawerIcon: (config) => (
-            <Styled.DrawerIcon
-              icon="account-group"
-              size={24}
-              iconColor={config.color}
-            />
+        {!isBreakout && (
+          <Drawer.Screen
+            name="BreakoutRoomScreen"
+            component={BreakoutRoomScreen}
+            options={{
+              title: t('app.createBreakoutRoom.title'),
+              unmountOnBlur: true,
+              drawerIcon: (config) => (
+                <Styled.DrawerIcon
+                  icon="account-group"
+                  size={24}
+                  iconColor={config.color}
+                />
 
-          ),
-        }}
-      />
-      )}
+              ),
+            }}
+          />
+        )}
 
-      <Drawer.Screen
-        name="UserNotesScreen"
-        component={UserNotesScreen}
-        options={{
-          title: t('app.notes.title'),
-          unmountOnBlur: true,
-          drawerLabelStyle: {
-            maxWidth: 150, fontWeight: '400', fontSize: 16, paddingLeft: 12
-          },
-          drawerIcon: (config) => (
-            <Styled.IconMaterial name="notes" size={24} color={config.color} />
-          ),
-        }}
-      />
+        <Drawer.Screen
+          name="UserNotesScreen"
+          component={UserNotesScreen}
+          options={{
+            title: t('app.notes.title'),
+            unmountOnBlur: true,
+            drawerLabelStyle: {
+              maxWidth: 150, fontWeight: '400', fontSize: 16, paddingLeft: 12
+            },
+            drawerIcon: (config) => (
+              <Styled.IconMaterial name="notes" size={24} color={config.color} />
+            ),
+          }}
+        />
 
-      {!isBreakout && (
-      <Drawer.Screen
-        name="InsideBreakoutRoomScreen"
-        component={InsideBreakoutRoomScreen}
-        options={{
-          title: 'InsideBreakoutScreen',
-          unmountOnBlur: true,
-          headerShown: false,
-          drawerItemStyle: { display: 'none' },
-          drawerIcon: (config) => (
-            <Styled.DrawerIcon
-              icon="account-group"
-              size={24}
-              iconColor={config.color}
-            />
-          ),
-        }}
-      />
-      )}
+        {!isBreakout && (
+          <Drawer.Screen
+            name="InsideBreakoutRoomScreen"
+            component={InsideBreakoutRoomScreen}
+            options={{
+              title: 'InsideBreakoutScreen',
+              unmountOnBlur: true,
+              headerShown: false,
+              drawerItemStyle: { display: 'none' },
+              drawerIcon: (config) => (
+                <Styled.DrawerIcon
+                  icon="account-group"
+                  size={24}
+                  iconColor={config.color}
+                />
+              ),
+            }}
+          />
+        )}
 
-      <Drawer.Screen
-        name="FullscreenWrapperScreen"
-        component={FullscreenWrapperScreen}
-        options={{
-          headerShown: false,
-          unmountOnBlur: true,
-          drawerItemStyle: { display: 'none' },
+        <Drawer.Screen
+          name="FullscreenWrapperScreen"
+          component={FullscreenWrapperScreen}
+          options={{
+            headerShown: false,
+            unmountOnBlur: true,
+            drawerItemStyle: { display: 'none' },
 
-        }}
-      />
-    </Drawer.Navigator>
+          }}
+        />
+      </Drawer.Navigator>
+      <NotificationController />
+    </>
   );
 };
 
