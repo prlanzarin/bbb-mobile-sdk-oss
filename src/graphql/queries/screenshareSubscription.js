@@ -17,6 +17,4 @@ const SCREENSHARE_SUBSCRIPTION = gql`
   }
 `;
 
-export default {
-  SCREENSHARE_SUBSCRIPTION,
-};
+export default SCREENSHARE_SUBSCRIPTION;

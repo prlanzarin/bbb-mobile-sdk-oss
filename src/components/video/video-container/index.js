@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -7,11 +7,11 @@ import {
   trigDetailedInfo,
   setIsFocused
 } from '../../../store/redux/slices/wide-app/layout';
-import { selectMetadata } from '../../../store/redux/slices/meeting';
-import { isClientReady } from '../../../store/redux/slices/wide-app/client';
+import useMeeting from '../../../graphql/hooks/useMeeting';
 import UserAvatar from '../../user-avatar';
-import VideoManager from '../../../services/webrtc/video-manager';
 import Styled from './styles';
+import SFUVideoStream from './video-stream';
+import LiveKitCameraViewContainer from '../../livekit/camera';
 
 const VideoContainer = (props) => {
   const {
@@ -27,47 +27,15 @@ const VideoContainer = (props) => {
     userRole,
     raiseHand,
   } = props;
-
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const mediaStreamId = useSelector((state) => state.video.videoStreams[cameraId]);
-  const signalingTransportOpen = useSelector((state) => state.video.signalingTransportOpen);
-  const mediaServer = useSelector((state) => selectMetadata(state, 'media-server-video'));
-  const clientIsReady = useSelector(isClientReady);
-  const visible = true;
+  const { data: meetingData, loading: meetingLoading } = useMeeting();
+  const { cameraBridge } = meetingData?.meeting[0] || {};
 
-  useEffect(() => {
-    if (signalingTransportOpen && clientIsReady) {
-      if (cameraId && !local) {
-        if (!mediaStreamId && visible) {
-          VideoManager.subscribe(cameraId, { mediaServer });
-        }
-
-        if (mediaStreamId && !visible) {
-          VideoManager.unsubscribe(cameraId);
-        }
-      }
-    }
-  }, [clientIsReady, cameraId, mediaStreamId, signalingTransportOpen, visible]);
-
-  const renderVideo = () => {
-    if (cameraId && visible) {
-      if (typeof mediaStreamId === 'string') {
-        return (
-          <Styled.VideoStream
-            streamURL={mediaStreamId}
-            isGrid={isGrid}
-            objectFit="cover"
-            zOrder={0}
-          />
-        );
-      }
-      return <Styled.VideoSkeleton />;
-    }
-
-    return (
-      <Styled.UserColor userColor={userColor} isGrid={isGrid}>
-        {isGrid && (
+  const renderPlaceholder = useCallback(() => (
+    <Styled.UserColor userColor={userColor} isGrid={isGrid}>
+      {isGrid && (
         <UserAvatar
           userName={userName}
           userId={userId}
@@ -75,12 +43,38 @@ const VideoContainer = (props) => {
           userImage={userAvatar}
           userRole={userRole}
         />
-        )}
-      </Styled.UserColor>
-    );
-  };
+      )}
+    </Styled.UserColor>
+  ), [isGrid, userAvatar, userColor, userId, userName, userRole]);
+
+  const renderVideo = useCallback(() => {
+    if (cameraBridge == null || meetingLoading) return renderPlaceholder();
+
+    switch (cameraBridge) {
+      case 'livekit':
+        return (
+          <LiveKitCameraViewContainer
+            cameraId={cameraId}
+            isGrid={isGrid}
+            renderPlaceholder={renderPlaceholder}
+          />
+        );
+
+      case 'bbb-webrtc-sfu':
+      default:
+        return (
+          <SFUVideoStream
+            cameraId={cameraId}
+            local={local}
+            isGrid={isGrid}
+            renderPlaceholder={renderPlaceholder}
+          />
+        );
+    }
+  }, [cameraId, local, isGrid, renderPlaceholder, cameraBridge, meetingLoading]);
 
   const handleFullscreenClick = () => {
+    // FIXME TODO mediaStreamId LiveKit
     if (typeof mediaStreamId === 'string') {
       dispatch(setFocusedId(mediaStreamId));
       dispatch(setFocusedElement('videoStream'));
