@@ -1,41 +1,29 @@
-import { useEffect, useState } from 'react';
 import * as Linking from 'expo-linking';
 import { Alert } from 'react-native';
 import { useMutation } from '@apollo/client';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import {
-  selectLockSettingsProp,
-  selectMetadata,
-} from '../../../store/redux/slices/meeting';
+import { selectLockSettingsProp } from '../../../store/redux/slices/meeting';
 import { isLocked } from '../../../store/redux/slices/current-user';
-import { selectLocalVideoStreams } from '../../../store/redux/slices/video-streams';
-import { isClientReady } from '../../../store/redux/slices/wide-app/client';
+import useMeeting from '../../../graphql/hooks/useMeeting';
 import useAppState from '../../../hooks/use-app-state';
-import useDebounce from '../../../hooks/use-debounce';
-import VideoManager from '../../../services/webrtc/video-manager';
 import logger from '../../../services/logger';
 import Queries from './queries';
-import Styled from './styles';
+import LKVideoControls from '../../livekit/camera/controls';
+import SFUVideoControls from './sfu-video-controls';
 
-const VideoControls = () => {
+const VideoControlsContainer = () => {
+  const { data: meetingData, loading: meetingLoading } = useMeeting();
+  const { t } = useTranslation();
+  const [cameraBroadcastStart] = useMutation(Queries.CAMERA_BROADCAST_START);
+  const [cameraBroadcastStop] = useMutation(Queries.CAMERA_BROADCAST_STOP);
+  const disabled = useSelector((state) => selectLockSettingsProp(state, 'disableCam') && isLocked(state));
   const isConnected = useSelector((state) => state.video.isConnected);
   const isConnecting = useSelector((state) => state.video.isConnecting);
   const localCameraId = useSelector((state) => state.video.localCameraId);
-  const camDisabled = useSelector((state) => selectLockSettingsProp(state, 'disableCam') && isLocked(state));
-  const userRequestedHangup = useSelector((state) => state.video.userRequestedHangup);
-  const localVideoStreams = useSelector(selectLocalVideoStreams);
-  const ready = useSelector((state) => isClientReady(state) && state.video.signalingTransportOpen);
-  const mediaServer = useSelector((state) => selectMetadata(state, 'media-server-video'));
-  const recordingAdapter = useSelector((state) => selectMetadata(state, 'sfu-recording-adapter'));
-  const [publishOnActive, setPublishOnActive] = useState(false);
-  const [cameraBroadcastStart] = useMutation(Queries.CAMERA_BROADCAST_START);
-  const [cameraBroadcastStop] = useMutation(Queries.CAMERA_BROADCAST_STOP);
   const appState = useAppState();
-  const { t } = useTranslation();
-
-  const isActive = isConnected || isConnecting;
-
+  const { cameraBridge } = meetingData?.meeting[0] || {};
+  const buttonEnabled = cameraBridge != null && !meetingLoading;
   const sendUserShareWebcam = (cameraId) => {
     return cameraBroadcastStart({ variables: { cameraId } });
   };
@@ -53,109 +41,77 @@ const VideoControls = () => {
     );
   };
 
-  const onButtonPress = useDebounce(() => {
-    if (!camDisabled) {
-      if (isActive) {
-        VideoManager.unpublish(localCameraId);
-      } else {
-        publishCamera();
+  const handleCameraPublishError = (error, publishCamera) => {
+    logger.error({
+      logCode: 'video_publish_failure',
+      extraInfo: {
+        errorCode: error.code,
+        errorMessage: error.message,
       }
-    } else {
-      fireDisabledCamAlert();
+    }, `Video published failed: ${error.message} - ${error.name}`);
+
+    if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+      const buttons = [
+        {
+          text: t('app.settings.main.cancel.label'),
+          style: 'cancel'
+        },
+        {
+          text: t('app.settings.main.label'),
+          onPress: () => Linking.openSettings(),
+        },
+        {
+          text: t('mobileSdk.error.tryAgain'),
+          onPress: publishCamera,
+        },
+      ];
+
+      Alert.alert(
+        t('mobileSdk.webcam.blockedLabel'),
+        t('mobileSdk.webcam.permissionLabel'),
+        buttons,
+        { cancelable: true },
+      );
     }
-  }, 1000);
-
-  const publishCamera = () => {
-    VideoManager.publish({ mediaServer, recordingAdapter }).catch((error) => {
-      logger.error({
-        logCode: 'video_publish_failure',
-        extraInfo: {
-          errorCode: error.code,
-          errorMessage: error.message,
-        }
-      }, `Video published failed: ${error.message} - ${error.name}`);
-
-      if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
-        const buttons = [
-          {
-            text: t('app.settings.main.cancel.label'),
-            style: 'cancel'
-          },
-          {
-            text: t('app.settings.main.label'),
-            onPress: () => Linking.openSettings(),
-          },
-          {
-            text: t('mobileSdk.error.tryAgain'),
-            onPress: () => publishCamera(),
-          },
-        ];
-
-        Alert.alert(
-          t('mobileSdk.webcam.blockedLabel'),
-          t('mobileSdk.webcam.permissionLabel'),
-          buttons,
-          { cancelable: true },
-        );
-      }
-    });
   };
 
-  useEffect(() => {
-    if (localCameraId) {
-      sendUserShareWebcam(localCameraId);
-    }
-  }, [localCameraId]);
+  // FIXME
+  if (!buttonEnabled) {
+    return null;
+  }
 
-  useEffect(() => {
-    if (userRequestedHangup && localCameraId) {
-      sendUserStopWebcam(localCameraId);
-    }
-  }, [userRequestedHangup]);
+  switch (cameraBridge) {
+    case 'livekit':
+      return (
+        <LKVideoControls
+          disabled={disabled}
+          appState={appState}
+          isConnected={isConnected}
+          isConnecting={isConnecting}
+          localCameraId={localCameraId}
+          sendUserShareWebcam={sendUserShareWebcam}
+          sendUserStopWebcam={sendUserStopWebcam}
+          fireDisabledCamAlert={fireDisabledCamAlert}
+          handleCameraPublishError={handleCameraPublishError}
+        />
+      );
 
-  useEffect(() => {
-    if (appState.match(/inactive|background/) && isActive) {
-      // Only schedule a re-share if the camera was connected in the first place.
-      // If it's still connecting, just stop it.
-      setPublishOnActive(isConnected);
-      VideoManager.unpublish(localCameraId);
-    } else if (appState === 'active' && publishOnActive) {
-      if (!camDisabled) {
-        publishCamera();
-        setPublishOnActive(false);
-      } else {
-        fireDisabledCamAlert();
-      }
-    }
-  }, [appState]);
-
-  useEffect(() => {
-    // Remote camera stream is present and local stream is absent, but user
-    // hasn't really requested a hangup - we need to reconnect
-    if (ready
-      && localVideoStreams.length >= 1
-      && isActive === false
-      && userRequestedHangup === false) {
-      localVideoStreams.forEach(({ stream }) => {
-        if (stream === localCameraId) return;
-        VideoManager.stopVideo(stream);
-      });
-
-      if (!camDisabled && localCameraId == null) {
-        publishCamera();
-      } else {
-        fireDisabledCamAlert();
-      }
-    }
-  }, [userRequestedHangup, localVideoStreams, isConnected, localCameraId, ready]);
-
-  return (
-    <Styled.VideoButton
-      isActive={isActive}
-      onPress={onButtonPress}
-      isConnecting={isConnecting}
-    />
-  );
+    case 'bbb-webrtc-sfu':
+    default:
+      return (
+        <SFUVideoControls
+          disabled={disabled}
+          appState={appState}
+          isConnected={isConnected}
+          isConnecting={isConnecting}
+          localCameraId={localCameraId}
+          sendUserShareWebcam={sendUserShareWebcam}
+          sendUserStopWebcam={sendUserStopWebcam}
+          fireDisabledCamAlert={fireDisabledCamAlert}
+          handleCameraPublishError={handleCameraPublishError}
+        />
+      );
+  }
 };
 
-export default VideoControls;
+export default VideoControlsContainer;

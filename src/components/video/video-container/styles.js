@@ -1,8 +1,6 @@
 import styled from 'styled-components/native';
 import { css } from 'styled-components';
-import { RTCView } from '@livekit/react-native-webrtc';
 import { MaterialIcons } from '@expo/vector-icons';
-import { View } from 'react-native';
 import IconButtonComponent from '../../icon-button';
 import Colors from '../../../constants/colors';
 import Pressable from '../../pressable';
@@ -33,19 +31,6 @@ const UserAvatar = styled.Image`
   overflow: hidden;
 `;
 
-const VideoStream = styled(RTCView)`
-  position: relative;
-  width: 100%;
-  height: 100%;
-  // overflow: hidden;
-  object-fit: contain;
-  background-color: ${Colors.contentLetterboxColor};
-
-  ${({ isGrid }) => isGrid && `
-    object-fit: cover;
-  `}
-`;
-
 const UserColor = styled.View`
   width: 100%;
   height: 100%;
@@ -71,10 +56,6 @@ const NameLabelContainer = styled.View`
 const NameLabel = styled.Text`
   color: ${Colors.white};
 `;
-
-const VideoSkeleton = () => (
-  <View style={{ backgroundColor: Colors.contentLetterboxColor, height: '100%', width: '100%' }} />
-);
 
 const ContainerPressableGrid = styled.Pressable`
     height: 120px;
@@ -133,8 +114,6 @@ export default {
   NameLabelContainer,
   PressableButton,
   UserColor,
-  VideoStream,
-  VideoSkeleton,
   ContainerPressableGrid,
   FullscreenIcon,
   HandRaisedIcon

@@ -11,6 +11,7 @@ import logger from '../../services/api';
 import Settings from '../../../settings.json';
 import Queries from './queries';
 import Styled from './styles';
+import BBBLiveKitRoom from '../livekit';
 
 const CustomDrawer = (props) => {
   const { meetingUrl, navigation } = props;
@@ -100,6 +101,7 @@ const CustomDrawer = (props) => {
       <Styled.ContainerCustomBottomButtons>
         {!isLandscape && renderBottomDrawerItems()}
       </Styled.ContainerCustomBottomButtons>
+      <BBBLiveKitRoom />
     </Styled.ViewContainer>
   );
 };

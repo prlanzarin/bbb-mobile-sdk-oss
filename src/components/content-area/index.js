@@ -1,10 +1,11 @@
 import * as Linking from 'expo-linking';
+import { useCallback } from 'react';
 import { useSubscription } from '@apollo/client';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Alert, NativeModules, Platform } from 'react-native';
-import { selectScreenshare } from '../../store/redux/slices/screenshare';
+import useMeeting from '../../graphql/hooks/useMeeting';
 import WhiteboardScreen from '../../screens/whiteboard-screen';
 import {
   setDetailedInfo,
@@ -17,6 +18,7 @@ import {
 import Styled from './styles';
 import Settings from '../../../settings.json';
 import Queries from './queries';
+import LiveKitScreenshareViewContainer from '../livekit/screenshare';
 
 const ContentArea = (props) => {
   const { style, fullscreen } = props;
@@ -25,6 +27,8 @@ const ContentArea = (props) => {
   const isPiPEnabled = useSelector((state) => state.layout.isPiPEnabled);
   const { data: currentPageData } = useSubscription(Queries.CURRENT_PRESENTATION_PAGE_SUBSCRIPTION);
   const { data: screenshareData } = useSubscription(Queries.SCREENSHARE_SUBSCRIPTION);
+  const { data: meetingData } = useMeeting();
+  const { screenShareBridge } = meetingData?.meeting[0] || {};
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -80,9 +84,16 @@ const ContentArea = (props) => {
       />
     ); };
 
-  const screenshareView = () => (
-    <Styled.Screenshare style={style} />
-  );
+  const screenshareView = useCallback(() => {
+    switch (screenShareBridge) {
+      case 'livekit':
+        return <LiveKitScreenshareViewContainer />;
+
+      case 'bbb-webrtc-sfu':
+      default:
+        return <Styled.Screenshare style={style} />;
+    }
+  }, [screenShareBridge]);
 
   // ** return methods **
   if (fullscreen) {

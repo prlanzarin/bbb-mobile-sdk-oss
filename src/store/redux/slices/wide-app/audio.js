@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
+  audioManagerInitialized: false,
   isMuted: true,
   isConnected: false,
   isConnecting: false,
@@ -47,10 +48,14 @@ const audioSlice = createSlice({
     setSelectedAudioDevice: (state, action) => {
       state.selectedAudioDevice = action.payload;
     },
+    setAudioManagerInitialized: (state, action) => {
+      state.audioManagerInitialized = action.payload;
+    }
   },
 });
 
 export const {
+  setAudioManagerInitialized,
   setMutedState,
   setInputStreamId,
   setIsConnecting,

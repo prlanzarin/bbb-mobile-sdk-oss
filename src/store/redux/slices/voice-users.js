@@ -1,18 +1,5 @@
-import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
-import { Platform, PermissionsAndroid } from 'react-native';
+import { createSlice, createSelector } from '@reduxjs/toolkit';
 import AudioManager from '../../../services/webrtc/audio-manager';
-import { setLoggedIn } from './wide-app/client';
-import {
-  addMeeting,
-  selectMeeting,
-  selectLockSettingsProp,
-  selectMetadata,
-} from './meeting';
-import { addCurrentUser, selectCurrentUser, isLocked } from './current-user';
-import { setAudioError } from './wide-app/audio';
-import logger from '../../../services/logger';
-
-const ANDROID_SDK_MIN_BTCONNECT = 31;
 
 const voiceUsersSlice = createSlice({
   name: 'voiceUsers',
@@ -59,18 +46,6 @@ const voiceUsersSlice = createSlice({
       }
     },
   },
-  extraReducers: (builder) => {
-    builder
-      .addCase(joinAudio.pending, () => {
-        // TODO move state updates from AudioManager to here
-      })
-      .addCase(joinAudio.fulfilled, () => {
-        // TODO move state updates from AudioManager to here
-      })
-      .addCase(joinAudio.rejected, () => {
-        // TODO move state updates from AudioManager to here
-      });
-  },
 });
 
 // Selectors
@@ -115,83 +90,6 @@ const voiceStateChangeListener = (action, listenerApi) => {
   }
 };
 
-const joinAudioOnLoginPredicate = (action, state) => {
-  // disables audio join when breakout started
-  if (addMeeting.match(action) && action.payload?.meetingObject?.fields?.meetingProp?.isBreakout) {
-    return false;
-  }
-  return (setLoggedIn.match(action) || addMeeting.match(action) || addCurrentUser.match(action))
-    && selectMeeting(state)
-    && selectCurrentUser(state)
-    && state.client.sessionState.loggedIn
-    && !state.audio.isConnected
-    && !state.audio.isConnecting
-    && !state.audio.isReconnecting;
-};
-
-const joinAudioOnLoginListener = (action, listenerApi) => {
-  if (action.type !== 'client/setLoggedIn') {
-    return;
-  }
-  listenerApi.dispatch(joinAudio()).unwrap().then(() => {
-    // If user joined as listen only, it means they are locked which is a soft
-    // error that needs to be surfaced
-    if (listenerApi.getState().audio.isListenOnly) {
-      listenerApi.dispatch(setAudioError('ListenOnly'));
-    }
-  }).catch((error) => {
-    listenerApi.dispatch(setAudioError(error.name));
-  });
-};
-
-const joinAudio = createAsyncThunk(
-  'client/joinAudio',
-  async (_, thunkAPI) => {
-    // const state = thunkAPI.getState();
-    // const muteOnStart = selectMeeting(state)?.voiceProp?.muteOnStart;
-    // const micDisabled = selectLockSettingsProp(state, 'disableMic') && isLocked(state);
-    // const transparentListenOnly = selectMetadata(state, 'transparent-listen-only');
-    const muteOnStart = true;
-    const micDisabled = false;
-    const transparentListenOnly = false;
-
-    if (Platform.OS === 'android' && Platform.Version >= ANDROID_SDK_MIN_BTCONNECT) {
-      const checkStatus = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
-      );
-
-      if (checkStatus === false) {
-        const permissionStatus = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
-        );
-        logger.info({
-          logCode: 'audio_bluetooth_permission',
-          extraInfo: {
-            checkStatus,
-            permissionStatus,
-          }
-        }, `Audio had to explicitly request BT permission, result=${permissionStatus}`);
-      }
-    }
-
-    return AudioManager.joinMicrophone({
-      muted: muteOnStart,
-      isListenOnly: micDisabled,
-      transparentListenOnly,
-    }).catch((error) => {
-      logger.error({
-        logCode: 'audio_publish_failure',
-        extraInfo: {
-          errorCode: error.code,
-          errorMessage: error.message,
-        }
-      }, `Audio published failed: ${error.message}`);
-
-      throw error;
-    });
-  },
-);
-
 export const {
   addVoiceUser,
   removeVoiceUser,
@@ -205,9 +103,6 @@ export {
   selectVoiceUserByUserId,
   voiceStateChangeListener,
   voiceStateChangePredicate,
-  joinAudioOnLoginListener,
-  joinAudioOnLoginPredicate,
-  joinAudio,
   isTalkingByUserId,
 };
 

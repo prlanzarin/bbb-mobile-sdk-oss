@@ -5,10 +5,10 @@ import { isClientReady } from '../../store/redux/slices/wide-app/client';
 import { selectMetadata } from '../../store/redux/slices/meeting';
 import ScreenshareManager from '../../services/webrtc/screenshare-manager';
 import Styled from './styles';
-import Queries from './queries';
+import screenshareSubscription from '../../graphql/queries/screenshareSubscription';
 
 const Screenshare = () => {
-  const { data: screenshareData } = useSubscription(Queries.SCREENSHARE_SUBSCRIPTION);
+  const { data: screenshareData } = useSubscription(screenshareSubscription);
   const mediaStreamId = useSelector((state) => state.screenshare.screenshareStream);
   const isConnected = useSelector((state) => state.screenshare.isConnected);
   const clientIsReady = useSelector(isClientReady);

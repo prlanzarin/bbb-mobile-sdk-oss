@@ -71,6 +71,9 @@ const USER_CURRENT_SUBSCRIPTION = gql`
       spoke
       listenOnly
     }
+    livekit {
+      livekitToken
+    }
   }
 }
 `;

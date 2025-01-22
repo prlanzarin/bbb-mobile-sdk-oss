@@ -4,9 +4,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Alert } from 'react-native';
 import { useMutation, useSubscription } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
+import { useAudioJoin } from '../../../hooks/use-audio-join';
 import AudioManager from '../../../services/webrtc/audio-manager';
 import { selectLockSettingsProp } from '../../../store/redux/slices/meeting';
-import { joinAudio } from '../../../store/redux/slices/voice-users';
 import { isLocked } from '../../../store/redux/slices/current-user';
 import { setAudioError } from '../../../store/redux/slices/wide-app/audio';
 import logger from '../../../services/logger';
@@ -16,6 +16,7 @@ import Styled from './styles';
 const AudioControls = () => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
+  const { joinAudio } = useAudioJoin();
   const isConnected = useSelector((state) => state.audio.isConnected);
   const isConnecting = useSelector(({ audio }) => audio.isConnecting || audio.isReconnecting);
   const micDisabled = useSelector((state) => selectLockSettingsProp(state, 'disableMic') && isLocked(state));
@@ -45,7 +46,7 @@ const AudioControls = () => {
             },
             {
               text: t('mobileSdk.error.tryAgain'),
-              onPress: () => joinMicrophone(),
+              onPress: () => joinAudio(),
             },
           ];
 
@@ -77,16 +78,6 @@ const AudioControls = () => {
     }
   }, [audioError]);
 
-  const joinMicrophone = () => {
-    dispatch(joinAudio()).unwrap().then(() => {
-      // If user joined as listen only, it means they are locked which is a soft
-      // error that needs to be surfaced
-      if (AudioManager.isListenOnly) dispatch(setAudioError('ListenOnly'));
-    }).catch((error) => {
-      dispatch(setAudioError(error.name));
-    });
-  };
-
   const toggleVoice = async () => {
     const userId = currentUserVoiceData?.user_current[0]?.voice?.userId;
     const muted = !currentUserVoiceData?.user_current[0]?.voice?.muted;
@@ -116,7 +107,7 @@ const AudioControls = () => {
     if (isActive) {
       AudioManager.exitAudio();
     } else {
-      joinMicrophone();
+      joinAudio();
     }
   };
 

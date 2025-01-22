@@ -1,33 +1,22 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { joinAudio } from '../../../store/redux/slices/voice-users';
-import { setAudioError } from '../../../store/redux/slices/wide-app/audio';
+import { useSelector } from 'react-redux';
+import { useAudioJoin } from '../../../hooks/use-audio-join';
 import AudioManager from '../../../services/webrtc/audio-manager';
 import Styled from './styles';
 
 const AudioButton = () => {
-  const dispatch = useDispatch();
   const { t } = useTranslation();
+  const { joinAudio } = useAudioJoin();
   const isConnected = useSelector((state) => state.audio.isConnected);
   const isConnecting = useSelector(({ audio }) => audio.isConnecting || audio.isReconnecting);
   const isActive = isConnected || isConnecting;
-
-  const joinMicrophone = () => {
-    dispatch(joinAudio()).unwrap().then(() => {
-      // If user joined as listen only, it means they are locked which is a soft
-      // error that needs to be surfaced
-      if (AudioManager.isListenOnly) dispatch(setAudioError('ListenOnly'));
-    }).catch((error) => {
-      dispatch(setAudioError(error.name));
-    });
-  };
 
   const onPressHeadphone = () => {
     if (isActive) {
       AudioManager.exitAudio();
     } else {
-      joinMicrophone();
+      joinAudio();
     }
   };
 

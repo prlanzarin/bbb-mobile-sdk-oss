@@ -1,7 +1,9 @@
 import { mediaDevices } from '@livekit/react-native-webrtc';
 import AudioBroker from './audio-broker';
+import LiveKitAudioBridge from './livekit-audio-bridge';
 import fetchIceServers from './fetch-ice-servers';
 import {
+  setAudioManagerInitialized,
   setIsConnecting,
   setIsConnected,
   setIsHangingUp,
@@ -45,6 +47,7 @@ class AudioManager {
     this.audioSessionNumber = 0;
     this.iceServers = null;
     this.isListenOnly = false;
+    this._livekitBridge = null;
   }
 
   get bridge() {
@@ -93,16 +96,15 @@ class AudioManager {
   }
 
   _getSenderTrackEnabled() {
-    const peer = this.bridge?.webRtcPeer;
-    let localStream = this.inputStream;
-
-    if (peer) {
-      localStream = peer.getLocalStream() || this.inputStream;
+    if (this.inputStream) {
+      return !this.inputStream.getAudioTracks().some((track) => !track.enabled);
     }
 
-    if (localStream == null) return true;
+    if (typeof this.bridge?.getSenderTrackEnabled === 'function') {
+      return this.bridge.getSenderTrackEnabled();
+    }
 
-    return !localStream.getAudioTracks().some((track) => !track.enabled);
+    return false;
   }
 
   _setSenderTrackEnabled(shouldEnable) {
@@ -174,27 +176,41 @@ class AudioManager {
     inputStream,
     muted,
     transparentListenOnly,
+    audioBridge,
   }) {
-    const brokerOptions = {
-      clientSessionNumber: this.audioSessionNumber,
-      iceServers: this.iceServers,
-      stream: (inputStream && inputStream.active) ? inputStream : undefined,
-      offering: (!isListenOnly && !transparentListenOnly),
-      traceLogs: true,
-      muted,
-      logger: this.logger,
-      reconnectCondition: AudioManager.reconnectCondition,
-      transparentListenOnly,
-    };
+    switch (audioBridge) {
+      case 'livekit':
+        this._livekitBridge = new LiveKitAudioBridge({
+          userId: this.userId,
+          logger: this.logger,
+          clientSessionNumber: this.audioSessionNumber,
+        });
+        this._attachProgressListeners(this._livekitBridge);
+        return this._livekitBridge;
 
-    const bridge = new AudioBroker(
-      this._getSFUAddr(),
-      (!isListenOnly ? 'sendrecv' : 'recvonly'),
-      brokerOptions,
-    );
-    this._attachProgressListeners(bridge);
+      case 'bbb-webrtc-sfu':
+      default: {
+        const brokerOptions = {
+          clientSessionNumber: this.audioSessionNumber,
+          iceServers: this.iceServers,
+          stream: (inputStream && inputStream.active) ? inputStream : undefined,
+          offering: (!isListenOnly && !transparentListenOnly),
+          traceLogs: true,
+          muted,
+          logger: this.logger,
+          reconnectCondition: AudioManager.reconnectCondition,
+          transparentListenOnly,
+        };
 
-    return bridge;
+        const bridge = new AudioBroker(
+          this._getSFUAddr(),
+          (!isListenOnly ? 'sendrecv' : 'recvonly'),
+          brokerOptions,
+        );
+        this._attachProgressListeners(bridge);
+        return bridge;
+      }
+    }
   }
 
   async init({
@@ -214,6 +230,7 @@ class AudioManager {
     this._sessionToken = sessionToken;
     this.logger = logger;
     this.initialized = true;
+    store.dispatch(setAudioManagerInitialized(true));
     try {
       this.iceServers = await fetchIceServers(this._getStunFetchURL());
     } catch (error) {
@@ -332,7 +349,7 @@ class AudioManager {
     }
   }
 
-  _joinAudio(callOptions) {
+  _joinAudio(callOptions = {}) {
     if (!this.initialized) throw new TypeError('Audio manager is not ready');
 
     // There's a stale bridge here. Tear it down and start again.
@@ -344,15 +361,19 @@ class AudioManager {
 
     this.bridge = this._initializeBridge(callOptions);
 
-    return this.bridge.joinAudio().catch((error) => {
+    return this.bridge.joinAudio({
+      inputStream: callOptions.inputStream,
+      muted: callOptions.muted,
+    }).catch((error) => {
       throw error;
     });
   }
 
   async joinMicrophone({
-    muted = false,
+    muted = true,
     isListenOnly = false,
     transparentListenOnly = false,
+    audioBridge,
   }) {
     try {
       this.isListenOnly = isListenOnly;
@@ -363,6 +384,7 @@ class AudioManager {
         isListenOnly,
         muted,
         transparentListenOnly,
+        audioBridge,
       });
     } catch (error) {
       this.exitAudio();
@@ -403,7 +425,6 @@ class AudioManager {
     this.userId = null;
     this._host = null;
     this._sessionToken = null;
-    this._makeCall = null;
     this.iceServers = null;
   }
 
