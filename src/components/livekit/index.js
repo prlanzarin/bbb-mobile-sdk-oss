@@ -22,7 +22,6 @@ import { USER_SET_TALKING } from './mutations';
 
 const LiveKitObserver = ({
   room,
-  url,
   usingAudio,
 }) => {
   const { localParticipant } = useLocalParticipant();
@@ -33,13 +32,13 @@ const LiveKitObserver = ({
   const joinedVoice = currentUserData?.user_current[0]?.voice?.joined ?? false;
   const isMuted = useSelector((state) => state.audio.isMuted);
   const isConnected = useSelector((state) => state.audio.isConnected);
+  const audioManagerInitialized = useSelector((state) => state.audio.audioManagerInitialized);
 
   useEffect(() => {
     logger.debug({
       logCode: 'livekit_conn_state_changed',
       extraInfo: {
         connectionState,
-        url,
       },
     }, `LiveKit conn state changed: ${connectionState}`);
   }, [connectionState]);
@@ -59,10 +58,11 @@ const LiveKitObserver = ({
 
     if (!isConnected
       && connectionState === ConnectionState.Connected
-      && joinedVoice) {
+      && joinedVoice
+      && audioManagerInitialized) {
       AudioManager.onAudioJoin();
     }
-  }, [isConnected, connectionState, joinedVoice]);
+  }, [isConnected, connectionState, joinedVoice, audioManagerInitialized]);
 
   return null;
 };
@@ -74,7 +74,6 @@ const BBBLiveKitRoom = ({ children }) => {
   const sessionToken = useSelector((state) => state.client.meetingData.sessionToken);
   const { data: meetingData, loading: meetingLoading } = useMeeting();
 
-  const url = `wss://${host}/livekit`;
   const livekitToken = currentUserData?.user_current[0]?.livekit?.livekitToken;
   const userId = currentUserData?.user_current[0]?.userId;
   const {
@@ -122,9 +121,7 @@ const BBBLiveKitRoom = ({ children }) => {
     }
   }, [sessionToken, host, userId, meetingData, meetingLoading]);
 
-  if (!shouldUseLiveKit) {
-    return children;
-  }
+  if (!shouldUseLiveKit) return children;
 
   return (
     <LiveKitRoom
@@ -132,11 +129,11 @@ const BBBLiveKitRoom = ({ children }) => {
       audio={usingAudio}
       connect={shouldUseLiveKit}
       token={livekitToken}
-      serverUrl={url}
+      serverUrl={host ? `wss://${host}/livekit` : null}
       room={liveKitRoom}
       style={{ zIndex: 0, height: 'initial', width: 'initial' }}
     >
-      <LiveKitObserver room={liveKitRoom} url={url} usingAudio={usingAudio} />
+      <LiveKitObserver room={liveKitRoom} usingAudio={usingAudio} />
       {children}
     </LiveKitRoom>
   );
