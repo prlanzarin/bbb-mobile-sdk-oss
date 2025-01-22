@@ -11,8 +11,11 @@ import {
   ConnectionState,
 } from 'livekit-client';
 import AudioManager from '../../services/webrtc/audio-manager';
+import VideoManager from '../../services/webrtc/video-manager';
+import ScreenshareManager from '../../services/webrtc/screenshare-manager';
 import logger from '../../services/logger';
 import useMeeting from '../../graphql/hooks/useMeeting';
+import { useAudioJoin } from '../../hooks/use-audio-join';
 import useCurrentUser from '../../graphql/hooks/useCurrentUser';
 import { liveKitRoom } from '../../services/livekit';
 import { USER_SET_TALKING } from './mutations';
@@ -67,9 +70,13 @@ const LiveKitObserver = ({
 const BBBLiveKitRoom = ({ children }) => {
   const { data: currentUserData } = useCurrentUser();
   const host = useSelector((state) => state.client.meetingData.host);
+  const { joinAudio } = useAudioJoin();
+  const sessionToken = useSelector((state) => state.client.meetingData.sessionToken);
+  const { data: meetingData, loading: meetingLoading } = useMeeting();
+
   const url = `wss://${host}/livekit`;
   const livekitToken = currentUserData?.user_current[0]?.livekit?.livekitToken;
-  const { data: meetingData } = useMeeting();
+  const userId = currentUserData?.user_current[0]?.userId;
   const {
     cameraBridge,
     screenShareBridge,
@@ -79,6 +86,41 @@ const BBBLiveKitRoom = ({ children }) => {
   const shouldUseLiveKit = cameraBridge === 'livekit'
     || screenShareBridge === 'livekit'
     || usingAudio;
+
+  const initializeMediaManagers = (bridges) => {
+    const mediaManagerConfigs = {
+      userId,
+      host,
+      sessionToken,
+      logger
+    };
+    if (bridges.cameraBridge === 'bbb-webrtc-sfu') VideoManager.init(mediaManagerConfigs);
+    if (bridges.screenShareBridge === 'bbb-webrtc-sfu') ScreenshareManager.init(mediaManagerConfigs);
+
+    // AudioManager is always initialized (used by all bridges)
+    return AudioManager.init(mediaManagerConfigs);
+  };
+
+  useEffect(() => {
+    if (sessionToken
+      && host
+      && userId
+      && !meetingLoading
+      && (audioBridge && cameraBridge && screenShareBridge)
+    ) {
+      initializeMediaManagers({ audioBridge, cameraBridge, screenShareBridge })
+        .then(joinAudio)
+        .catch((initError) => {
+          logger.error({
+            logCode: 'media_manager_init_failure',
+            extraInfo: {
+              errorCode: initError.code,
+              errorMessage: initError.message,
+            },
+          }, `Media manager initialization failed: ${initError.message}`);
+        });
+    }
+  }, [sessionToken, host, userId, meetingData, meetingLoading]);
 
   if (!shouldUseLiveKit) {
     return children;

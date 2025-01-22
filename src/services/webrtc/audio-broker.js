@@ -71,6 +71,16 @@ class AudioBroker extends BaseBroker {
     return Promise.resolve();
   }
 
+  getSenderTrackEnabled(inputStream) {
+    if (!this.webRtcPeer) return false;
+
+    const localStream = this.webRtcPeer.getLocalStream();
+
+    if (localStream == null) return false;
+
+    return !localStream.getAudioTracks().some((track) => !track.enabled);
+  }
+
   setSenderTrackEnabled(shouldEnable) {
     if (this.role === 'recvonly') return false;
 
