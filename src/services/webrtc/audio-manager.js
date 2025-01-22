@@ -3,6 +3,7 @@ import AudioBroker from './audio-broker';
 import LiveKitAudioBridge from './livekit-audio-bridge';
 import fetchIceServers from './fetch-ice-servers';
 import {
+  setAudioManagerInitialized,
   setIsConnecting,
   setIsConnected,
   setIsHangingUp,
@@ -229,6 +230,7 @@ class AudioManager {
     this._sessionToken = sessionToken;
     this.logger = logger;
     this.initialized = true;
+    store.dispatch(setAudioManagerInitialized(true));
     try {
       this.iceServers = await fetchIceServers(this._getStunFetchURL());
     } catch (error) {

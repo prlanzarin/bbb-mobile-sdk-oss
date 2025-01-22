@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useLocalParticipant, RoomContext } from '@livekit/react-native';
+import {
+  useParticipantTracks,
+  useLocalParticipant,
+  RoomContext
+} from '@livekit/react-native';
+import { Track } from 'livekit-client';
 import Styled from '../../../video/video-controls/styles';
 import {
   setIsConnecting,
@@ -8,7 +13,6 @@ import {
   setLocalCameraId,
 } from '../../../../store/redux/slices/wide-app/video';
 import useDebounce from '../../../../hooks/use-debounce';
-import VideoManager from '../../../../services/webrtc/video-manager';
 import logger from '../../../../services/logger';
 import { liveKitRoom } from '../../../../services/livekit';
 
@@ -24,38 +28,42 @@ const LKVideoControls = ({
   handleCameraPublishError,
 }) => {
   const { localParticipant } = useLocalParticipant();
+  const tracks = useParticipantTracks([Track.Source.Camera], localParticipant.identity);
   const dispatch = useDispatch();
   const [publishOnActive, setPublishOnActive] = useState(false);
   const isActive = localParticipant.isCameraEnabled || isConnecting;
   const constraints = { video: true };
 
   const publishCamera = useCallback(async () => {
-    const newCameraId = VideoManager.buildCameraId();
+    const newCameraId = `${localParticipant.identity}_app_${Date.now()}`;
     const publishOptions = { dtx: true, videoCodec: 'vp8', name: newCameraId };
 
-    if (localParticipant.isCameraEnabled) await unpublishCamera(localCameraId);
-
-    dispatch(setIsConnecting(true));
-    localParticipant.setCameraEnabled(true, constraints, publishOptions)
-      .then(() => {
-        dispatch(setLocalCameraId(newCameraId));
-        dispatch(setIsConnected(true));
-        sendUserShareWebcam(newCameraId);
-      })
-      .catch(handleCameraPublishError)
-      .finally(() => {
-        dispatch(setIsConnecting(false));
-      });
-  }, [handleCameraPublishError]);
-
-  const unpublishCamera = async (cameraId) => {
     try {
-      await localParticipant.setCameraEnabled(false);
-      logger.info({
-        logCode: 'livekit_camera_unpublished',
-        extraInfo: { cameraId },
-      }, 'LiveKit: Camera unpublished');
+      if (localParticipant.isCameraEnabled) await unpublishCamera();
+
+      dispatch(setIsConnecting(true));
+      const localPub = await localParticipant.setCameraEnabled(true, constraints, publishOptions);
+
+      if (!localPub) throw new Error('Local track publication failed');
+
+      dispatch(setLocalCameraId(newCameraId));
+      dispatch(setIsConnected(true));
+      sendUserShareWebcam(newCameraId);
     } catch (error) {
+      handleCameraPublishError(error, publishCamera);
+    } finally {
+      dispatch(setIsConnecting(false));
+    }
+  }, [
+    localParticipant,
+    unpublishCamera,
+    sendUserShareWebcam,
+    handleCameraPublishError,
+  ]);
+
+  const unpublishCamera = useCallback(async () => {
+    const publications = tracks.map((trackReference) => trackReference.publication);
+    const handleUnpublishError = (error) => {
       logger.error({
         logCode: 'livekit_camera_unpublish_error',
         extraInfo: {
@@ -63,17 +71,34 @@ const LKVideoControls = ({
           errorStack: error.stack,
         },
       }, `LiveKit: camera unpublish error ${error.message}`);
+    };
+
+    try {
+      await Promise.all(publications
+        .map((publication) => localParticipant.unpublishTrack(publication?.track)
+          .then((trackPublication) => {
+            logger.info({
+              logCode: 'livekit_camera_unpublished',
+              extraInfo: { cameraId: trackPublication.trackName },
+            }, `LiveKit: Camera unpublished ${trackPublication.trackName}`);
+            return trackPublication;
+          })
+          .catch(handleUnpublishError)
+          .finally(() => {
+            if (publication && publication.trackName) sendUserStopWebcam(publication.trackName);
+          })));
+    } catch (error) {
+      handleUnpublishError(error);
     } finally {
-      sendUserStopWebcam(cameraId);
       dispatch(setLocalCameraId(null));
       dispatch(setIsConnected(false));
     }
-  };
+  }, [localParticipant, sendUserStopWebcam, tracks]);
 
   const onButtonPress = useDebounce(useCallback(() => {
     if (!disabled) {
       if (isActive) {
-        unpublishCamera(localCameraId);
+        unpublishCamera();
       } else {
         publishCamera();
       }
@@ -87,7 +112,7 @@ const LKVideoControls = ({
       // Only schedule a re-share if the camera was connected in the first place.
       // If it's still connecting, just stop it.
       setPublishOnActive(isConnected);
-      unpublishCamera(localCameraId);
+      unpublishCamera();
     } else if (appState === 'active' && publishOnActive) {
       if (!disabled) {
         publishCamera();
@@ -96,7 +121,7 @@ const LKVideoControls = ({
         fireDisabledCamAlert();
       }
     }
-  }, [appState, unpublishCamera]);
+  }, [appState, unpublishCamera, publishCamera]);
 
   return (
     <Styled.VideoButton
