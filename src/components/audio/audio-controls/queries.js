@@ -20,4 +20,13 @@ const USER_CURRENT_VOICE = gql`
   }
 `;
 
-export default { USER_SET_MUTED, USER_CURRENT_VOICE };
+const USER_CURRENT_VOICE_JOINED = gql`
+  subscription UserVoiceJoined {
+    user_voice {
+      joined
+    }
+  }
+`
+
+
+export default { USER_SET_MUTED, USER_CURRENT_VOICE, USER_CURRENT_VOICE_JOINED };
