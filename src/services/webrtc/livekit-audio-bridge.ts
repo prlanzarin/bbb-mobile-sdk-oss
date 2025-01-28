@@ -282,7 +282,7 @@ export default class LiveKitAudioBridge {
     this.liveKitRoom.localParticipant.off(ParticipantEvent.LocalTrackUnpublished, this.handleLocalTrackUnpublished);
   }
 
-  setSenderTrackEnabled(shouldEnable: boolean): void {
+  setSenderTrackEnabled(shouldEnable: boolean): boolean {
     const trackPubs = this.getLocalMicTrackPubs();
     const handleMuteError = (error: Error) => {
       this.logger.error({
@@ -314,6 +314,7 @@ export default class LiveKitAudioBridge {
             trackName,
           },
         }, `LiveKit: unmuting audio track - ${trackName}`);
+        return true;
       } else if (trackPubs.length === 0) {
         // Track was unpublished on previous mute toggle, so publish again
         // If audio hasn't been shared yet, do nothing
@@ -326,6 +327,7 @@ export default class LiveKitAudioBridge {
             trackName,
           },
         }, `LiveKit: audio track unmute+publish - ${trackName}`);
+        return true;
       } else {
         this.logger.debug({
           logCode: 'livekit_audio_track_unmute_noop',
@@ -336,17 +338,16 @@ export default class LiveKitAudioBridge {
             trackPubs,
           },
         }, 'LiveKit: audio track unmute no-op');
+        return false;
       }
     } else {
-      // @ts-ignore
-      const LIVEKIT_SETTINGS = window.meetingClientSettings.public.media?.livekit?.audio;
+      // TODO unpublishOnMute settings flag
+      this.liveKitRoom.localParticipant.setMicrophoneEnabled(false).catch(handleMuteError);
 
-      if (LIVEKIT_SETTINGS?.unpublishOnMute) {
-        this.unpublish();
-      } else {
-        this.liveKitRoom.localParticipant.setMicrophoneEnabled(false).catch(handleMuteError);
-      }
+      return true;
     }
+
+    return false;
   }
 
   private hasMicrophoneTrack(): boolean {
@@ -358,8 +359,7 @@ export default class LiveKitAudioBridge {
   private async publish(inputStream: MediaStream | null): Promise<void> {
     try {
       // @ts-ignore
-      const LIVEKIT_SETTINGS = window.meetingClientSettings.public.media?.livekit?.audio;
-      const basePublishOptions: TrackPublishOptions = LIVEKIT_SETTINGS?.publishOptions || {
+      const basePublishOptions: TrackPublishOptions = {
         audioPreset: AudioPresets.speech,
         dtx: true,
         red: false,
@@ -379,10 +379,9 @@ export default class LiveKitAudioBridge {
       if (this.hasMicrophoneTrack()) await this.unpublish();
 
       if (inputStream) {
-        const cloneStream = inputStream.clone();
         // Get tracks from the stream and publish them. Map into an array of
         // Promise objects and wait for all of them to resolve.
-        const trackPublishers = cloneStream.getTracks()
+        const trackPublishers = this.originalStream.getTracks()
           .map((track) => {
             return this.liveKitRoom.localParticipant.publishTrack(track, publishOptions);
           });
