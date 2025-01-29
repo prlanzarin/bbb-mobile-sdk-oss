@@ -41,7 +41,6 @@ import ReduxDebug from '../../services/logger/redux-debug';
 import {
   screenshareCleanupObserver,
   videoStreamCleanupObserver,
-  voiceUserStateObserver,
   voiceCallStateObserver,
   logoutOrEjectionObserver
 } from './middlewares';
@@ -145,7 +144,6 @@ export const store = configureStore({
       flushStoreObserver.middleware,
       videoStreamCleanupObserver.middleware,
       screenshareCleanupObserver.middleware,
-      voiceUserStateObserver.middleware,
       voiceCallStateObserver.middleware,
       logoutOrEjectionObserver.middleware,
     ]);

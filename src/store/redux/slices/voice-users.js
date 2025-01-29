@@ -1,5 +1,4 @@
 import { createSlice, createSelector } from '@reduxjs/toolkit';
-import AudioManager from '../../../services/webrtc/audio-manager';
 
 const voiceUsersSlice = createSlice({
   name: 'voiceUsers',
@@ -69,27 +68,6 @@ const isTalkingByUserId = createSelector(
   (voiceUserObj) => voiceUserObj?.talking
 );
 
-// Middleware effects and listeners
-const voiceStateChangePredicate = (action, currentState) => {
-  if (!editVoiceUser.match(action) && !addVoiceUser.match(action)) return false;
-  const { voiceUserObject } = action.payload;
-  const currentVoiceUser = selectVoiceUserByDocumentId(currentState, voiceUserObject.id);
-  // Not for us - skip
-  if (currentVoiceUser.intId !== AudioManager.userId) return false;
-  return true;
-};
-
-const voiceStateChangeListener = (action, listenerApi) => {
-  const state = listenerApi.getState();
-  const { voiceUserObject } = action.payload;
-  const currentVoiceUser = selectVoiceUserByDocumentId(state, voiceUserObject.id);
-  const { muted } = currentVoiceUser;
-
-  if (typeof muted === 'boolean' && muted !== state.audio.isMuted) {
-    AudioManager.setMutedState(muted);
-  }
-};
-
 export const {
   addVoiceUser,
   removeVoiceUser,
@@ -101,8 +79,6 @@ export const {
 export {
   selectVoiceUserByDocumentId,
   selectVoiceUserByUserId,
-  voiceStateChangeListener,
-  voiceStateChangePredicate,
   isTalkingByUserId,
 };
 

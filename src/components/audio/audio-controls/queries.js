@@ -26,7 +26,6 @@ const USER_CURRENT_VOICE_JOINED = gql`
       joined
     }
   }
-`
-
+`;
 
 export default { USER_SET_MUTED, USER_CURRENT_VOICE, USER_CURRENT_VOICE_JOINED };

@@ -1,5 +1,5 @@
 import * as Linking from 'expo-linking';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Alert } from 'react-native';
 import { useMutation, useSubscription } from '@apollo/client';
@@ -14,6 +14,7 @@ import Queries from './queries';
 import Styled from './styles';
 
 const AudioControls = () => {
+  const [audioPermissionTainted, setAudioPermissionTainted] = useState(false);
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { joinAudio } = useAudioJoin();
@@ -22,12 +23,22 @@ const AudioControls = () => {
   const micDisabled = useSelector((state) => selectLockSettingsProp(state, 'disableMic') && isLocked(state));
   const isListenOnly = useSelector((state) => state.audio.isListenOnly);
   const audioError = useSelector((state) => state.audio.audioError);
+  const localMutedState = useSelector((state) => state.audio.isMuted);
   const isActive = isConnected || isConnecting;
-  const { data: currentUserVoiceData } = useSubscription(Queries.USER_CURRENT_VOICE);
+  const {
+    data: currentUserVoiceData,
+    loading: currentUserVoiceLoading,
+  } = useSubscription(Queries.USER_CURRENT_VOICE);
   const isMuted = currentUserVoiceData?.user_current[0]?.voice?.muted;
   const unmutedAndConnected = !isMuted && isConnected;
 
   const [userSetMuted] = useMutation(Queries.USER_SET_MUTED);
+
+  useEffect(() => {
+    if (!currentUserVoiceLoading && (localMutedState !== isMuted)) {
+      AudioManager.setMutedState(isMuted);
+    }
+  }, [isMuted, currentUserVoiceLoading, localMutedState]);
 
   useEffect(() => {
     if (audioError) {
@@ -38,11 +49,17 @@ const AudioControls = () => {
           const buttons = [
             {
               text: t('app.settings.main.cancel.label'),
-              style: 'cancel'
+              style: 'cancel',
+              onPress: () => {
+                setAudioPermissionTainted(true);
+              },
             },
             {
               text: t('app.settings.main.label'),
-              onPress: () => Linking.openSettings(),
+              onPress: () => {
+                Linking.openSettings();
+                setAudioPermissionTainted(true);
+              },
             },
             {
               text: t('mobileSdk.error.tryAgain'),
@@ -78,18 +95,20 @@ const AudioControls = () => {
     }
   }, [audioError]);
 
-  const toggleVoice = async () => {
+  const toggleVoice = useCallback(async (mutedVal) => {
     const userId = currentUserVoiceData?.user_current[0]?.voice?.userId;
-    const muted = !currentUserVoiceData?.user_current[0]?.voice?.muted;
+    const currMuted = currentUserVoiceData?.user_current[0]?.voice?.muted;
+    const muted = typeof mutedVal === 'boolean' ? mutedVal : !currMuted;
 
     try {
       await userSetMuted({ variables: { muted, userId } });
     } catch (e) {
       logger.error('Error on trying to toggle muted');
     }
-  };
+  }, [currentUserVoiceData]);
 
-  const onPressMic = () => {
+  const onPressMic = useCallback(() => {
+    // Lock settings are applied to the user
     if (micDisabled) {
       // TODO localization, programmatically dismissable Dialog that is reusable
       Alert.alert(
@@ -98,10 +117,17 @@ const AudioControls = () => {
         null,
         { cancelable: true },
       );
-      return;
+    } else if (audioPermissionTainted) {
+      // Audio permission was tainted (i.e. user denied permission and didn't grant it)
+      // Try to join audio again
+      setAudioPermissionTainted(false);
+      joinAudio().then(() => {
+        toggleVoice(false);
+      });
+    } else {
+      toggleVoice();
     }
-    toggleVoice();
-  };
+  }, [micDisabled, audioPermissionTainted, toggleVoice]);
 
   const onPressHeadphone = () => {
     if (isActive) {
