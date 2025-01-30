@@ -19,6 +19,7 @@ import { useAudioJoin } from '../../hooks/use-audio-join';
 import useCurrentUser from '../../graphql/hooks/useCurrentUser';
 import { liveKitRoom } from '../../services/livekit';
 import { USER_SET_TALKING } from './mutations';
+import SelectiveSubscription from './selective-subscription/index.tsx';
 
 const LiveKitObserver = ({
   room,
@@ -134,6 +135,7 @@ const BBBLiveKitRoom = ({ children }) => {
       style={{ zIndex: 0, height: 'initial', width: 'initial' }}
     >
       <LiveKitObserver room={liveKitRoom} usingAudio={usingAudio} />
+      {usingAudio && <SelectiveSubscription />}
       {children}
     </LiveKitRoom>
   );
