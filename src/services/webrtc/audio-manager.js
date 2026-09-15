@@ -119,11 +119,17 @@ class AudioManager {
 
   _setSenderTrackEnabled(shouldEnable) {
     if (this.isListenOnly) return;
+    if (!this.bridge) return;
 
-    if (this.bridge) {
-      this.bridge.setSenderTrackEnabled(shouldEnable);
-      store.dispatch(setMutedState(!shouldEnable));
-    }
+    this.bridge.setSenderTrackEnabled(shouldEnable);
+    // Redux audio.isMuted is the persisted rejoin intent, and a server mute ignored
+    // during a reconnect leaves the bridge's intent alone, so mirror the bridge
+    // rather than the requested value.
+    const muted = typeof this.bridge.getMuteIntent === 'function'
+      ? this.bridge.getMuteIntent()
+      : !shouldEnable;
+
+    store.dispatch(setMutedState(muted));
   }
 
   _getStunFetchURL() {
