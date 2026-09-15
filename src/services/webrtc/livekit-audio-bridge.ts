@@ -813,7 +813,8 @@ export default class LiveKitAudioBridge {
         }, 'LiveKit: published audio track without stream');
       }
 
-      this.onpublished();
+      // A newer publish owns the publication by now and reports its own success.
+      if (this.publishGeneration === currentGeneration) this.onpublished();
     } catch (error) {
       const publishedAnyway = !!inputStream && this.isTrackPublishedWithStream(inputStream);
 
@@ -828,6 +829,7 @@ export default class LiveKitAudioBridge {
           inputDeviceId: this.inputDeviceId,
           streamData: MediaStreamUtils.getMediaStreamLogData(inputStream || this.originalStream),
           publishedAnyway,
+          stale: this.publishGeneration !== currentGeneration,
         },
       }, 'LiveKit: failed to publish audio track');
 
@@ -835,13 +837,18 @@ export default class LiveKitAudioBridge {
       // duplicate publish racing the SDK's republish, not a broken room, so it
       // must not force a full room reconnect.
       if (publishedAnyway) {
+        // The stream is on the wire, so failing the caller would be wrong even
+        // when a newer publish has taken over.
         this.reassertUnmuteIntent();
-        this.onpublished();
+        if (this.publishGeneration === currentGeneration) this.onpublished();
 
         return;
       }
 
-      if (LiveKitAudioBridge.isFatalPublishError(error as Error)) {
+      // A superseded publish rejecting says nothing about the room a newer one is
+      // using, and the fatal path tears audio down room-wide.
+      if (this.publishGeneration === currentGeneration
+        && LiveKitAudioBridge.isFatalPublishError(error as Error)) {
         this.handleFatalPublishError(error as Error);
       }
 
