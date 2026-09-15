@@ -48,9 +48,16 @@ import {
   setMediaInterrupted,
 } from '../../store/redux/slices/wide-app/audio';
 import {
+  setIsConnected as setVideoIsConnected,
+  setLocalCameraId,
+} from '../../store/redux/slices/wide-app/video';
+import {
   hideNotification,
   setProfile,
+  showNotificationWithTimeout,
 } from '../../store/redux/slices/wide-app/notification-bar';
+import { expectStreamStop } from '../../services/livekit/camera-state.ts';
+import LiveKitCameraTeardownObserver from './camera/teardown-observer';
 import { USER_SET_TALKING } from './mutations';
 import SelectiveSubscription from './selective-subscription/index.tsx';
 import useMeetingSettings from '../../graphql/local-states/useMeetingSettings';
@@ -317,6 +324,11 @@ const BBBLiveKitRoom = ({ children }) => {
   // The effect below needs it to tell "there is something to show" from "the
   // user has not been told yet", which is what the grace window buys.
   const [reconnectingNotice, setReconnectingNotice] = useState(false);
+  // A camera teardown announced while a persistent notice owns the bar's single
+  // slot waits for that slot instead of being clobbered by the re-assert below.
+  // The profile is captured at announce time: 'cameraStoppedByLock' must not
+  // degrade to 'cameraStopped' because the lock was lifted while it waited.
+  const [cameraNotice, setCameraNotice] = useState(null);
   const barProfile = useSelector((state) => state.notificationBar.profile);
   const noticeDismissed = useSelector(
     (state) => state.notificationBar.dismissed.mediaReconnectFailed ?? false,
@@ -416,7 +428,7 @@ const BBBLiveKitRoom = ({ children }) => {
   // the session down and letting the reconnect effect rebuild it. The two
   // refusals are told apart because they are not equally terminal: a mutex
   // collision is worth retrying, a spent room budget never is.
-  const forceRoomReconnect = useCallback(({ source, resetAudio }) => {
+  const forceRoomReconnect = useCallback(({ source, resetAudio, resetCamera }) => {
     if (forcedReconnectInFlight.current) return 'in_flight';
 
     // Nothing reconnects a room whose budget is spent, so disconnecting here
@@ -450,6 +462,25 @@ const BBBLiveKitRoom = ({ children }) => {
       dispatch(setIsReconnecting(false));
     }
 
+    // The disconnect below stops the capture and nothing republishes it: the
+    // connect effect re-joins audio only, and the camera is published on a
+    // button press or an app resume. The server's camera row survives an
+    // app-driven reconnect, so the row observer never sees this one - hence the
+    // marking, so it does not announce it a second time if the row does go.
+    if (resetCamera && store.getState().video.isConnected) {
+      const cameraId = store.getState().video.localCameraId;
+
+      if (cameraId) expectStreamStop(cameraId);
+
+      logger.warn({
+        logCode: 'livekit_camera_stopped_unexpectedly',
+        extraInfo: { cameraId, trigger: 'forced_reconnect', source },
+      }, 'LiveKit: camera stopped by a forced room reconnect');
+      dispatch(setLocalCameraId(null));
+      dispatch(setVideoIsConnected(false));
+      setCameraNotice('cameraStopped');
+    }
+
     let timeout = null;
     // Bounded: disconnect() awaits a leave that can stay pending forever on the
     // half-open socket this path exists for, latching the mutex with it. It
@@ -472,7 +503,7 @@ const BBBLiveKitRoom = ({ children }) => {
       });
 
     return 'started';
-  }, [dispatch, notifyReconnectExhausted]);
+  }, [dispatch, store, notifyReconnectExhausted]);
 
   const initializeMediaManagers = (bridges) => {
     const mediaManagerConfigs = {
@@ -766,6 +797,7 @@ const BBBLiveKitRoom = ({ children }) => {
       const result = forceRoomReconnect({
         source: 'reconnect_stalled',
         resetAudio: usingAudio,
+        resetCamera: usingCamera,
       });
 
       if (result === 'budget_exhausted') {
@@ -803,6 +835,7 @@ const BBBLiveKitRoom = ({ children }) => {
     url,
     stallEpoch,
     usingAudio,
+    usingCamera,
     forceRoomReconnect,
     notifyReconnectExhausted,
   ]);
@@ -865,23 +898,45 @@ const BBBLiveKitRoom = ({ children }) => {
   }, [reviveReconnect]);
 
   // The bar has a single profile slot, so anything else raised meanwhile takes
-  // it over for good: assert and re-assert while the condition holds, unless
-  // the user has dismissed the notice. One effect for both notices, in priority
-  // order - two would ping-pong the slot whenever a stall ends in a give-up.
+  // it over for good: assert and re-assert while the condition holds and the
+  // notice has not been dismissed - a dismissed one leaves the slot free for
+  // whatever is pending below it. One effect for all of them, in priority
+  // order - separate ones would ping-pong the slot whenever a stall ends in a
+  // give-up.
   useEffect(() => {
-    if (reconnectNotice.current.room || reconnectNotice.current.fatal) {
-      if (noticeDismissed || barProfile === 'mediaReconnectFailed') return;
+    const failedPending = reconnectNotice.current.room || reconnectNotice.current.fatal;
+    // mediaReconnecting is gated on the room budget as well: a loop that has
+    // given up is not "restoring your audio and video", so it must not inherit
+    // the slot from a dismissed give-up notice.
+    const top = (failedPending && !noticeDismissed && 'mediaReconnectFailed')
+      || (reconnectingNotice && !reconnectingDismissed && !reconnectNotice.current.room
+        && 'mediaReconnecting')
+      || null;
 
-      dispatch(setProfile({ profile: 'mediaReconnectFailed' }));
+    if (top) {
+      if (barProfile !== top) dispatch(setProfile({ profile: top }));
 
       return;
     }
 
-    if (!reconnectingNotice) return;
-    if (reconnectingDismissed || barProfile === 'mediaReconnecting') return;
+    if (!cameraNotice) return;
 
-    dispatch(setProfile({ profile: 'mediaReconnecting' }));
-  }, [barProfile, noticeDismissed, reconnectingDismissed, reconnectingNotice, dispatch]);
+    setCameraNotice(null);
+
+    // A camera the user has shared again in the meantime needs no warning; the
+    // room still being down is not a reason to drop one.
+    if (!store.getState().video.isConnected) {
+      dispatch(showNotificationWithTimeout({ profile: cameraNotice }));
+    }
+  }, [
+    barProfile,
+    noticeDismissed,
+    reconnectingDismissed,
+    reconnectingNotice,
+    cameraNotice,
+    store,
+    dispatch,
+  ]);
 
   // Handle fatal errors emitted from other parts of the app (e.g. unrecoverable
   // audio publish timeouts) by forcing a LiveKit room reconnection. Gated by
@@ -922,7 +977,11 @@ const BBBLiveKitRoom = ({ children }) => {
 
       // The only emitter of this event is the LiveKit audio bridge, so the
       // audio teardown follows whichever bridge carries audio.
-      const result = forceRoomReconnect({ source: 'fatal_error', resetAudio: usingAudio });
+      const result = forceRoomReconnect({
+        source: 'fatal_error',
+        resetAudio: usingAudio,
+        resetCamera: usingCamera,
+      });
 
       // A refused reconnect tore nothing down, so it must not cost a budget a
       // burst of errors would otherwise drain without a single teardown.
@@ -947,6 +1006,7 @@ const BBBLiveKitRoom = ({ children }) => {
   }, [
     reconnectOnFatalFailures,
     usingAudio,
+    usingCamera,
     forceRoomReconnect,
     notifyReconnectExhausted,
     clearReconnectNotice,
@@ -987,6 +1047,7 @@ const BBBLiveKitRoom = ({ children }) => {
         usingCamera={usingCamera}
         setReconnectingNotice={setReconnectingNotice}
       />
+      {usingCamera && <LiveKitCameraTeardownObserver setCameraNotice={setCameraNotice} />}
       {usingAudio && selectiveSubscriptionEnabled && <SelectiveSubscription />}
       {children}
     </LiveKitRoom>

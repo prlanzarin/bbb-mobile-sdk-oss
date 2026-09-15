@@ -4,6 +4,7 @@ import logger from '../logger';
 import AudioManager from '../webrtc/audio-manager';
 import VideoManager from '../webrtc/video-manager';
 import ScreenshareManager from '../webrtc/screenshare-manager';
+import { clearExpectedStreamStops, expectAllStreamStops } from './camera-state.ts';
 
 // React Native has no DOM (window/CustomEvent), so cross-module LiveKit signals
 // go through this emitter instead of window.dispatchEvent/addEventListener.
@@ -87,6 +88,7 @@ let connectedOnce = false;
 // a Room that outlives every session.
 liveKitRoom.on(RoomEvent.Connected, () => {
   connectedOnce = true;
+  clearExpectedStreamStops();
 });
 
 /**
@@ -154,7 +156,12 @@ export const waitForRoomConnection = (room, timeout = ROOM_CONNECTION_TIMEOUT) =
 export const disconnectLiveKitRoom = ({
   final = false,
 }) => {
-  if (final) connectedOnce = false;
+  if (final) {
+    connectedOnce = false;
+    // Every camera goes down with the session, and the teardown is not
+    // something to warn the user about.
+    expectAllStreamStops();
+  }
 
   liveKitRoom.disconnect()
     .then(() => {
