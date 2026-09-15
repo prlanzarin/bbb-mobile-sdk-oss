@@ -1240,7 +1240,12 @@ export default class LiveKitAudioBridge {
     this.stopping = true;
 
     return this.liveKitRoom.localParticipant.setMicrophoneEnabled(false)
-      .then(() => this.unpublish('stop'))
+      .then(
+        () => this.unpublish('stop'),
+        // A rejected mute must not skip the unpublish, or the publication survives
+        // live on the shared room with the bridge already detached.
+        (error) => this.unpublish('stop').then(() => { throw error; }),
+      )
       .then(() => {
         this.logger.info({
           logCode: 'livekit_audio_exit',
