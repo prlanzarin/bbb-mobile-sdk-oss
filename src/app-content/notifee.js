@@ -142,7 +142,7 @@ const NotifeeController = () => {
             },
           },
           ...(isListenOnly ? [] : [
-            audioIsMuted
+            displayedMuted
               ? {
                 title: t('app.actionsBar.unmuteLabel'),
                 pressAction: {
@@ -181,7 +181,7 @@ const NotifeeController = () => {
         }, 'Failed to start the audio foreground service');
       }
     }
-  }, [audioIsMuted, isListenOnly, t]);
+  }, [displayedMuted, isListenOnly, t]);
 
   // Start/stop the foreground service with the audio connection; re-display on
   // mute changes so the mute/unmute action label stays in sync (same id
