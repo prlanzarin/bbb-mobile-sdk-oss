@@ -89,9 +89,16 @@ const LKVideoControls = ({
           // never read as a teardown it did not ask for.
           if (cameraId) expectStreamStop(cameraId);
 
-          const trackPublication = await localParticipant.unpublishTrack(publication.track);
+          // The room keeps stopLocalTrackOnUnpublish disabled for the microphone's sake -
+          // the audio bridge owns that capture and releases it itself - so a camera
+          // unpublish has to ask for the stop explicitly, or the device capture keeps
+          // running with nothing left referencing it.
+          const trackPublication = await localParticipant.unpublishTrack(publication.track, true);
 
           if (trackPublication == null) {
+            // unpublishTrack bails before its own stop when it no longer knows the
+            // publication, so the capture would survive that path too.
+            publication.track?.stop();
             logger.warn({
               logCode: 'livekit_camera_unpublish_no_publication',
               extraInfo: { cameraId },
