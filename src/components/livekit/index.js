@@ -107,6 +107,8 @@ const BBBLiveKitRoom = ({ children }) => {
   const url = meetingSettings?.public
     ? (meetingSettings.public?.media?.livekit?.url || `wss://${host}/livekit`)
     : null;
+  // The server's clientSettings decide this; the ?? false fallback only covers a
+  // server that predates the key.
   const reconnectOnFatalFailures = meetingSettings?.public?.media?.livekit
     ?.reconnectOnFatalFailures ?? false;
   const selectiveSubscriptionEnabled = meetingSettings?.public?.media?.livekit

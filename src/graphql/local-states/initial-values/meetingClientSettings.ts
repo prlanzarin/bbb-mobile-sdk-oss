@@ -687,6 +687,8 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
           muteDebounceMs: 2500,
         },
         logLevel: LogLevel.warn,
+        // Looks wrong but is inert: the server's clientSettings replace it before
+        // the room connects, and a stock server ships true.
         reconnectOnFatalFailures: false,
         // Parity with the server's settings.yml only: what reaches the room is the
         // server's roomOptions layered over DEFAULT_ROOM_OPTIONS in services/livekit.
