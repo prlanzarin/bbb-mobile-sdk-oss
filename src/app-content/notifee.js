@@ -59,6 +59,7 @@ const NotifeeController = () => {
   const audioIsConnected = useSelector((state) => state.audio.isConnected);
   const audioIsMuted = useSelector((state) => state.audio.isMuted);
   const isListenOnly = useSelector((state) => state.audio.isListenOnly);
+  const mediaInterrupted = useSelector((state) => state.audio.mediaInterrupted);
   const pendingMuteAssert = useSelector((state) => state.audio.pendingMuteAssert);
   const { t } = useTranslation();
   const [userSetMuted] = useMutation(AudioQueries.USER_SET_MUTED);
@@ -72,6 +73,11 @@ const NotifeeController = () => {
     : (voice?.muted ?? audioIsMuted);
 
   const toggleMute = useCallback(async () => {
+    // Only unmuting is refused while the media session is down: it is a no-op
+    // that would leave local and server state disagreeing. Muting still goes
+    // through, as it is partially effective locally.
+    if (mediaInterrupted && displayedMuted) return;
+
     // Explicit user mute toggle supersedes previous mute asserts
     // (mirrors audio-controls' toggleVoice)
     dispatch(setPendingMuteAssert(null));
@@ -90,7 +96,7 @@ const NotifeeController = () => {
         extraInfo: { errorMessage: error?.message },
       }, 'Error on trying to toggle muted from notification');
     }
-  }, [voice, displayedMuted, currentUserId]);
+  }, [voice, displayedMuted, currentUserId, mediaInterrupted]);
 
   const leave = useCallback(async () => {
     try {

@@ -24,7 +24,7 @@ import VideoManager from '../../services/webrtc/video-manager';
 import ScreenshareManager from '../../services/webrtc/screenshare-manager';
 import logger from '../../services/logger';
 import useMeeting from '../../graphql/hooks/useMeeting';
-import { useAudioJoin } from '../../hooks/use-audio-join';
+import { useAudioJoin, invalidateInFlightAudioJoin } from '../../hooks/use-audio-join';
 import useCurrentUser from '../../graphql/hooks/useCurrentUser';
 import { usePrimaryLiveKitMembership } from '../../graphql/hooks/useLiveKitMemberships';
 import {
@@ -37,13 +37,19 @@ import {
   liveKitEvents,
   applyRoomOptions,
   resolveRoomOptions,
+  hasConnectedOnce,
+  isReconnectingState,
   LK_FATAL_ERROR_EVENT,
 } from '../../services/livekit';
-import { setIsConnected, setIsConnecting, setIsReconnecting } from '../../store/redux/slices/wide-app/audio';
+import {
+  setIsConnected,
+  setIsConnecting,
+  setIsReconnecting,
+  setMediaInterrupted,
+} from '../../store/redux/slices/wide-app/audio';
 import {
   hideNotification,
   setProfile,
-  showNotificationWithTimeout,
 } from '../../store/redux/slices/wide-app/notification-bar';
 import { USER_SET_TALKING } from './mutations';
 import SelectiveSubscription from './selective-subscription/index.tsx';
@@ -71,11 +77,34 @@ const MAX_RECONNECT_ATTEMPTS = 10;
 // component owns the only liveKitRoom.connect() call site, so a gate that stays
 // latched is permanent media death: always fail open.
 const OFFLINE_GATE_FAILOPEN_MS = 30000;
+// How long the room may sit outside Connected before the client stops trusting
+// the SDK's own recovery and tears the session down itself. Web client value.
+const RECONNECT_STALL_TIMEOUT_MS = 60000;
+const MAX_STALL_RECONNECT_ATTEMPTS = 10;
+// The stall gate's own offline budget. It cannot ride on the connect loop's
+// fail-open above: that one clears in half a stall window, so it is always open
+// again by the time a window elapses. The gate still has to fail open - the
+// detector is the only rescue for a room parked in Reconnecting - just on a
+// budget longer than the window it guards.
+const STALL_OFFLINE_GATE_MAX_MS = 300000;
+// Room.disconnect() awaits a leave that can stay pending forever on a half-open
+// socket, which is the very case the stall detector fires on.
+const FORCED_DISCONNECT_TIMEOUT_MS = 5000;
+// A signal resume keeps publications and usually settles, so it is given longer
+// before the user is told anything at all.
+const MEDIA_INTERRUPTED_NOTICE_GRACE_MS = 1000;
+const SIGNAL_RESUME_NOTICE_GRACE_MS = 5000;
 
 const LiveKitObserver = ({
   room,
   usingAudio,
+  usingCamera,
+  setReconnectingNotice,
 }) => {
+  const dispatch = useDispatch();
+  const mainRoomBlockedByBreakout = useSelector(
+    (state) => state.client.sessionState.mainRoomBlockedByBreakout,
+  );
   const { localParticipant } = useLocalParticipant();
   // Both call sites below fire precisely when the transport may be down (room
   // drop, session teardown), and an Apollo rejection surfaces on RN as a visible
@@ -148,6 +177,46 @@ const LiveKitObserver = ({
     }
   }, [isConnected, connectionState, joinedVoice, audioManagerInitialized]);
 
+  // A room reports Disconnected before it has ever connected as well, and
+  // entering a breakout tears this one down while the component stays mounted:
+  // neither is an interruption of a session the user is in.
+  const isMediaInterrupted = hasConnectedOnce()
+    && !mainRoomBlockedByBreakout
+    && connectionState !== ConnectionState.Connected;
+  const isResuming = connectionState === ConnectionState.SignalReconnecting;
+
+  useEffect(() => {
+    // The notice promises audio and video back: a room kept around only to
+    // receive a screenshare while the user's audio is on FreeSWITCH is not
+    // something to warn about.
+    if (!isMediaInterrupted || !(usingAudio || usingCamera)) {
+      setReconnectingNotice(false);
+      dispatch(hideNotification('mediaReconnecting'));
+
+      return undefined;
+    }
+
+    // Only the condition is raised here: the bar has one slot and a dismiss
+    // latch, both of which are arbitrated by BBBLiveKitRoom's single effect.
+    const timer = setTimeout(() => {
+      setReconnectingNotice(true);
+    }, isResuming ? SIGNAL_RESUME_NOTICE_GRACE_MS : MEDIA_INTERRUPTED_NOTICE_GRACE_MS);
+
+    return () => clearTimeout(timer);
+  }, [isMediaInterrupted, isResuming, usingAudio, usingCamera, setReconnectingNotice, dispatch]);
+
+  useEffect(() => {
+    if (!usingAudio) return;
+
+    dispatch(setMediaInterrupted(isMediaInterrupted && !isResuming));
+  }, [isMediaInterrupted, isResuming, usingAudio, dispatch]);
+
+  // Clearing this from the effect above's cleanup would flicker the flag
+  // through Redux on every transition.
+  useEffect(() => () => {
+    dispatch(setMediaInterrupted(false));
+  }, [dispatch]);
+
   return null;
 };
 
@@ -206,6 +275,7 @@ const BBBLiveKitRoom = ({ children }) => {
     audioBridge,
   } = meetingData?.meeting[0] || {};
   const usingAudio = audioBridge === 'livekit';
+  const usingCamera = cameraBridge === 'livekit';
   const shouldUseLiveKit = cameraBridge === 'livekit'
     || screenShareBridge === 'livekit'
     || usingAudio;
@@ -229,13 +299,30 @@ const BBBLiveKitRoom = ({ children }) => {
   const reconnectNotice = useRef({ room: false, fatal: false });
   const isOffline = useRef(false);
   const wasOffline = useRef(false);
+  const offlineSince = useRef(null);
   const lastNetInfoType = useRef(null);
   const offlineFailOpen = useRef(null);
   const prevRoomAppState = useRef(AppState.currentState);
   const [reconnectEpoch, setReconnectEpoch] = useState(0);
+  const stallSince = useRef(null);
+  const stallReconnectAttempts = useRef(0);
+  const stallExhausted = useRef(false);
+  const forcedReconnectInFlight = useRef(false);
+  const prevAppState = useRef(AppState.currentState);
+  const [stallEpoch, setStallEpoch] = useState(0);
+  // The stall detector has to re-run on a resume, so the app state is state
+  // here and a ref in the reconnect budget's listener.
+  const [appState, setAppState] = useState(AppState.currentState);
+  // Raised by LiveKitObserver once an interruption outlives its grace window.
+  // The effect below needs it to tell "there is something to show" from "the
+  // user has not been told yet", which is what the grace window buys.
+  const [reconnectingNotice, setReconnectingNotice] = useState(false);
   const barProfile = useSelector((state) => state.notificationBar.profile);
   const noticeDismissed = useSelector(
     (state) => state.notificationBar.dismissed.mediaReconnectFailed ?? false,
+  );
+  const reconnectingDismissed = useSelector(
+    (state) => state.notificationBar.dismissed.mediaReconnecting ?? false,
   );
   // The scheduler reads these at fire time, so it always connects with the
   // current token and options without the backoff restarting on a refresh.
@@ -301,12 +388,91 @@ const BBBLiveKitRoom = ({ children }) => {
       clearReconnectNotice('room');
     }
 
+    // Unconditional: a room the detector gave up on is parked outside
+    // Disconnected, so connAttempts was never spent and no room notice was ever
+    // raised - the guard above is false in exactly the state the give-up
+    // produces, and nothing else would ever clear this. The counter goes with
+    // the flag: clearing the latch alone re-arms the detector with a spent
+    // budget, which re-latches on the next window. The epoch bump is what
+    // re-runs the detector: the refs alone would not.
+    stallReconnectAttempts.current = 0;
+    stallExhausted.current = false;
+    // The window is re-measured on a reattach only: the SDK resumes by itself
+    // once the link is back, and a window that kept running through the outage
+    // would let a forced reconnect pre-empt that resume by seconds. The other
+    // reasons repeat on a flapping transport, which would defer the detector
+    // for good.
+    if (reason === 'netinfo_reattached') stallSince.current = Date.now();
+    setStallEpoch((p) => p + 1);
+
     // Unconditional: the offline gate returns without spending an attempt, so a
     // link that drops and returns before any attempt is counted leaves the
     // epoch as the only thing that runs the scheduler again. The scheduler
     // re-checks every gate, so a bump with nothing to do is a no-op.
     setReconnectEpoch((p) => p + 1);
   }, [clearReconnectNotice]);
+
+  // Both the fatal-error handler and the stall detector below recover by tearing
+  // the session down and letting the reconnect effect rebuild it. The two
+  // refusals are told apart because they are not equally terminal: a mutex
+  // collision is worth retrying, a spent room budget never is.
+  const forceRoomReconnect = useCallback(({ source, resetAudio }) => {
+    if (forcedReconnectInFlight.current) return 'in_flight';
+
+    // Nothing reconnects a room whose budget is spent, so disconnecting here
+    // would turn a session the SDK might still recover into a dead one.
+    if (connAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
+      logger.warn({
+        logCode: 'livekit_forced_reconnect_skipped',
+        extraInfo: { source, attempts: connAttempts.current },
+      }, `LiveKit: forced reconnect skipped, room reconnect budget exhausted (${source})`);
+      notifyReconnectExhausted('room', {
+        attempts: connAttempts.current,
+        max: MAX_RECONNECT_ATTEMPTS,
+        source,
+      });
+
+      return 'budget_exhausted';
+    }
+
+    forcedReconnectInFlight.current = true;
+
+    // AudioManager.exitAudio() is bridge-agnostic and the detector arms whenever
+    // any bridge is on LiveKit, so an ungated teardown would kill a healthy
+    // bbb-webrtc-sfu audio session because a video room stalled.
+    if (resetAudio) {
+      invalidateInFlightAudioJoin();
+      AudioManager.exitAudio();
+      // Cleared before the disconnect, not in its continuation: the state change
+      // can re-fire the join effect first and read a stale isConnected:true.
+      dispatch(setIsConnected(false));
+      dispatch(setIsConnecting(false));
+      dispatch(setIsReconnecting(false));
+    }
+
+    let timeout = null;
+    // Bounded: disconnect() awaits a leave that can stay pending forever on the
+    // half-open socket this path exists for, latching the mutex with it. It
+    // stops the captures as well, which is what mobile needs: publishing goes
+    // through setCameraEnabled and no LocalVideoTrack reference is kept, so a
+    // surviving track would be a running capture nothing can reach.
+    Promise.race([
+      liveKitRoom.disconnect(),
+      new Promise((resolve) => {
+        timeout = setTimeout(resolve, FORCED_DISCONNECT_TIMEOUT_MS);
+      }),
+    ])
+      .catch((error) => logger.error({
+        logCode: 'livekit_forced_reconnect_disconnect_error',
+        extraInfo: { source, errorMessage: error?.message },
+      }, `LiveKit: forced reconnect disconnect failed (${source})`))
+      .finally(() => {
+        if (timeout) clearTimeout(timeout);
+        forcedReconnectInFlight.current = false;
+      });
+
+    return 'started';
+  }, [dispatch, notifyReconnectExhausted]);
 
   const initializeMediaManagers = (bridges) => {
     const mediaManagerConfigs = {
@@ -510,6 +676,137 @@ const BBBLiveKitRoom = ({ children }) => {
     clearReconnectNotice('room');
   }, [connectionState, clearReconnectNotice]);
 
+  // livekit-client does not always emit Disconnected for a session it has
+  // stopped trying to restore, and the effect above only (re)connects on
+  // Disconnected, so a room parked in Reconnecting would stay there for good.
+  useEffect(() => {
+    if (!shouldUseLiveKit || mainRoomBlockedByBreakout) {
+      stallSince.current = null;
+
+      return undefined;
+    }
+
+    if (connectionState === ConnectionState.Connected) {
+      stallReconnectAttempts.current = 0;
+      stallExhausted.current = false;
+    }
+
+    if (!isReconnectingState(connectionState)) {
+      stallSince.current = null;
+
+      return undefined;
+    }
+
+    if (stallExhausted.current) return undefined;
+
+    // The detector stays armed while backgrounded: background audio is
+    // first-class here (iOS UIBackgroundModes, an Android foreground service),
+    // and screen-off listening is exactly where a silent stall goes unnoticed.
+    // Only a recorded background -> active resume restarts the window -
+    // prevAppState is written nowhere else and only for those two states, so
+    // the iOS transients (notification shade, app switcher, permission prompts)
+    // cannot be used to defer the countdown indefinitely.
+    if (prevAppState.current === 'background' && appState === 'active') {
+      stallSince.current = Date.now();
+    }
+
+    if (appState === 'active' || appState === 'background') prevAppState.current = appState;
+
+    // One continuous window across the whole reconnecting period: a
+    // Reconnecting <-> SignalReconnecting flap must not restart the countdown.
+    if (stallSince.current == null) stallSince.current = Date.now();
+
+    const delay = Math.max(0, RECONNECT_STALL_TIMEOUT_MS - (Date.now() - stallSince.current));
+    const timer = setTimeout(() => {
+      // A detached interface gates the connect loop for the same reason it has
+      // to gate this one: a forced reconnect tears the bridge down for an
+      // attempt that cannot reach the server, so the window is given back
+      // instead of an attempt being spent. isOffline alone would not hold: it
+      // fails open mid-window, while wasOffline is precisely "detached and not
+      // seen attached since" and is bounded by the budget above instead.
+      const offline = isOffline.current
+        || (wasOffline.current
+          && offlineSince.current !== null
+          && Date.now() - offlineSince.current < STALL_OFFLINE_GATE_MAX_MS);
+
+      if (offline) {
+        stallSince.current = Date.now();
+        setStallEpoch((p) => p + 1);
+
+        return;
+      }
+
+      if (stallReconnectAttempts.current >= MAX_STALL_RECONNECT_ATTEMPTS) {
+        stallExhausted.current = true;
+        logger.error({
+          logCode: 'livekit_reconnect_stalled_exhausted',
+          extraInfo: { connectionState, attempts: stallReconnectAttempts.current },
+        }, 'LiveKit: stalled-room reconnects exhausted');
+        // Terminal: the room is parked outside Disconnected and the detector is
+        // done, so the user gets the same "leave and rejoin" notice the room
+        // loop's give-up raises instead of a reconnecting bar that never ends.
+        notifyReconnectExhausted('room', {
+          source: 'reconnect_stalled',
+          attempts: stallReconnectAttempts.current,
+          max: MAX_STALL_RECONNECT_ATTEMPTS,
+        });
+
+        return;
+      }
+
+      logger.warn({
+        logCode: 'livekit_reconnect_stalled',
+        extraInfo: {
+          state: connectionState,
+          url,
+          attempts: stallReconnectAttempts.current + 1,
+        },
+      }, `LiveKit: room stalled (state=${connectionState}), forcing a reconnect`);
+
+      const result = forceRoomReconnect({
+        source: 'reconnect_stalled',
+        resetAudio: usingAudio,
+      });
+
+      if (result === 'budget_exhausted') {
+        // There is nothing left for the detector to trigger, so it goes quiet
+        // instead of re-arming on every state change.
+        stallExhausted.current = true;
+
+        return;
+      }
+
+      if (result === 'in_flight') {
+        // A forced reconnect from the fatal path is still resolving: it may
+        // well fix the stall, and the budget it would have spent is intact, so
+        // the window is given back rather than closed for the session.
+        stallSince.current = Date.now();
+        setStallEpoch((p) => p + 1);
+
+        return;
+      }
+
+      stallReconnectAttempts.current += 1;
+      // Re-primed rather than nulled: a disconnect that leaves the room in
+      // Reconnecting emits no state change, so nothing would re-run this effect
+      // and the remaining attempts would be unreachable.
+      stallSince.current = Date.now();
+      setStallEpoch((p) => p + 1);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [
+    shouldUseLiveKit,
+    mainRoomBlockedByBreakout,
+    connectionState,
+    appState,
+    url,
+    stallEpoch,
+    usingAudio,
+    forceRoomReconnect,
+    notifyReconnectExhausted,
+  ]);
+
   useEffect(() => {
     // isConnected === false is interface attachment and nothing else.
     // isInternetReachable is a public-internet probe (a captive-portal check on
@@ -526,6 +823,9 @@ const BBBLiveKitRoom = ({ children }) => {
       if (isConnected === false) {
         isOffline.current = true;
         wasOffline.current = true;
+        // Not re-stamped while the device stays detached, so the stall gate's
+        // budget is a ceiling on the outage rather than on the last event.
+        if (offlineSince.current === null) offlineSince.current = Date.now();
         armOfflineFailOpen();
 
         return;
@@ -536,6 +836,7 @@ const BBBLiveKitRoom = ({ children }) => {
 
       const reattached = wasOffline.current;
       wasOffline.current = false;
+      offlineSince.current = null;
 
       if (!reattached && !changedTransport) return;
 
@@ -554,21 +855,33 @@ const BBBLiveKitRoom = ({ children }) => {
       // Only real states are recorded, so the iOS transients (notification
       // shade, app switcher, permission prompts) neither revive the budget nor
       // mask a later resume.
-      if (next === 'active' || next === 'background') prevRoomAppState.current = next;
+      if (next === 'active' || next === 'background') {
+        prevRoomAppState.current = next;
+        setAppState(next);
+      }
     });
 
     return () => subscription.remove();
   }, [reviveReconnect]);
 
   // The bar has a single profile slot, so anything else raised meanwhile takes
-  // it over for good: re-assert while the condition holds, unless the user has
-  // dismissed the notice.
+  // it over for good: assert and re-assert while the condition holds, unless
+  // the user has dismissed the notice. One effect for both notices, in priority
+  // order - two would ping-pong the slot whenever a stall ends in a give-up.
   useEffect(() => {
-    if (!reconnectNotice.current.room && !reconnectNotice.current.fatal) return;
-    if (noticeDismissed || barProfile === 'mediaReconnectFailed') return;
+    if (reconnectNotice.current.room || reconnectNotice.current.fatal) {
+      if (noticeDismissed || barProfile === 'mediaReconnectFailed') return;
 
-    dispatch(setProfile({ profile: 'mediaReconnectFailed' }));
-  }, [barProfile, noticeDismissed, dispatch]);
+      dispatch(setProfile({ profile: 'mediaReconnectFailed' }));
+
+      return;
+    }
+
+    if (!reconnectingNotice) return;
+    if (reconnectingDismissed || barProfile === 'mediaReconnecting') return;
+
+    dispatch(setProfile({ profile: 'mediaReconnecting' }));
+  }, [barProfile, noticeDismissed, reconnectingDismissed, reconnectingNotice, dispatch]);
 
   // Handle fatal errors emitted from other parts of the app (e.g. unrecoverable
   // audio publish timeouts) by forcing a LiveKit room reconnection. Gated by
@@ -607,6 +920,14 @@ const BBBLiveKitRoom = ({ children }) => {
         return;
       }
 
+      // The only emitter of this event is the LiveKit audio bridge, so the
+      // audio teardown follows whichever bridge carries audio.
+      const result = forceRoomReconnect({ source: 'fatal_error', resetAudio: usingAudio });
+
+      // A refused reconnect tore nothing down, so it must not cost a budget a
+      // burst of errors would otherwise drain without a single teardown.
+      if (result !== 'started') return;
+
       fatalReconnectAttempts.current += 1;
       // Reset the counter if no further fatal error arrives within the stability
       // window (i.e. the link recovered), so isolated blips don't accumulate.
@@ -616,31 +937,6 @@ const BBBLiveKitRoom = ({ children }) => {
         fatalReconnectResetTimer.current = null;
         clearReconnectNotice('fatal');
       }, FATAL_RECONNECT_STABLE_MS);
-      dispatch(showNotificationWithTimeout({ profile: 'mediaReconnecting' }));
-
-      // Non-final disconnect (do NOT destroy the media managers). Once the room
-      // is Disconnected, the connect effect above re-fires and re-establishes the
-      // room; resetting the audio flags lets it re-run joinAudio to republish mic.
-      // Tear the audio bridge down through AudioManager (rather than leaving it
-      // dangling on the singleton room until the next joinAudio call) so its
-      // stop() is tracked and awaited before a new bridge is started.
-      // No-op if there's no live bridge (e.g. audioBridge isn't 'livekit').
-      AudioManager.exitAudio();
-
-      liveKitRoom.disconnect()
-        .then(() => {
-          dispatch(setIsConnected(false));
-          dispatch(setIsConnecting(false));
-          dispatch(setIsReconnecting(false));
-        })
-        .catch((disconnectError) => {
-          logger.error({
-            logCode: 'livekit_fatal_error_reconnect_disconnect_error',
-            extraInfo: {
-              errorMessage: disconnectError?.message,
-            },
-          }, `LiveKit: fatal-error reconnect disconnect failed - ${disconnectError?.message}`);
-        });
     };
 
     liveKitEvents.on(LK_FATAL_ERROR_EVENT, handleFatalError);
@@ -648,7 +944,13 @@ const BBBLiveKitRoom = ({ children }) => {
     return () => {
       liveKitEvents.off(LK_FATAL_ERROR_EVENT, handleFatalError);
     };
-  }, [reconnectOnFatalFailures, dispatch, notifyReconnectExhausted, clearReconnectNotice]);
+  }, [
+    reconnectOnFatalFailures,
+    usingAudio,
+    forceRoomReconnect,
+    notifyReconnectExhausted,
+    clearReconnectNotice,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -679,7 +981,12 @@ const BBBLiveKitRoom = ({ children }) => {
       room={liveKitRoom}
       style={{ zIndex: 0, height: 'initial', width: 'initial' }}
     >
-      <LiveKitObserver room={liveKitRoom} usingAudio={usingAudio} />
+      <LiveKitObserver
+        room={liveKitRoom}
+        usingAudio={usingAudio}
+        usingCamera={usingCamera}
+        setReconnectingNotice={setReconnectingNotice}
+      />
       {usingAudio && selectiveSubscriptionEnabled && <SelectiveSubscription />}
       {children}
     </LiveKitRoom>

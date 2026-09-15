@@ -68,6 +68,32 @@ export const applyRoomOptions = (room, options) => {
 // nothing to read here yet: the configured options are merged in before connecting.
 export const liveKitRoom = new Room(resolveRoomOptions());
 
+/**
+ * Whether a connection state is one the SDK is trying to recover from.
+ *
+ * @param {import('livekit-client').ConnectionState} state
+ * @returns {boolean}
+ */
+export const isReconnectingState = (state) => state === ConnectionState.Reconnecting
+  || state === ConnectionState.SignalReconnecting;
+
+// A room reports Disconnected both before it has ever connected and after it has been
+// torn down, and only the second is an interruption. This Room is a module global reused
+// across breakout entry, leave and SDK re-mounts, so the flag is reset on a final
+// teardown: otherwise the next session starts with an interruption already latched.
+let connectedOnce = false;
+
+// A single permanent listener: re-arming a `once` per teardown accumulates listeners on
+// a Room that outlives every session.
+liveKitRoom.on(RoomEvent.Connected, () => {
+  connectedOnce = true;
+});
+
+/**
+ * @returns {boolean} Whether the room has connected at least once this session.
+ */
+export const hasConnectedOnce = () => connectedOnce;
+
 // How long a room may stay unusable before the caller gives up on it.
 export const ROOM_CONNECTION_TIMEOUT = 15000;
 
@@ -128,6 +154,8 @@ export const waitForRoomConnection = (room, timeout = ROOM_CONNECTION_TIMEOUT) =
 export const disconnectLiveKitRoom = ({
   final = false,
 }) => {
+  if (final) connectedOnce = false;
+
   liveKitRoom.disconnect()
     .then(() => {
       logger.debug({
