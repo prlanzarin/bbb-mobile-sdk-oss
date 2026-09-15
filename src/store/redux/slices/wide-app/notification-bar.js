@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 // Profiles that stay up until their condition clears, so they are the only ones
 // offered a dismiss control.
-export const PERSISTENT_PROFILES = ['mediaReconnectFailed'];
+export const PERSISTENT_PROFILES = ['mediaReconnectFailed', 'mediaReconnecting'];
 
 const initialState = {
   isShow: false,

@@ -37,6 +37,7 @@ const AudioControls = () => {
   const isListenOnly = useSelector((state) => state.audio.isListenOnly);
   const audioError = useSelector((state) => state.audio.audioError);
   const localMutedState = useSelector((state) => state.audio.isMuted);
+  const mediaInterrupted = useSelector((state) => state.audio.mediaInterrupted);
   const pendingMuteAssert = useSelector((state) => state.audio.pendingMuteAssert);
   const pendingMuteAssertEpoch = useSelector((state) => state.audio.pendingMuteAssertEpoch);
   const [userSetMuted] = useMutation(Queries.USER_SET_MUTED);
@@ -67,6 +68,7 @@ const AudioControls = () => {
     ? localMutedState
     : (serverMuted ?? localMutedState);
   const unmutedAndConnected = !displayedMuted && isConnected;
+  const unmuteBlocked = mediaInterrupted && displayedMuted;
 
   // Mute reconciliation effect: applies the server's mute state
   // locally if it differs from the local state based on specific conditions.
@@ -263,17 +265,28 @@ const AudioControls = () => {
         null,
         { cancelable: true },
       );
-    } else if (audioPermissionTainted) {
+
+      return;
+    }
+
+    // Unmuting while the media session is down is a no-op that would leave local
+    // and server state disagreeing. Muting still goes through, it is partly
+    // effective locally.
+    if (unmuteBlocked) return;
+
+    if (audioPermissionTainted) {
       // Audio permission was tainted (i.e. user denied permission and didn't grant it)
       // Try to join audio again
       setAudioPermissionTainted(false);
       joinAudio().then(() => {
         toggleVoice(false);
       });
-    } else {
-      toggleVoice();
+
+      return;
     }
-  }, [micDisabled, audioPermissionTainted, toggleVoice, joinAudio]);
+
+    toggleVoice();
+  }, [micDisabled, unmuteBlocked, audioPermissionTainted, toggleVoice, joinAudio]);
 
   const onPressHeadphone = useCallback(() => {
     if (isActive) {
@@ -296,6 +309,7 @@ const AudioControls = () => {
       isConnecting={isConnecting}
       isListenOnly={isListenOnly}
       unmutedAndConnected={unmutedAndConnected}
+      mediaInterrupted={mediaInterrupted}
       isActive={isActive}
       onPressJoined={onPressMic}
       onPressNotJoined={onPressHeadphone}
