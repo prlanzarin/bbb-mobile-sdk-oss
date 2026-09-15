@@ -1203,6 +1203,11 @@ export default class LiveKitAudioBridge {
     try {
       this.joinInFlight = true;
       await waitForRoomConnection(this.liveKitRoom);
+
+      // stop()/exitAudio can finish while this wait is still pending; resuming
+      // would resurrect the stream and flag audio connected on a dead bridge.
+      if (this.stopping) return;
+
       this.originalStream = inputStream;
       this.shouldBeMuted = muted;
       this.lastServerMuteState = muted;
@@ -1213,6 +1218,9 @@ export default class LiveKitAudioBridge {
       this.listenOnly = !!isListenOnly;
 
       if (!muted) await this.publish(inputStream);
+
+      // publish() returns silently when the bridge was stopped mid-publish.
+      if (this.stopping) return;
 
       this.onstart();
     } catch (error) {
