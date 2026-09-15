@@ -20,11 +20,27 @@ import {
   LK_FATAL_ERROR_EVENT,
 } from '../livekit';
 import MediaStreamUtils from './media-stream-utils';
+import { consumeMuteCommand } from './mute-intent';
 import { getMeetingSettings } from '../../graphql/local-states/useMeetingSettings';
 
 const BRIDGE_NAME = 'livekit';
 const SENDRECV_ROLE = 'sendrecv';
 const DEFAULT_UNPUBLISH_AFTER_MUTE_MS = 5000;
+// Window, counted from the moment the room settles out of a reconnect, during
+// which the bridge still ignores the server's mute state: the mute the SFU
+// derives from the reconnect's unpublish can trail the settle by more than ten
+// seconds on a mobile link.
+const RECONNECT_SERVER_MUTE_WINDOW_MS = 15000;
+// Ceiling on how long an unsettled reconnect may hold the server's mute state,
+// so a room that never comes back cannot hold it for the bridge's lifetime. Set
+// above the connection-stall detector's own budget so it only bites where that
+// detector has already given up on the room.
+const RECONNECT_MUTE_HOLD_CEILING_MS = 90000;
+// Time given to the reconnect's republish to land before the bridge reads the
+// server's mute state again and reconciles against it.
+const STATE_RECONCILE_DELAY_MS = 2000;
+
+type ReconnectMuteHoldReason = 'reconnecting' | 'reconnect_settling';
 
 interface JoinOptions {
   inputStream: MediaStream;
@@ -73,6 +89,34 @@ export default class LiveKitAudioBridge {
   // setSenderTrackEnabled.
   private shouldBeMuted: boolean;
 
+  // Last known authoritative mute state: server-originated, or the join intent
+  // at joinAudio.
+  private lastServerMuteState: boolean;
+
+  private reconnectingSince: number | null;
+
+  // When the room last settled out of a reconnect.
+  private reconnectSettledAt: number | null;
+
+  // The baseline the settle reconcile measures the server's state against: a
+  // mute that reached shouldBeMuted before the hold took effect makes
+  // shouldBeMuted itself useless as a reference.
+  private preReconnectIntent: boolean | null;
+
+  // Start of the outage the hold covers. Separate from reconnectingSince, which
+  // is rewritten on every connection-state flap: re-arming the ceiling there
+  // would let an outage that keeps flapping push it out indefinitely.
+  private reconnectHoldSince: number | null;
+
+  // Set when the reconnect in flight actually republished the microphone. Only
+  // a full reconnect tears the publication down, and only that republish (plus
+  // the unpublish the SFU reads as a mute) can leave a publication muted
+  // without the server having decided to mute the user. A signal resume
+  // republishes nothing, so a mute seen there is the server's and must stand.
+  private reconnectRepublished: boolean;
+
+  private serverStateReconcile: ReturnType<typeof setTimeout> | null;
+
   // Set for the duration of joinAudio: the publication is still being
   // established, so reconciling it against the last intent would race the join.
   private joinInFlight: boolean;
@@ -112,8 +156,16 @@ export default class LiveKitAudioBridge {
     this.handleLocalTrackPublished = this.handleLocalTrackPublished.bind(this);
     this.handleLocalTrackUnpublished = this.handleLocalTrackUnpublished.bind(this);
     this.handleRoomReconnected = this.handleRoomReconnected.bind(this);
+    this.handleRoomReconnecting = this.handleRoomReconnecting.bind(this);
     this.handleRoomConnected = this.handleRoomConnected.bind(this);
     this.shouldBeMuted = true;
+    this.lastServerMuteState = true;
+    this.reconnectingSince = null;
+    this.reconnectSettledAt = null;
+    this.preReconnectIntent = null;
+    this.reconnectHoldSince = null;
+    this.reconnectRepublished = false;
+    this.serverStateReconcile = null;
 
     this.observeLiveKitEvents();
   }
@@ -403,6 +455,8 @@ export default class LiveKitAudioBridge {
       },
     }, `LiveKit: audio track published - ${trackSid}`);
 
+    if (this.reconnectingSince !== null) this.reconnectRepublished = true;
+
     // A (re)published track comes up unmuted (e.g. reconnect republish or a
     // fresh publish racing a mute). Reinforce the muted state if that is the
     // intent so audio never flows while the user is meant to be muted.
@@ -425,7 +479,29 @@ export default class LiveKitAudioBridge {
     }, `LiveKit: audio track unpublished - ${trackSid}`);
   }
 
+  private handleRoomReconnecting(): void {
+    this.reconnectingSince = Date.now();
+    this.reconnectSettledAt = null;
+    // Kept across a failed resume (Reconnecting -> Disconnected -> Connected):
+    // the intent to reconcile against is the one the outage started from, not
+    // the one the intervening reconnect attempt left behind.
+    if (this.preReconnectIntent === null) {
+      this.preReconnectIntent = this.shouldBeMuted;
+      this.reconnectHoldSince = Date.now();
+    }
+    this.reconnectRepublished = false;
+    this.clearServerStateReconcile();
+  }
+
   private handleRoomReconnected(): void {
+    // A signal-only resume also surfaces as Reconnected, and it republishes
+    // nothing for the SFU to read as a mute.
+    const fullReconnect = this.reconnectingSince !== null
+      || this.preReconnectIntent !== null;
+
+    this.reconnectingSince = null;
+    if (fullReconnect) this.reconnectSettledAt = Date.now();
+    this.scheduleServerStateReconcile();
     // A full reconnect republishes local tracks using the SDK's local mute
     // state, which may have drifted from BBB's authoritative state. Reinforce.
     this.reinforceMuteState('room_reconnected');
@@ -433,7 +509,98 @@ export default class LiveKitAudioBridge {
   }
 
   private handleRoomConnected(): void {
+    // A failed resume comes back as Reconnecting -> Disconnected -> Connected
+    // and this bridge survives it, so the reconnect bookkeeping has to be taken
+    // down here too - otherwise it stays armed for the bridge's lifetime.
+    // The settle tail is only opened when a reconnect preceded this connect: a
+    // first connect has no republish for the SFU to read as a mute.
+    if (this.preReconnectIntent !== null) this.reconnectSettledAt = Date.now();
+    this.reconnectingSince = null;
+    this.scheduleServerStateReconcile();
     this.reconcileMicPublication('room_connected');
+  }
+
+  // A full reconnect unpublishes the microphone before republishing it, and the
+  // server reads that unpublish as a mute - so a reconnect started while
+  // unmuted would end with the user silenced. Server-originated mutes are held
+  // for as long as the reconnect runs, plus a tail after it settles, so the
+  // pre-reconnect intent survives the republish instead: on a mobile link the
+  // reconnect itself takes tens of seconds and the server's mute lands anywhere
+  // in that span. A room that is Disconnected is not reconnecting and holds
+  // nothing; the ceiling covers one that stays Reconnecting forever.
+  private reconnectMuteHoldReason(): ReconnectMuteHoldReason | null {
+    const now = Date.now();
+    const state = this.liveKitRoom?.state;
+
+    if (this.reconnectingSince !== null
+      && (state === ConnectionState.Reconnecting
+        || state === ConnectionState.SignalReconnecting)) {
+      const holdSince = this.reconnectHoldSince ?? this.reconnectingSince;
+
+      return now - holdSince < RECONNECT_MUTE_HOLD_CEILING_MS ? 'reconnecting' : null;
+    }
+
+    if (this.reconnectSettledAt !== null
+      && now - this.reconnectSettledAt < RECONNECT_SERVER_MUTE_WINDOW_MS) {
+      return 'reconnect_settling';
+    }
+
+    return null;
+  }
+
+  private clearServerStateReconcile(): void {
+    if (this.serverStateReconcile) {
+      clearTimeout(this.serverStateReconcile);
+      this.serverStateReconcile = null;
+    }
+  }
+
+  // Nothing re-delivers a voice state the bridge ignored during a reconnect, so
+  // the server's state is read once more when the room settles and adopted if
+  // the two still disagree.
+  private scheduleServerStateReconcile(): void {
+    this.clearServerStateReconcile();
+
+    this.serverStateReconcile = setTimeout(() => {
+      // Measured against the pre-reconnect intent, not the live one: a mute the
+      // hold did not cover has already overwritten shouldBeMuted, and comparing
+      // against it would call the corrupted state agreement.
+      const baselineIntent = this.preReconnectIntent ?? this.shouldBeMuted;
+
+      if (this.lastServerMuteState === baselineIntent) {
+        this.serverStateReconcile = null;
+        this.reconnectRepublished = false;
+        this.preReconnectIntent = null;
+        this.reconnectHoldSince = null;
+
+        return;
+      }
+
+      this.logger.warn({
+        logCode: 'livekit_audio_mute_state_reconciled',
+        extraInfo: {
+          bridgeName: this.bridgeName,
+          role: this.role,
+          shouldBeMuted: this.shouldBeMuted,
+          lastServerMuteState: this.lastServerMuteState,
+          preReconnectIntent: this.preReconnectIntent,
+        },
+      }, 'LiveKit: adopting the server voice state after a reconnect');
+
+      this.shouldBeMuted = this.lastServerMuteState;
+      // The adoption has to reach Redux even when the track is already in the
+      // adopted state and reinforceMuteState returns early: nothing else
+      // re-delivers a voice state that was ignored. Mute direction only, per
+      // reinforceMuteState's rule.
+      if (this.shouldBeMuted) this.onmutestatechanged(true);
+      // Cleared only after the reinforce: reconnectRepublished is what
+      // authorizes reinforceMuteState to open the mic.
+      this.reinforceMuteState('server_state_reconcile');
+      this.serverStateReconcile = null;
+      this.reconnectRepublished = false;
+      this.preReconnectIntent = null;
+      this.reconnectHoldSince = null;
+    }, STATE_RECONCILE_DELAY_MS);
   }
 
   // The room can come back after an operation aimed at it already failed: a
@@ -477,12 +644,40 @@ export default class LiveKitAudioBridge {
     });
   }
 
-  // Re-assert the desired muted state onto the local microphone track. LiveKit
-  // reconnects/republishes, and out-of-band track unmutes, can leave the track
-  // sending audio while BBB's state is muted.
+  // Re-assert the desired mute state onto the local microphone track:
+  // reconnects/republishes and out-of-band track mutes/unmutes can leave the
+  // track sending audio while BBB's state is muted, or silent while it is
+  // unmuted.
   private reinforceMuteState(reason: string): void {
-    if (!this.shouldBeMuted) return;
-    if (!this.hasMicrophoneTrack() || this.isLocalPublicationMuted()) return;
+    if (!this.hasMicrophoneTrack()) return;
+
+    const publicationMuted = this.isLocalPublicationMuted();
+
+    if (this.shouldBeMuted === publicationMuted) return;
+
+    const targetMuted = this.shouldBeMuted;
+    const handleError = (error: Error) => {
+      this.logger.error({
+        logCode: 'livekit_audio_mute_reinforce_error',
+        extraInfo: {
+          errorMessage: error?.message,
+          errorName: error?.name,
+          errorStack: error?.stack,
+          bridgeName: this.bridgeName,
+          role: this.role,
+          reason,
+        },
+      }, `LiveKit: failed to reinforce muted state - ${error?.message}`);
+    };
+
+    // The mic is only ever opened here while a reconnect that republished the
+    // microphone is being reconciled. Outside that window, a publication muted
+    // behind the bridge's back is the server's doing - lk-controller applies the
+    // voice state onto the track and can beat the GraphQL verdict - and the
+    // fail-safe direction is muted.
+    if (!targetMuted
+      && this.reconnectingSince === null
+      && !this.reconnectRepublished) return;
 
     this.logger.warn({
       logCode: 'livekit_audio_mute_reinforced',
@@ -490,27 +685,28 @@ export default class LiveKitAudioBridge {
         bridgeName: this.bridgeName,
         role: this.role,
         reason,
+        shouldBeMuted: targetMuted,
+        publicationMuted,
       },
-    }, `LiveKit: reinforcing muted state on local audio track - ${reason}`);
+    }, `LiveKit: reinforcing mute state on local audio track - ${reason}`);
 
-    this.liveKitRoom.localParticipant.setMicrophoneEnabled(false)
-      .then(() => {
-        // Keep Redux's mute state in sync with this out-of-band track.
-        this.onmutestatechanged(true);
-      })
-      .catch((error) => {
-        this.logger.error({
-          logCode: 'livekit_audio_mute_reinforce_error',
-          extraInfo: {
-            errorMessage: (error as Error)?.message,
-            errorName: (error as Error)?.name,
-            errorStack: (error as Error)?.stack,
-            bridgeName: this.bridgeName,
-            role: this.role,
-            reason,
-          },
-        }, `LiveKit: failed to reinforce muted state - ${(error as Error)?.message}`);
-      });
+    if (targetMuted) {
+      this.liveKitRoom.localParticipant.setMicrophoneEnabled(false)
+        .then(() => {
+          // Only the mute direction is pushed into Redux: a reinforced unmute
+          // is not acknowledged by the server yet, and syncing it would make
+          // audio-controls' reconciliation push the stale server mute back down.
+          this.onmutestatechanged(true);
+        })
+        .catch(handleError);
+    } else {
+      this.clearUnpublishRequest();
+      // Publication-level unmute, for the reason spelled out on
+      // reassertUnmuteIntent().
+      this.getLocalMicTrackPubs()
+        .filter((pub) => pub.isMuted)
+        .forEach((pub) => { pub.unmute().catch(handleError); });
+    }
   }
 
   private observeLiveKitEvents(): void {
@@ -525,6 +721,7 @@ export default class LiveKitAudioBridge {
     this.liveKitRoom.localParticipant.on(ParticipantEvent.LocalTrackPublished, this.handleLocalTrackPublished);
     this.liveKitRoom.localParticipant.on(ParticipantEvent.LocalTrackUnpublished, this.handleLocalTrackUnpublished);
     this.liveKitRoom.on(RoomEvent.Connected, this.handleRoomConnected);
+    this.liveKitRoom.on(RoomEvent.Reconnecting, this.handleRoomReconnecting);
     this.liveKitRoom.on(RoomEvent.Reconnected, this.handleRoomReconnected);
   }
 
@@ -539,13 +736,18 @@ export default class LiveKitAudioBridge {
     this.liveKitRoom.localParticipant.off(ParticipantEvent.LocalTrackPublished, this.handleLocalTrackPublished);
     this.liveKitRoom.localParticipant.off(ParticipantEvent.LocalTrackUnpublished, this.handleLocalTrackUnpublished);
     this.liveKitRoom.off(RoomEvent.Connected, this.handleRoomConnected);
+    this.liveKitRoom.off(RoomEvent.Reconnecting, this.handleRoomReconnecting);
     this.liveKitRoom.off(RoomEvent.Reconnected, this.handleRoomReconnected);
   }
 
   setSenderTrackEnabled(shouldEnable: boolean): boolean {
     // Record the latest mute intent so reconnect/republish/out-of-band track
     // unmutes can be reconciled against it (see reinforceMuteState).
+    const previousIntent = this.shouldBeMuted;
     this.shouldBeMuted = !shouldEnable;
+    this.lastServerMuteState = this.shouldBeMuted;
+    const clientInitiated = previousIntent !== this.shouldBeMuted
+      && consumeMuteCommand(this.shouldBeMuted);
     const trackPubs = this.getLocalMicTrackPubs();
     const isCurrentlyMuted = this.isLocalPublicationMuted();
     const hasPublishedTrack = this.hasMicrophoneTrack();
@@ -643,6 +845,34 @@ export default class LiveKitAudioBridge {
     }
 
     // shouldEnable === false (mute)
+    const holdReason: ReconnectMuteHoldReason | null = clientInitiated
+      ? null
+      : this.reconnectMuteHoldReason();
+
+    if (holdReason) {
+      // Hold the pre-reconnect intent. lastServerMuteState is deliberately kept
+      // at the ignored value so the reconcile can tell that a mute was asked
+      // for and never applied.
+      this.shouldBeMuted = previousIntent;
+      this.clearUnpublishRequest();
+      // The reconcile armed at the settle may already have run, and nothing
+      // re-delivers what is held here, so the hold arms its own settle read.
+      if (holdReason === 'reconnect_settling') this.scheduleServerStateReconcile();
+      this.logger.warn({
+        logCode: 'livekit_audio_mute_ignored_reconnecting',
+        extraInfo: {
+          bridgeName: this.bridgeName,
+          role: this.role,
+          inputDeviceId: this.inputDeviceId,
+          previousIntent,
+          preReconnectIntent: this.preReconnectIntent,
+          holdReason,
+        },
+      }, 'LiveKit: mute ignored while the room reconnects');
+
+      return false;
+    }
+
     if (isCurrentlyMuted || !hasPublishedTrack) return false;
 
     // Track is published and unmuted - mute it. The handleLocalTrackMuted
@@ -650,6 +880,13 @@ export default class LiveKitAudioBridge {
     this.liveKitRoom.localParticipant.setMicrophoneEnabled(false).catch(handleMuteError);
 
     return true;
+  }
+
+  // The bridge's own mute intent. A server mute held for the reconnect window
+  // leaves it untouched, so callers must mirror this rather than what they asked
+  // for.
+  getMuteIntent(): boolean {
+    return this.shouldBeMuted;
   }
 
   private hasMicrophoneTrack(): boolean {
@@ -920,6 +1157,11 @@ export default class LiveKitAudioBridge {
       await waitForRoomConnection(this.liveKitRoom);
       this.originalStream = inputStream;
       this.shouldBeMuted = muted;
+      this.lastServerMuteState = muted;
+      this.reconnectRepublished = false;
+      this.reconnectSettledAt = null;
+      this.preReconnectIntent = null;
+      this.reconnectHoldSince = null;
       this.listenOnly = !!isListenOnly;
 
       if (!muted) await this.publish(inputStream);
@@ -978,6 +1220,7 @@ export default class LiveKitAudioBridge {
       .finally(() => {
         this.removeLiveKitObservers();
         this.clearUnpublishRequest();
+        this.clearServerStateReconcile();
         this.originalStream = null;
         this.isPublishPending = false;
         this.publishGeneration += 1;
