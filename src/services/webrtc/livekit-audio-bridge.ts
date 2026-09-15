@@ -29,6 +29,7 @@ const DEFAULT_UNPUBLISH_AFTER_MUTE_MS = 5000;
 interface JoinOptions {
   inputStream: MediaStream;
   muted: boolean;
+  isListenOnly?: boolean;
 }
 
 interface SetInputStreamOptions {
@@ -72,6 +73,15 @@ export default class LiveKitAudioBridge {
   // setSenderTrackEnabled.
   private shouldBeMuted: boolean;
 
+  // Set for the duration of joinAudio: the publication is still being
+  // established, so reconciling it against the last intent would race the join.
+  private joinInFlight: boolean;
+
+  // Recorded from the join options because a listen-only join still acquires a
+  // real microphone stream here, so neither the input stream nor the mute
+  // intent can tell a listen-only session apart from a muted sendrecv one.
+  private listenOnly: boolean;
+
   constructor({
     userId,
     logger,
@@ -88,6 +98,8 @@ export default class LiveKitAudioBridge {
     this.isPublishPending = false;
     this.publishGeneration = 0;
     this.stopping = false;
+    this.joinInFlight = false;
+    this.listenOnly = false;
     // eslint-disable-next-line no-underscore-dangle
     this._inputDeviceId = null;
 
@@ -100,6 +112,7 @@ export default class LiveKitAudioBridge {
     this.handleLocalTrackPublished = this.handleLocalTrackPublished.bind(this);
     this.handleLocalTrackUnpublished = this.handleLocalTrackUnpublished.bind(this);
     this.handleRoomReconnected = this.handleRoomReconnected.bind(this);
+    this.handleRoomConnected = this.handleRoomConnected.bind(this);
     this.shouldBeMuted = true;
 
     this.observeLiveKitEvents();
@@ -410,6 +423,52 @@ export default class LiveKitAudioBridge {
     // A full reconnect republishes local tracks using the SDK's local mute
     // state, which may have drifted from BBB's authoritative state. Reinforce.
     this.reinforceMuteState('room_reconnected');
+    this.reconcileMicPublication('room_reconnected');
+  }
+
+  private handleRoomConnected(): void {
+    this.reconcileMicPublication('room_connected');
+  }
+
+  // The room can come back after an operation aimed at it already failed: a
+  // reconnect cancels a pending publish, and a full disconnect leaves this
+  // bridge alive with no publication while the connect effect skips the audio
+  // re-join because audio.isConnected is still true. Nothing replays those, so
+  // re-derive the publication from the last intent once the room is usable.
+  private reconcileMicPublication(reason: string): void {
+    if (this.stopping) return;
+    if (this.listenOnly) return;
+    if (this.shouldBeMuted || this.joinInFlight) return;
+    if (!this.originalStream) return;
+    if (this.hasMicrophoneTrack()) return;
+
+    this.logger.info({
+      logCode: 'livekit_audio_mic_reconciled',
+      extraInfo: {
+        bridgeName: this.bridgeName,
+        role: this.role,
+        reason,
+        inputDeviceId: this.inputDeviceId,
+        streamData: MediaStreamUtils.getMediaStreamLogData(this.originalStream),
+      },
+    }, `LiveKit: republishing the microphone after room connect - ${reason}`);
+
+    // Deliberately not forced: livekit-client parks a publish issued during a
+    // reconnect instead of cancelling it and does not dedupe a re-wrapped raw
+    // track, so superseding one here can leave two microphone publications of
+    // which setMicrophoneEnabled(false) only mutes one.
+    this.publish(this.originalStream).catch((error) => {
+      this.logger.error({
+        logCode: 'livekit_audio_mic_reconcile_error',
+        extraInfo: {
+          errorMessage: (error as Error)?.message,
+          errorName: (error as Error)?.name,
+          bridgeName: this.bridgeName,
+          role: this.role,
+          reason,
+        },
+      }, `LiveKit: failed to republish the microphone after room connect - ${(error as Error)?.message}`);
+    });
   }
 
   // Re-assert the desired muted state onto the local microphone track. LiveKit
@@ -459,6 +518,7 @@ export default class LiveKitAudioBridge {
     this.liveKitRoom.localParticipant.on(ParticipantEvent.TrackUnmuted, this.handleLocalTrackUnmuted);
     this.liveKitRoom.localParticipant.on(ParticipantEvent.LocalTrackPublished, this.handleLocalTrackPublished);
     this.liveKitRoom.localParticipant.on(ParticipantEvent.LocalTrackUnpublished, this.handleLocalTrackUnpublished);
+    this.liveKitRoom.on(RoomEvent.Connected, this.handleRoomConnected);
     this.liveKitRoom.on(RoomEvent.Reconnected, this.handleRoomReconnected);
   }
 
@@ -472,6 +532,7 @@ export default class LiveKitAudioBridge {
     this.liveKitRoom.localParticipant.off(ParticipantEvent.TrackUnmuted, this.handleLocalTrackUnmuted);
     this.liveKitRoom.localParticipant.off(ParticipantEvent.LocalTrackPublished, this.handleLocalTrackPublished);
     this.liveKitRoom.localParticipant.off(ParticipantEvent.LocalTrackUnpublished, this.handleLocalTrackUnpublished);
+    this.liveKitRoom.off(RoomEvent.Connected, this.handleRoomConnected);
     this.liveKitRoom.off(RoomEvent.Reconnected, this.handleRoomReconnected);
   }
 
@@ -774,12 +835,15 @@ export default class LiveKitAudioBridge {
     const {
       muted,
       inputStream,
+      isListenOnly,
     } = options;
 
     try {
+      this.joinInFlight = true;
       await waitForRoomConnection(this.liveKitRoom);
       this.originalStream = inputStream;
       this.shouldBeMuted = muted;
+      this.listenOnly = !!isListenOnly;
 
       if (!muted) await this.publish(inputStream);
 
@@ -798,6 +862,8 @@ export default class LiveKitAudioBridge {
         },
       }, `LiveKit: activate audio failed: ${(error as Error).message}`);
       throw error;
+    } finally {
+      this.joinInFlight = false;
     }
   }
 
