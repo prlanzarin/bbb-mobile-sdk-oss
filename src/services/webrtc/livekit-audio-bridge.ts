@@ -70,6 +70,11 @@ export default class LiveKitAudioBridge {
 
   private originalStream: MediaStream | null;
 
+  // Set when the fallback publish lets livekit-client acquire the capture:
+  // the shared Room runs with stopLocalTrackOnUnpublish disabled, so the
+  // bridge is the only owner left to release that native capture.
+  private bridgeAcquiredStream: boolean;
+
   private unpublishRequest: ReturnType<typeof setTimeout> | null;
 
   // Tracks whether a publish operation is pending. Used for idempotency checks
@@ -137,6 +142,7 @@ export default class LiveKitAudioBridge {
     this.userId = userId;
     this.clientSessionNumber = clientSessionNumber;
     this.originalStream = null;
+    this.bridgeAcquiredStream = false;
     this.liveKitRoom = liveKitRoom;
     this.unpublishRequest = null;
     this.isPublishPending = false;
@@ -180,11 +186,15 @@ export default class LiveKitAudioBridge {
     return this._inputDeviceId;
   }
 
-  get inputStream(): MediaStream | null {
+  get publicationTrackStream(): MediaStream | null {
     const micTrackPublications = this.getLocalMicTrackPubs();
     const publication = micTrackPublications[0];
 
-    return this.originalStream || publication?.track?.mediaStream || null;
+    return publication?.track?.mediaStream || null;
+  }
+
+  get inputStream(): MediaStream | null {
+    return this.originalStream || this.publicationTrackStream;
   }
 
   private getLocalMicTrackPubs(): LocalTrackPublication[] {
@@ -259,6 +269,19 @@ export default class LiveKitAudioBridge {
       && error.message?.includes('timed out');
   }
 
+  // Liveness is read off the audio tracks because MediaStream.active is a
+  // constant true under @livekit/react-native-webrtc, the app's only
+  // MediaStream implementation. Mirrors AudioManager._mediaFactory, which
+  // already gates stream reuse on the same predicate.
+  // Scope: under @livekit/react-native-webrtc a capture reads as ended only
+  // when JS stops it (Room.disconnect()/LocalTrack.stop()) - the native ended
+  // event is wired to video capture controllers only - so this detects a
+  // stream the client tore down, never an OS-level device loss, which RN
+  // still reports as live. Same caveat as canUnmuteInPlace.
+  private static isStreamLive(stream: MediaStream | null): boolean {
+    return !!stream && stream.getAudioTracks().some((track) => track.readyState === 'live');
+  }
+
   // A publish targets the room the bridge holds; if that room dies mid-publish
   // the caller must not wait on a promise the room can no longer complete. The
   // SDK already rejects in-flight publishes in engine.close()/cleanupClient()
@@ -313,8 +336,8 @@ export default class LiveKitAudioBridge {
   // user-provided track makes the SDK wrap it in a brand new MediaStream, so
   // the published stream's id never matches the one handed to the bridge, while
   // the SDK's reconnect republish reuses the very same track - which is what
-  // has to be detected here. Liveness comes from the track's readyState because
-  // @livekit/react-native-webrtc hardcodes MediaStream.active to true.
+  // has to be detected here. Liveness comes from the track's readyState, as
+  // in isStreamLive.
   private isTrackPublishedWithStream(stream: MediaStream | null): boolean {
     if (!stream) return false;
 
@@ -1027,7 +1050,7 @@ export default class LiveKitAudioBridge {
 
       if (this.hasMicrophoneTrack()) await this.unpublish('republish');
 
-      if (inputStream && !inputStream.active) {
+      if (inputStream && !LiveKitAudioBridge.isStreamLive(inputStream)) {
         this.logger.warn({
           logCode: 'livekit_audio_publish_inactive_stream',
           extraInfo: {
@@ -1039,7 +1062,7 @@ export default class LiveKitAudioBridge {
         }, 'LiveKit: audio stream is inactive, fallback');
       }
 
-      if (inputStream && inputStream.active) {
+      if (inputStream && LiveKitAudioBridge.isStreamLive(inputStream)) {
         // Get tracks from the stream and publish them. Map into an array of
         // Promise objects and wait for all of them to resolve.
         this.logger.debug({
@@ -1060,6 +1083,11 @@ export default class LiveKitAudioBridge {
           Promise.all(trackPublishers),
         );
       } else {
+        // Flagged before the call because it can still land a capture after
+        // this publish is aborted by the room liveness binding or superseded:
+        // claiming ownership of a capture that never came costs nothing, while
+        // missing one leaks it.
+        this.bridgeAcquiredStream = true;
         await LiveKitAudioBridge.bindToRoomLiveness(
           this.liveKitRoom,
           this.liveKitRoom.localParticipant.setMicrophoneEnabled(
@@ -1068,7 +1096,25 @@ export default class LiveKitAudioBridge {
             publishOptions,
           ),
         );
-        this.originalStream = this.inputStream;
+
+        // The capture in this branch is the SDK's, so it has to be read off the
+        // publication: inputStream would hand back the dead originalStream.
+        // An absent publication stream is kept rather than assigned, since a
+        // null originalStream disables the unmute republish path for good.
+        if (this.publicationTrackStream) {
+          this.originalStream = this.publicationTrackStream;
+        } else {
+          this.logger.warn({
+            logCode: 'livekit_audio_publish_pub_stream_missing',
+            extraInfo: {
+              bridgeName: this.bridgeName,
+              role: this.role,
+              inputDeviceId: this.inputDeviceId,
+              streamData: MediaStreamUtils.getMediaStreamLogData(this.originalStream),
+            },
+          }, 'LiveKit: published without a publication stream, keeping the previous capture');
+        }
+
         this.logger.debug({
           logCode: 'livekit_audio_publish_without_stream',
           extraInfo: {
@@ -1239,6 +1285,15 @@ export default class LiveKitAudioBridge {
         this.removeLiveKitObservers();
         this.clearUnpublishRequest();
         this.clearServerStateReconcile();
+        // On react-native-webrtc, track.stop() is a JS-only state flip; only
+        // the platform-specific release() frees the native capture. Restricted
+        // to captures this bridge acquired - AudioManager owns the others.
+        if (this.bridgeAcquiredStream && this.originalStream) {
+          const releasable = this.originalStream as unknown as { release?: () => void };
+
+          if (typeof releasable.release === 'function') releasable.release();
+        }
+        this.bridgeAcquiredStream = false;
         this.originalStream = null;
         this.isPublishPending = false;
         this.publishGeneration += 1;
