@@ -63,6 +63,11 @@ export default class LiveKitAudioBridge {
   // callbacks from clearing isPublishPending when a newer publish superseded them.
   private publishGeneration: number;
 
+  // Set synchronously by stop() and never reset (stop() is terminal per
+  // instance): used to abort a publish that was parked waiting for a usable
+  // room while the bridge was being torn down.
+  private stopping: boolean;
+
   // Desired mute state, mirroring the last mute/unmute intent applied via
   // setSenderTrackEnabled.
   private shouldBeMuted: boolean;
@@ -82,6 +87,7 @@ export default class LiveKitAudioBridge {
     this.unpublishRequest = null;
     this.isPublishPending = false;
     this.publishGeneration = 0;
+    this.stopping = false;
     // eslint-disable-next-line no-underscore-dangle
     this._inputDeviceId = null;
 
@@ -623,6 +629,18 @@ export default class LiveKitAudioBridge {
     this.isPublishPending = true;
 
     try {
+      // The room may still be (re)establishing when this runs (unmute during a
+      // blip, republish after a resume). Wait for a room that can carry media
+      // before touching the existing publication; with the Disconnected abort
+      // in waitForRoomConnection, a terminal room fails fast instead of stalling.
+      await waitForRoomConnection(this.liveKitRoom);
+
+      // The bridge may have been stopped (stop()/exitAudio) or superseded by a
+      // newer publish while the room was unusable. Publishing now would put a
+      // live mic into the shared room on behalf of a dead bridge, with its
+      // observers already detached, so reinforceMuteState could not re-mute it.
+      if (this.stopping || this.publishGeneration !== currentGeneration) return;
+
       // @ts-ignore
       const basePublishOptions: TrackPublishOptions = {
         audioPreset: AudioPresets.music,
@@ -784,6 +802,11 @@ export default class LiveKitAudioBridge {
   }
 
   stop(): Promise<boolean> {
+    // Synchronously, before any await: stop()'s own awaits routinely span the
+    // moment the room becomes usable again, and a publish parked in the room
+    // connection wait must not republish a mic after the user left audio.
+    this.stopping = true;
+
     return this.liveKitRoom.localParticipant.setMicrophoneEnabled(false)
       .then(() => this.unpublish())
       .then(() => {
@@ -814,6 +837,7 @@ export default class LiveKitAudioBridge {
         this.clearUnpublishRequest();
         this.originalStream = null;
         this.isPublishPending = false;
+        this.publishGeneration += 1;
         this.onended();
       });
   }
