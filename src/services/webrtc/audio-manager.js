@@ -89,6 +89,18 @@ class AudioManager {
     return this.audioSessionNumber;
   }
 
+  // On react-native-webrtc, track.stop() only flips JS state; the native capture
+  // stays alive until release() runs, so whoever drops a capture must release it.
+  releaseInputStream() {
+    const stream = this.inputStream;
+
+    if (!stream) return;
+
+    this.inputStream = null;
+    stream.getTracks().forEach((track) => track.stop());
+    if (typeof stream.release === 'function') stream.release();
+  }
+
   async _mediaFactory(constraints = { audio: true }) {
     // Reuse the cached stream only if it still has a live audio track;
     // otherwise re-acquire, so a dead input track is regenerated rather than
@@ -98,6 +110,10 @@ class AudioManager {
       && this.inputStream.getAudioTracks().some((track) => track.readyState === 'live');
 
     if (hasLiveAudioTrack) return this.inputStream;
+
+    // A room disconnect ends the capture in JS only, so free it before acquiring
+    // a new one.
+    this.releaseInputStream();
 
     const inputStream = await mediaDevices.getUserMedia(constraints);
     this.inputStream = inputStream;
