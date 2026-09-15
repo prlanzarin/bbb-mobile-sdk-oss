@@ -1275,6 +1275,15 @@ export default class LiveKitAudioBridge {
     try {
       this.joinInFlight = true;
       await waitForRoomConnection(this.liveKitRoom);
+
+      // stop()/exitAudio can land while the room is unusable, and its teardown
+      // runs to completion in a few microtasks - long before this wait can
+      // resolve. Resuming here would resurrect originalStream on a dead bridge
+      // and flag audio connected with AudioManager.bridge already null, which
+      // no later event undoes (publish() bails on the same flag at its own
+      // post-wait check).
+      if (this.stopping) return;
+
       this.originalStream = inputStream;
       this.shouldBeMuted = muted;
       this.lastServerMuteState = muted;
@@ -1285,6 +1294,10 @@ export default class LiveKitAudioBridge {
       this.listenOnly = !!isListenOnly;
 
       if (!muted) await this.publish(inputStream);
+
+      // publish() returns silently when the bridge was stopped mid-publish, so
+      // the join tail has to re-check before signalling a live audio session.
+      if (this.stopping) return;
 
       this.onstart();
     } catch (error) {
