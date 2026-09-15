@@ -54,8 +54,20 @@ const AudioControls = () => {
     loading: currentUserVoiceLoading,
   } = useSubscription(Queries.USER_CURRENT_VOICE);
   const voice = currentUserVoiceData?.user_current[0]?.voice;
-  const isMuted = voice?.muted;
-  const unmutedAndConnected = !isMuted && isConnected;
+  const serverMuted = voice?.muted;
+  // The media session outlives the voice record - it is nullish during
+  // rejoin/breakout windows and Apollo blanks data on a terminal subscription
+  // error - so deriving the indicator from it alone renders the mic as unmuted
+  // regardless of what it is actually doing. Redux audio.isMuted carries the
+  // last known local mute state, which is what the notification renders from.
+  // A pending mute assert means the server value is precisely the one this
+  // client is overwriting - the reconciliation effect below skips for that
+  // reason - so the asserted intent, already applied to the bridge at join and
+  // mirrored into Redux, is what the mic is actually doing until it converges.
+  const displayedMuted = pendingMuteAssert !== null
+    ? localMutedState
+    : (serverMuted ?? localMutedState);
+  const unmutedAndConnected = !displayedMuted && isConnected;
 
   // Mute reconciliation effect: applies the server's mute state
   // locally if it differs from the local state based on specific conditions.
@@ -69,8 +81,8 @@ const AudioControls = () => {
     if (currentUserVoiceLoading || !voice) return;
     if (pendingMuteAssert !== null) return;
 
-    if (localMutedState !== isMuted) AudioManager.setMutedState(isMuted);
-  }, [isMuted, currentUserVoiceLoading, localMutedState, voice, pendingMuteAssert]);
+    if (localMutedState !== serverMuted) AudioManager.setMutedState(serverMuted);
+  }, [serverMuted, currentUserVoiceLoading, localMutedState, voice, pendingMuteAssert]);
 
   // Mute state re-assertion after a rejoin (breakouts, reconnects, etc): once
   // a rejoined session's voice record exists, push our restored mute intent to the
@@ -214,9 +226,10 @@ const AudioControls = () => {
   }, [audioError, joinAudio]);
 
   const toggleVoice = useCallback(async (mutedVal) => {
-    const userId = currentUserVoiceData?.user_current[0]?.voice?.userId;
-    const currMuted = currentUserVoiceData?.user_current[0]?.voice?.muted;
-    const muted = typeof mutedVal === 'boolean' ? mutedVal : !currMuted;
+    const userId = voice?.userId ?? currentUserData?.user_current[0]?.userId;
+    // Toggle against what the button renders, so a tap while the voice record
+    // is absent inverts the actual mic state instead of always muting.
+    const muted = typeof mutedVal === 'boolean' ? mutedVal : !displayedMuted;
 
     // Explicit user mute toggle supersedes previous mute asserts
     dispatch(setPendingMuteAssert(null));
@@ -226,7 +239,7 @@ const AudioControls = () => {
     } catch (e) {
       logger.error('Error on trying to toggle muted');
     }
-  }, [currentUserVoiceData]);
+  }, [voice, currentUserData, displayedMuted]);
 
   const onPressMic = useCallback(() => {
     // Lock settings are applied to the user
