@@ -10,12 +10,59 @@ import ScreenshareManager from '../webrtc/screenshare-manager';
 export const LK_FATAL_ERROR_EVENT = 'liveKitFatalError';
 export const liveKitEvents = new EventEmitter2();
 
-export const liveKitRoom = new Room({
+export const DEFAULT_ROOM_OPTIONS = {
   adaptiveStream: true,
   dynacast: true,
   stopLocalTrackOnUnpublish: false,
-  disconnectOnPageLeave: true,
-});
+};
+
+// Only the keys mobile actually honours are taken from the meeting settings: a
+// server-authored roomOptions is shaped for the web client, and shallow-merging one of
+// its nested blocks (audioCaptureDefaults, publishDefaults) would replace the object the
+// SDK already merged its own defaults into - dropping echo cancellation/AGC on every
+// capture - while a JSON reconnectPolicy would replace a class instance.
+const SUPPORTED_ROOM_OPTION_KEYS = [
+  'adaptiveStream',
+  'dynacast',
+  'stopLocalTrackOnUnpublish',
+];
+
+/**
+ * Layers the meeting's configured room options over the shipped defaults, so an
+ * override that carries only some of the keys keeps ours for the rest.
+ *
+ * @param {Object} [configured]
+ * @returns {Object}
+ */
+export const resolveRoomOptions = (configured) => {
+  const picked = {};
+
+  if (configured) {
+    SUPPORTED_ROOM_OPTION_KEYS.forEach((key) => {
+      if (configured[key] !== undefined) picked[key] = configured[key];
+    });
+  }
+
+  return { ...DEFAULT_ROOM_OPTIONS, ...picked };
+};
+
+/**
+ * Merges options into a room's own options object.
+ *
+ * livekit-client hands that object to LocalParticipant and RTCEngine by reference at
+ * construction and keeps reading dynacast, stopLocalTrackOnUnpublish and publishDefaults
+ * off it, so it must never be swapped for a new one.
+ *
+ * @param {import('livekit-client').Room | undefined} room
+ * @param {Object} [options]
+ */
+export const applyRoomOptions = (room, options) => {
+  if (room && options) Object.assign(room.options, options);
+};
+
+// The room is built at bootstrap, before the meeting settings are fetched, so there is
+// nothing to read here yet: the configured options are merged in before connecting.
+export const liveKitRoom = new Room(resolveRoomOptions());
 
 // How long a room may stay unusable before the caller gives up on it.
 export const ROOM_CONNECTION_TIMEOUT = 15000;
