@@ -688,9 +688,13 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
         },
         logLevel: LogLevel.warn,
         reconnectOnFatalFailures: false,
+        // Parity with the server's settings.yml only: the server's clientSettings replace
+        // these initial values before the room connects, so what reaches the room is the
+        // server's roomOptions layered over DEFAULT_ROOM_OPTIONS in services/livekit.
         roomOptions: {
           adaptiveStream: true,
           dynacast: true,
+          singlePeerConnection: false,
           stopLocalTrackOnUnpublish: false,
         },
         audio: {

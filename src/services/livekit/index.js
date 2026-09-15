@@ -13,6 +13,9 @@ export const liveKitEvents = new EventEmitter2();
 export const DEFAULT_ROOM_OPTIONS = {
   adaptiveStream: true,
   dynacast: true,
+  // A single peer connection carries subscriptions on trailing negotiations, which races
+  // the audio subscriptions mobile drives by hand, so keep publisher and subscriber apart.
+  singlePeerConnection: false,
   stopLocalTrackOnUnpublish: false,
 };
 
@@ -24,6 +27,7 @@ export const DEFAULT_ROOM_OPTIONS = {
 const SUPPORTED_ROOM_OPTION_KEYS = [
   'adaptiveStream',
   'dynacast',
+  'singlePeerConnection',
   'stopLocalTrackOnUnpublish',
 ];
 
