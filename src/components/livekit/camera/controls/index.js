@@ -38,6 +38,67 @@ const LKVideoControls = ({
   const isMounted = useRef(false);
   const isActive = localParticipant.isCameraEnabled || isConnecting;
 
+  // Declared before publishCamera, which lists it as a dependency: naming a binding
+  // initialised further down would memoize against undefined and stay stale.
+  const unpublishCamera = useCallback(async () => {
+    const publications = tracks.map((trackReference) => trackReference.publication);
+    const localPublications = publications.filter((publication) => publication?.isLocal);
+    const handleUnpublishError = (error) => {
+      logger.error({
+        logCode: 'livekit_camera_unpublish_error',
+        extraInfo: {
+          errorMessage: error.message,
+          errorStack: error.stack,
+        },
+      }, `LiveKit: camera unpublish error ${error.message}`);
+    };
+
+    try {
+      await Promise.all(localPublications.map(async (publication) => {
+        // trackName outlives the track and the publication, so it still identifies
+        // the camera further down.
+        const cameraId = publication?.trackName;
+
+        try {
+          // The track may already be gone (server-side unpublish, a reconnect, a
+          // concurrent unpublish), and unpublishTrack resolves undefined for a
+          // publication it no longer knows about.
+          if (publication?.track == null) {
+            logger.warn({
+              logCode: 'livekit_camera_unpublish_no_track',
+              extraInfo: { cameraId },
+            }, `LiveKit: camera track already gone, skipping unpublish ${cameraId}`);
+            return;
+          }
+
+          const trackPublication = await localParticipant.unpublishTrack(publication.track);
+
+          if (trackPublication == null) {
+            logger.warn({
+              logCode: 'livekit_camera_unpublish_no_publication',
+              extraInfo: { cameraId },
+            }, `LiveKit: camera publication already gone ${cameraId}`);
+            return;
+          }
+
+          logger.info({
+            logCode: 'livekit_camera_unpublished',
+            extraInfo: { cameraId: trackPublication.trackName },
+          }, `LiveKit: Camera unpublished ${trackPublication.trackName}`);
+        } catch (error) {
+          handleUnpublishError(error);
+        } finally {
+          if (cameraId) sendUserStopWebcam(cameraId);
+        }
+      }));
+    } catch (error) {
+      handleUnpublishError(error);
+    } finally {
+      dispatch(setLocalCameraId(null));
+      dispatch(setIsConnected(false));
+    }
+  }, [localParticipant, sendUserStopWebcam, tracks]);
+
   const publishCamera = useCallback(async () => {
     const newCameraId = `${localParticipant.identity}_app_${Date.now()}`;
     const cameraSettings = getMeetingSettings()?.public?.media?.livekit?.camera?.publishOptions;
@@ -82,41 +143,6 @@ const LKVideoControls = ({
     handleCameraPublishError,
     cameraFacingMode,
   ]);
-
-  const unpublishCamera = useCallback(async () => {
-    const publications = tracks.map((trackReference) => trackReference.publication);
-    const localPublications = publications.filter(publication => publication?.isLocal)
-    const handleUnpublishError = (error) => {
-      logger.error({
-        logCode: 'livekit_camera_unpublish_error',
-        extraInfo: {
-          errorMessage: error.message,
-          errorStack: error.stack,
-        },
-      }, `LiveKit: camera unpublish error ${error.message}`);
-    };
-
-    try {
-      await Promise.all(localPublications
-        .map((publication) => localParticipant.unpublishTrack(publication?.track)
-          .then((trackPublication) => {
-            logger.info({
-              logCode: 'livekit_camera_unpublished',
-              extraInfo: { cameraId: trackPublication.trackName },
-            }, `LiveKit: Camera unpublished ${trackPublication.trackName}`);
-            return trackPublication;
-          })
-          .catch(handleUnpublishError)
-          .finally(() => {
-            if (publication && publication.trackName) sendUserStopWebcam(publication.trackName);
-          })));
-    } catch (error) {
-      handleUnpublishError(error);
-    } finally {
-      dispatch(setLocalCameraId(null));
-      dispatch(setIsConnected(false));
-    }
-  }, [localParticipant, sendUserStopWebcam, tracks]);
 
   useEffect(() => {
     if (!isMounted.current) {
