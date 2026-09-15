@@ -725,7 +725,7 @@ export default class LiveKitAudioBridge {
           bridgeName: this.bridgeName,
           role: this.role,
           inputDeviceId: this.inputDeviceId,
-          streamData: MediaStreamUtils.getStreamData(inputStream || this.originalStream),
+          streamData: MediaStreamUtils.getMediaStreamLogData(inputStream || this.originalStream),
         },
       }, 'LiveKit: failed to publish audio track');
 
@@ -794,7 +794,7 @@ export default class LiveKitAudioBridge {
           bridgeName: this.bridgeName,
           role: this.role,
           inputDeviceId: this.inputDeviceId,
-          streamData: MediaStreamUtils.getStreamData(inputStream || this.originalStream),
+          streamData: MediaStreamUtils.getMediaStreamLogData(inputStream || this.originalStream),
         },
       }, `LiveKit: activate audio failed: ${(error as Error).message}`);
       throw error;

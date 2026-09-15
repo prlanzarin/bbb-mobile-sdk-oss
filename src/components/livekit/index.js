@@ -107,6 +107,8 @@ const BBBLiveKitRoom = ({ children }) => {
   const url = meetingSettings?.public
     ? (meetingSettings.public?.media?.livekit?.url || `wss://${host}/livekit`)
     : null;
+  // The effective default is the server's (settings.yml has shipped true since
+  // cb9ec3cdf7); the ?? false fallback only covers a server predating the key.
   const reconnectOnFatalFailures = meetingSettings?.public?.media?.livekit
     ?.reconnectOnFatalFailures ?? false;
   const selectiveSubscriptionEnabled = meetingSettings?.public?.media?.livekit
@@ -233,7 +235,7 @@ const BBBLiveKitRoom = ({ children }) => {
   ]);
 
   // Handle fatal errors emitted from other parts of the app (e.g. unrecoverable
-  // audio publish timeouts) by forcing a LiveKit room reconnection. Opt-in via
+  // audio publish timeouts) by forcing a LiveKit room reconnection. Gated by
   // the reconnectOnFatalFailures setting. Mobile has no DOM CustomEvent, so this
   // listens on the module EventEmitter instead of window.addEventListener.
   useEffect(() => {

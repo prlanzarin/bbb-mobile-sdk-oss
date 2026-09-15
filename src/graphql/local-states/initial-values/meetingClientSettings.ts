@@ -687,6 +687,8 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
           muteDebounceMs: 2500,
         },
         logLevel: LogLevel.warn,
+        // Inert, and the opposite of upstream's value: the server's clientSettings
+        // replace this before the room connects, and a stock server ships true.
         reconnectOnFatalFailures: false,
         // Parity with the server's settings.yml only: the server's clientSettings replace
         // these initial values before the room connects, so what reaches the room is the
