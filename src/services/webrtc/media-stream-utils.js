@@ -74,17 +74,21 @@ const getMediaStreamLogData = (stream) => {
     const videoTracks = getVideoTracks(stream);
 
     return {
+      // react-native-webrtc hardcodes MediaStream.active to true, so per-track
+      // readyState is the only field that tells a live capture from a dead one.
       active: stream.active,
       id: stream.id,
       audio: audioTracks.map((track) => ({
         id: track.id,
         enabled: track.enabled,
+        readyState: track.readyState,
         deviceId: getDeviceIdFromTrack(track),
         label: track.label,
       })),
       video: videoTracks.map((track) => ({
         id: track.id,
         enabled: track.enabled,
+        readyState: track.readyState,
         deviceId: getDeviceIdFromTrack(track),
         label: track.label,
       })),
