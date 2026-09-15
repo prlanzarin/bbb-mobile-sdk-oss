@@ -687,6 +687,7 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
           muteDebounceMs: 2500,
         },
         logLevel: LogLevel.warn,
+        sdkLogBridge: true,
         // Looks wrong but is inert: the server's clientSettings replace it before
         // the room connects, and a stock server ships true.
         reconnectOnFatalFailures: false,
