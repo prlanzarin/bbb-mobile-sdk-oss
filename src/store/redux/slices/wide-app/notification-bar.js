@@ -92,15 +92,15 @@ const notificationBarSlice = createSlice({
           break;
         case 'recordingStarted':
           state.isShow = true;
-          state.messageTitle = 'mobileSdk.notification.recordLabel';
-          state.messageSubtitle = 'app.notification.recordingStart';
-          state.icon = 'recording-stopped';
+          state.profile = 'recordingStarted';
+          state.text = 'app.notification.recordingStart';
+          state.extraInfo = {};
           break;
         case 'recordingStopped':
           state.isShow = true;
-          state.messageTitle = 'mobileSdk.notification.recordLabel';
-          state.messageSubtitle = 'app.notification.recordingPaused';
-          state.icon = 'recording-stopped';
+          state.profile = 'recordingStopped';
+          state.text = 'app.notification.recordingPaused';
+          state.extraInfo = {};
           break;
         default:
       }
@@ -112,19 +112,31 @@ const notificationQueue = [];
 export const showNotificationWithTimeout = createAsyncThunk(
   'notificationBar/setProfile',
   async (params, thunkAPI) => {
-    if (notificationQueue.length === 0) {
-      notificationQueue.push(params.profile);
+    // Callers pass either a profile string or a { profile } object. Normalise,
+    // and never write back into the caller's argument: a string primitive
+    // throws in strict mode, which used to leave the queue jammed for good.
+    const requested = typeof params === 'string' ? params : params?.profile;
+
+    if (!requested) return;
+
+    notificationQueue.push(requested);
+    // Somebody else owns the drain loop.
+    if (notificationQueue.length > 1) return;
+
+    try {
       while (notificationQueue.length !== 0) {
-        // eslint-disable-next-line prefer-destructuring
-        params.profile = notificationQueue[0];
-        thunkAPI.dispatch(setProfile({ profile: params.profile }));
+        const profile = notificationQueue[0];
+
+        thunkAPI.dispatch(setProfile({ profile }));
         // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
         await new Promise((resolve) => setTimeout(resolve, 5000));
         notificationQueue.shift();
-        thunkAPI.dispatch(hideNotification(params.profile));
+        thunkAPI.dispatch(hideNotification(profile));
       }
-    } else {
-      notificationQueue.push(params.profile);
+    } finally {
+      // A throw must never leave a stuck head behind: every later call would
+      // take the "already draining" path and never be shown again.
+      notificationQueue.length = 0;
     }
   }
 );
