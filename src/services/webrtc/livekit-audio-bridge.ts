@@ -257,17 +257,23 @@ export default class LiveKitAudioBridge {
     liveKitEvents.emit(LK_FATAL_ERROR_EVENT, { error, source: 'audio' });
   }
 
+  // Compares track identities rather than stream ones: publishing a
+  // user-provided track makes the SDK wrap it in a brand new MediaStream, so
+  // the published stream's id never matches the one handed to the bridge, while
+  // the SDK's reconnect republish reuses the very same track - which is what
+  // has to be detected here. Liveness comes from the track's readyState because
+  // @livekit/react-native-webrtc hardcodes MediaStream.active to true.
   private isTrackPublishedWithStream(stream: MediaStream | null): boolean {
     if (!stream) return false;
 
-    const pubs = this.getLocalMicTrackPubs();
+    const trackIds = stream.getAudioTracks().map((track) => track.id);
 
-    if (pubs.length === 0) return false;
+    if (trackIds.length === 0) return false;
 
-    return pubs.some((pub) => {
-      const pubStream = pub.track?.mediaStream;
+    return this.getLocalMicTrackPubs().some((pub) => {
+      const track = pub.track?.mediaStreamTrack;
 
-      return pubStream?.id === stream.id && pubStream?.active;
+      return !!track && trackIds.includes(track.id) && track.readyState === 'live';
     });
   }
 
@@ -652,6 +658,31 @@ export default class LiveKitAudioBridge {
     return tracks.length > 0;
   }
 
+  // A publication the bridge did not issue itself - the SDK's reconnect
+  // republish - carries the LocalTrack's own muted state, and nothing re-fires
+  // setSenderTrackEnabled once Redux and the server already agree on "unmuted",
+  // so the intent has to be pushed back onto the track. Unmuting the
+  // publication rather than setMicrophoneEnabled(true), which can fall through
+  // to acquiring a fresh capture when the publication is gone.
+  private reassertUnmuteIntent(): void {
+    if (this.shouldBeMuted || !this.isLocalPublicationMuted()) return;
+
+    this.getLocalMicTrackPubs()
+      .filter((pub) => pub.isMuted)
+      .forEach((pub) => {
+        pub.unmute().catch((error) => {
+          this.logger.warn({
+            logCode: 'livekit_audio_publish_reassert_error',
+            extraInfo: {
+              errorMessage: (error as Error).message,
+              bridgeName: this.bridgeName,
+              role: this.role,
+            },
+          }, 'LiveKit: failed to re-assert the unmute intent after a publish skip');
+        });
+      });
+  }
+
   private async publish(inputStream: MediaStream | null, force = false): Promise<void> {
     // If the stream is already published and active, skip
     if (inputStream && this.isTrackPublishedWithStream(inputStream)) {
@@ -661,6 +692,7 @@ export default class LiveKitAudioBridge {
           bridgeName: this.bridgeName,
           role: this.role,
           inputDeviceId: this.inputDeviceId,
+          streamData: MediaStreamUtils.getMediaStreamLogData(inputStream),
         },
       }, 'LiveKit: stream already published, skipping publish');
 
@@ -701,6 +733,27 @@ export default class LiveKitAudioBridge {
       // live mic into the shared room on behalf of a dead bridge, with its
       // observers already detached, so reinforceMuteState could not re-mute it.
       if (this.stopping || this.publishGeneration !== currentGeneration) return;
+
+      // The wait also ends on Reconnected, and the SDK republishes local tracks
+      // before emitting it (republishAllTracks in its Room.ts), so the stream
+      // handed to this publish may already be back on the wire. Unpublishing it
+      // below would tear down the SDK's own republication and the server would
+      // read that as a mute.
+      if (inputStream && this.isTrackPublishedWithStream(inputStream)) {
+        this.logger.debug({
+          logCode: 'livekit_audio_publish_republished_skip',
+          extraInfo: {
+            bridgeName: this.bridgeName,
+            role: this.role,
+            inputDeviceId: this.inputDeviceId,
+            streamData: MediaStreamUtils.getMediaStreamLogData(inputStream),
+          },
+        }, 'LiveKit: stream republished while waiting for the room, skipping publish');
+
+        this.reassertUnmuteIntent();
+
+        return;
+      }
 
       // @ts-ignore
       const basePublishOptions: TrackPublishOptions = {
@@ -777,6 +830,8 @@ export default class LiveKitAudioBridge {
 
       this.onpublished();
     } catch (error) {
+      const publishedAnyway = !!inputStream && this.isTrackPublishedWithStream(inputStream);
+
       this.logger.error({
         logCode: 'livekit_audio_publish_error',
         extraInfo: {
@@ -787,8 +842,20 @@ export default class LiveKitAudioBridge {
           role: this.role,
           inputDeviceId: this.inputDeviceId,
           streamData: MediaStreamUtils.getMediaStreamLogData(inputStream || this.originalStream),
+          publishedAnyway,
         },
       }, 'LiveKit: failed to publish audio track');
+
+      // A timeout on a stream that is published regardless is most likely a
+      // duplicate publish racing the SDK's reconnect republish, not a bugged
+      // room: reporting success keeps it from forcing a full room reconnect
+      // through the fatal-error handling.
+      if (publishedAnyway) {
+        this.reassertUnmuteIntent();
+        this.onpublished();
+
+        return;
+      }
 
       if (LiveKitAudioBridge.isFatalPublishError(error as Error)) {
         this.handleFatalPublishError(error as Error);
